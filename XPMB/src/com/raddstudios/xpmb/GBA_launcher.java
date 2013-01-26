@@ -109,7 +109,8 @@ public class GBA_launcher extends Activity {
 		
 		bmAnim.setOneShot(false);
 		drwAnimSrc = null;
-		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
+		ImageView iv_la = ((ImageView) findViewById(R.id.ivLoadAnim));
+		//iv_la.setImageDrawable(bmAnim);
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
 		
@@ -192,11 +193,11 @@ public class GBA_launcher extends Activity {
 
 				@Override
 				public void run() {
-					((ImageView) findViewById(R.id.ivLoadAnim))
-							.setVisibility(View.VISIBLE);
+					//((ImageView) findViewById(R.id.ivLoadAnim))
+					//		.setVisibility(View.VISIBLE);
 					updateFoundGames();
-					((ImageView) findViewById(R.id.ivLoadAnim))
-							.setVisibility(View.INVISIBLE);
+					//((ImageView) findViewById(R.id.ivLoadAnim))
+					//		.setVisibility(View.INVISIBLE);
 					((ImageView) findViewById(R.id.ivCover))
 							.setImageDrawable(getCorrectCover(0));
 					if (foundGames.size() > 1) {

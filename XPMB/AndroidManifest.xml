@@ -32,7 +32,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="GBA_Launcher"
+            android:name="GBA_launcher"
             android:configChanges="orientation|keyboardHidden"
             android:excludeFromRecents="true"
             tools:ignore="ExportedActivity" >
