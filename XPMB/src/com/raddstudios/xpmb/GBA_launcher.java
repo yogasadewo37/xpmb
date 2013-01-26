@@ -1,3 +1,22 @@
+//-----------------------------------------------------------------------------
+//    
+//    This file is part of XPMB.
+//
+//    XPMB is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    XPMB is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with XPMB.  If not, see <http://www.gnu.org/licenses/>.
+//
+//-----------------------------------------------------------------------------
+
 package com.raddstudios.xpmb;
 
 import java.io.BufferedReader;
@@ -66,9 +85,8 @@ public class GBA_launcher extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		if (!Build.PRODUCT.equalsIgnoreCase("R800i")
-				&& !Build.PRODUCT.equalsIgnoreCase("R800a")
-				&& !Build.PRODUCT.equalsIgnoreCase("R800x")) {
+		if (!Build.BOARD.equalsIgnoreCase("zeus")
+				&& !Build.BOARD.equalsIgnoreCase("zeusc")) {
 			Toast tst = Toast.makeText(getWindow().getContext(),
 					getString(R.string.strIncorrectDevice), Toast.LENGTH_SHORT);
 			tst.show();
@@ -106,14 +124,14 @@ public class GBA_launcher extends Activity {
 					new BitmapDrawable(getResources(), Bitmap.createBitmap(
 							drwAnimSrc, dp * 128, 0, 128, 128)), 50);
 		}
-		
+
 		bmAnim.setOneShot(false);
 		drwAnimSrc = null;
 		ImageView iv_la = ((ImageView) findViewById(R.id.ivLoadAnim));
-		//iv_la.setImageDrawable(bmAnim);
+		iv_la.setImageDrawable(bmAnim);
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
-		
+
 		final Handler mHandler = new Handler();
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 
@@ -193,11 +211,11 @@ public class GBA_launcher extends Activity {
 
 				@Override
 				public void run() {
-					//((ImageView) findViewById(R.id.ivLoadAnim))
-					//		.setVisibility(View.VISIBLE);
+					((ImageView) findViewById(R.id.ivLoadAnim))
+							.setVisibility(View.VISIBLE);
 					updateFoundGames();
-					//((ImageView) findViewById(R.id.ivLoadAnim))
-					//		.setVisibility(View.INVISIBLE);
+					((ImageView) findViewById(R.id.ivLoadAnim))
+							.setVisibility(View.INVISIBLE);
 					((ImageView) findViewById(R.id.ivCover))
 							.setImageDrawable(getCorrectCover(0));
 					if (foundGames.size() > 1) {

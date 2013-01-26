@@ -1,12 +1,28 @@
+//-----------------------------------------------------------------------------
+//    
+//    This file is part of XPMB.
+//
+//    XPMB is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    XPMB is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with XPMB.  If not, see <http://www.gnu.org/licenses/>.
+//
+//-----------------------------------------------------------------------------
+
 package com.raddstudios.xpmb.utils;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.xmlpull.v1.XmlPullParser;
-
-import com.raddstudios.xpmb.XPMB_Main;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -16,7 +32,6 @@ import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Handler;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -25,13 +40,15 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.raddstudios.xpmb.XPMB_Main;
+
 public class XPMBMenu {
 
 	private class XPMBMenuItem {
 		private String strID = null, strIcon = null;
 		private ArrayList<XPMBMenuSubitem> alSubitems = null;
 		private ImageView ivParentView = null;
-		private TextView ivParentLabel = null;
+		private TextView tvParentLabel = null;
 		private int intCurSubitem = 0;
 
 		public XPMBMenuItem(String id) {
@@ -68,11 +85,11 @@ public class XPMBMenu {
 		}
 
 		public void setParentLabel(TextView label) {
-			ivParentLabel = label;
+			tvParentLabel = label;
 		}
 
 		public TextView getParentLabel() {
-			return ivParentLabel;
+			return tvParentLabel;
 		}
 
 		public int getNumSubItems() {
@@ -94,7 +111,7 @@ public class XPMBMenu {
 		private int intType = TYPE_DUMMY;
 		private String strID = null, strExecString = null, strIcon = null;
 		private ImageView ivParentView = null;
-		private TextView ivParentLabel = null;
+		private TextView tvParentLabel = null;
 
 		public XPMBMenuSubitem(String id, int type) {
 			intType = type;
@@ -134,11 +151,11 @@ public class XPMBMenu {
 		}
 
 		public void setParentLabel(TextView label) {
-			ivParentLabel = label;
+			tvParentLabel = label;
 		}
 
 		public TextView getParentLabel() {
-			return ivParentLabel;
+			return tvParentLabel;
 		}
 	}
 
@@ -221,6 +238,11 @@ public class XPMBMenu {
 		return XPMBMenuSubitem.TYPE_DUMMY;
 	}
 
+	private float pxFromDip(int dip) {
+		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
+				vgParent.getResources().getDisplayMetrics());
+	}
+
 	public void parseInitLayout() {
 
 		int mX = 0, mY = 0;
@@ -298,11 +320,6 @@ public class XPMBMenu {
 				vgParent.addView(cSublabel, cSublabelParams);
 			}
 		}
-	}
-
-	private float pxFromDip(int dip) {
-		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
-				vgParent.getResources().getDisplayMetrics());
 	}
 
 	public void moveToNextItem() {
