@@ -1,13 +1,11 @@
-package com.raddstudios.xplay.launcher.gba;
+package com.raddstudios.xpmb;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Timer;
@@ -46,11 +44,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.raddstudios.xplay.launcher.gba.utils.ROMInfo;
+import com.raddstudios.xpmb.utils.ROMInfo;
 
 //TODO Implement a correct XML Reader for getting info from the ROM Database
 
-public class Launcher extends Activity {
+public class GBA_launcher extends Activity {
 
 	// XPERIA Play's physical button Key Codes
 	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20,
@@ -96,7 +94,7 @@ public class Launcher extends Activity {
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
-		setContentView(R.layout.activity_launcher);
+		setContentView(R.layout.gba_launcher);
 
 		initializeTriggeredEvents();
 
@@ -108,12 +106,13 @@ public class Launcher extends Activity {
 					new BitmapDrawable(getResources(), Bitmap.createBitmap(
 							drwAnimSrc, dp * 128, 0, 128, 128)), 50);
 		}
+		
 		bmAnim.setOneShot(false);
 		drwAnimSrc = null;
 		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
-
+		
 		final Handler mHandler = new Handler();
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 
@@ -266,7 +265,7 @@ public class Launcher extends Activity {
 				showingSideMenu = true;
 			} else {
 				ObjectAnimator sm_tx_h = ObjectAnimator.ofFloat(iv_sm,
-						"TranslationX", 0, pxFromDip(145));
+						"TranslationX", 0, pxFromDip(164));
 				sm_tx_h.setDuration(150);
 				sm_tx_h.start();
 				new Handler().postDelayed(new Runnable() {
@@ -290,7 +289,7 @@ public class Launcher extends Activity {
 				firstBackPress = false;
 				ObjectAnimator sm_tx_h = ObjectAnimator.ofFloat(
 						findViewById(R.id.ivSideMenu), "TranslationX", 0,
-						pxFromDip(145));
+						pxFromDip(164));
 				sm_tx_h.setDuration(150);
 				sm_tx_h.start();
 				new Handler().postDelayed(new Runnable() {

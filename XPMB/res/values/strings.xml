@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">LauncherGBA</string>
+    <string name="app_name">XPMB</string>
     <string name="strIncorrectDevice">¡Tu dispositivo no es un XPERIA Play!\r\nNo puedes ejecutar esta aplicación.</string>
     <string name="ivRunGame_desc">Iniciar Juego</string>
     <string name="ivCover_desc">Carátula del Juego</string>

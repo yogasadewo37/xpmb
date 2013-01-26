@@ -1,11 +1,11 @@
 <AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/AbsoluteLayout"
+    android:id="@+id/absl_gbalauncher_land"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:layout_gravity="fill"
     android:layout_marginTop="0dp"
-    tools:context=".Launcher"
+    tools:context=".GBA_launcher"
     tools:ignore="Deprecated,Overdraw" >
 
     <ImageView
@@ -148,9 +148,9 @@
 
     <ImageView
         android:id="@+id/ivSideMenu"
-        android:layout_width="145dp"
+        android:layout_width="164dp"
         android:layout_height="fill_parent"
-        android:layout_x="424dp"
+        android:layout_x="404dp"
         android:layout_y="0dp"
         android:scaleType="matrix"
         android:src="@drawable/ui_side_menu"

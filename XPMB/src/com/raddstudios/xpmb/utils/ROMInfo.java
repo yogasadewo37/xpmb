@@ -1,4 +1,4 @@
-package com.raddstudios.xplay.launcher.gba.utils;
+package com.raddstudios.xpmb.utils;
 
 import android.graphics.Bitmap;
 
