@@ -35,6 +35,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
@@ -106,7 +107,7 @@ public class XPMBMenu {
 	}
 
 	private class XPMBMenuSubitem {
-		static final int TYPE_DUMMY = 0, TYPE_EXEC = 1;
+		static final int TYPE_DUMMY = 0, TYPE_EXEC = 1, TYPE_SUBMENU = 2;
 
 		private int intType = TYPE_DUMMY;
 		private String strID = null, strExecString = null, strIcon = null;
@@ -160,15 +161,12 @@ public class XPMBMenu {
 	}
 
 	private Handler hMBus = null;
-	private ViewGroup vgParent = null;
 	private ArrayList<XPMBMenuItem> alItems = null;
-	private int cMenuItem = 0, cMenuSubitem = 0;
+	private int cMenuItem = 0;
 	private XPMB_Main mRoot = null;
 
-	public XPMBMenu(XmlResourceParser layout, Handler messageBus,
-			ViewGroup parentView, XPMB_Main root) {
+	public XPMBMenu(XmlResourceParser layout, Handler messageBus, XPMB_Main root) {
 		hMBus = messageBus;
-		vgParent = parentView;
 		mRoot = root;
 
 		try {
@@ -222,6 +220,7 @@ public class XPMBMenu {
 				}
 				eventType = layout.next();
 			}
+			layout.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -235,15 +234,18 @@ public class XPMBMenu {
 		if (type.equalsIgnoreCase("exec")) {
 			return XPMBMenuSubitem.TYPE_EXEC;
 		}
+		if (type.equalsIgnoreCase("submenu")) {
+			return XPMBMenuSubitem.TYPE_SUBMENU;
+		}
 		return XPMBMenuSubitem.TYPE_DUMMY;
 	}
 
 	private float pxFromDip(int dip) {
 		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
-				vgParent.getResources().getDisplayMetrics());
+				mRoot.getResources().getDisplayMetrics());
 	}
 
-	public void parseInitLayout() {
+	public void parseInitLayout(ViewGroup base) {
 
 		int mX = 0, mY = 0;
 
@@ -251,15 +253,15 @@ public class XPMBMenu {
 			// Setup Icon
 			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(70),
 					(int) pxFromDip(70));
-			ImageView cItem = new ImageView(vgParent.getContext());
+			ImageView cItem = new ImageView(base.getContext());
 			cItem.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
 			cItem.setY(pxFromDip(48));
 			cItem.setPivotX(pxFromDip(35));
 			cItem.setPivotY(pxFromDip(55));
 			String cIcon = "drawable/" + alItems.get(mX).getIcon();
-			Drawable cDrawable = vgParent.getResources().getDrawable(
-					vgParent.getResources().getIdentifier(cIcon, null,
-							vgParent.getContext().getPackageName()));
+			Drawable cDrawable = base.getResources().getDrawable(
+					base.getResources().getIdentifier(cIcon, null,
+							base.getContext().getPackageName()));
 			cItem.setImageDrawable(cDrawable);
 			if (mX > 0) {
 				cItem.setScaleX(0.7f);
@@ -268,12 +270,12 @@ public class XPMBMenu {
 			// Setup label
 			LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(70),
 					(int) pxFromDip(16));
-			TextView cLabel = new TextView(vgParent.getContext());
+			TextView cLabel = new TextView(base.getContext());
 			cLabel.setText(alItems.get(mX).getID());
 			cLabel.setGravity(Gravity.CENTER_HORIZONTAL);
 			cLabel.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
 			cLabel.setY(pxFromDip(104));
-			cLabel.setTextAppearance(vgParent.getContext(),
+			cLabel.setTextAppearance(base.getContext(),
 					android.R.style.TextAppearance_Small);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
 			if (mX > 0) {
@@ -281,21 +283,21 @@ public class XPMBMenu {
 			}
 			alItems.get(mX).setParentView(cItem);
 			alItems.get(mX).setParentLabel(cLabel);
-			vgParent.addView(cItem, cItemParams);
-			vgParent.addView(cLabel, cLabelParams);
+			base.addView(cItem, cItemParams);
+			base.addView(cLabel, cLabelParams);
 			// Setup Subitems
 			for (mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
 				// Set Subitem Icon
 				LayoutParams cSubitemParams = new LayoutParams(
 						(int) pxFromDip(70), (int) pxFromDip(70));
-				ImageView cSubitem = new ImageView(vgParent.getContext());
+				ImageView cSubitem = new ImageView(base.getContext());
 				cSubitem.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
 				cSubitem.setY(pxFromDip(118 + (70 * mY)));
 				String cSubicon = "drawable/"
 						+ alItems.get(mX).getSubItem(mY).getIcon();
-				Drawable cSubdrawable = vgParent.getResources().getDrawable(
-						vgParent.getResources().getIdentifier(cSubicon, null,
-								vgParent.getContext().getPackageName()));
+				Drawable cSubdrawable = base.getResources().getDrawable(
+						base.getResources().getIdentifier(cSubicon, null,
+								base.getContext().getPackageName()));
 				cSubitem.setImageDrawable(cSubdrawable);
 				if (mX > 0) {
 					cSubitem.setAlpha(0.0f);
@@ -303,12 +305,12 @@ public class XPMBMenu {
 				// Set Subitem Label
 				LayoutParams cSublabelParams = new LayoutParams(
 						(int) pxFromDip(240), (int) pxFromDip(70));
-				TextView cSublabel = new TextView(vgParent.getContext());
+				TextView cSublabel = new TextView(base.getContext());
 				cSublabel.setText(alItems.get(mX).getSubItem(mY).getID());
 				cSublabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 				cSublabel.setX(pxFromDip(156 + (16 * mX) + (70 * mX)));
 				cSublabel.setY(pxFromDip(118 + (70 * mY)));
-				cSublabel.setTextAppearance(vgParent.getContext(),
+				cSublabel.setTextAppearance(base.getContext(),
 						android.R.style.TextAppearance_Medium);
 				cSublabel.setShadowLayer(16, 0, 0, Color.WHITE);
 				if (mX > 0 | mY > 0) {
@@ -316,8 +318,8 @@ public class XPMBMenu {
 				}
 				alItems.get(mX).getSubItem(mY).setParentView(cSubitem);
 				alItems.get(mX).getSubItem(mY).setParentLabel(cSublabel);
-				vgParent.addView(cSubitem, cSubitemParams);
-				vgParent.addView(cSublabel, cSublabelParams);
+				base.addView(cSubitem, cSubitemParams);
+				base.addView(cSublabel, cSublabelParams);
 			}
 		}
 	}
@@ -572,20 +574,126 @@ public class XPMBMenu {
 				alItems.get(cMenuItem).getSelectedSubitem());
 		switch (selItem.getType()) {
 		case XPMBMenuSubitem.TYPE_EXEC:
-			mRoot.showLoadingAnim(true);
+			Intent int_ex = new Intent("android.intent.action.MAIN");
+			int_ex.setComponent(ComponentName.unflattenFromString(selItem
+					.getExecString()));
+			mRoot.startActivity(int_ex);
+			break;
+		case XPMBMenuSubitem.TYPE_SUBMENU:
+			doPreExecute();
 			hMBus.postDelayed(new Runnable() {
 
 				@Override
 				public void run() {
-					Intent intent = new Intent("android.intent.action.VIEW");
-					intent.setComponent(ComponentName
+					Intent int_sm = new Intent("android.intent.action.MAIN");
+					int_sm.setComponent(ComponentName
 							.unflattenFromString(selItem.getExecString()));
-					intent.setFlags(0x10200000);
-					mRoot.startActivityForResult(intent,
+					mRoot.startActivityForResult(int_sm,
 							XPMB_Main.RESULT_RUN_APP_FINISHED);
 				}
 
-			}, 500);
+			}, 160);
+			break;
 		}
+	}
+
+	private void doPreExecute() {
+		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+
+		for (int mX = 0; mX < alItems.size(); mX++) {
+			ImageView cItem = alItems.get(mX).getParentView();
+			TextView cLabel = alItems.get(mX).getParentLabel();
+			float cX = cItem.getX();
+
+			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
+					(cX - pxFromDip(121))));
+			if (mX == cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 1.0f, 0.0f));
+				for (int mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
+					ImageView cSubItem = alItems.get(mX).getSubItem(mY)
+							.getParentView();
+					TextView cSubLabel = alItems.get(mX).getSubItem(mY)
+							.getParentLabel();
+					float csX = cSubItem.getX(), csX_l = cSubLabel.getX();
+
+					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X", csX,
+							(csX - pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X", csX_l,
+							(csX_l - pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "Alpha",
+							1.0f, 0.0f));
+
+					if (mY == alItems.get(mX).getSelectedSubitem()) {
+						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
+								1.0f, 0.0f));
+					} else {
+						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
+								1.0f, 0.6f));
+					}
+				}
+			} else {
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));				
+			}
+		}
+
+		AnimatorSet as_ef_p = new AnimatorSet();
+		as_ef_p.playTogether((Collection<Animator>) alAnims);
+		as_ef_p.setDuration(150);
+		as_ef_p.start();
+	}
+
+	public void postExecuteFinished() {
+		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+
+		for (int mX = 0; mX < alItems.size(); mX++) {
+			ImageView cItem = alItems.get(mX).getParentView();
+			TextView cLabel = alItems.get(mX).getParentLabel();
+			float cX = cItem.getX();
+
+			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
+					(cX + pxFromDip(121))));
+			if (mX == cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 0.0f, 1.0f));
+				for (int mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
+					ImageView cSubItem = alItems.get(mX).getSubItem(mY)
+							.getParentView();
+					TextView cSubLabel = alItems.get(mX).getSubItem(mY)
+							.getParentLabel();
+					float csX = cSubItem.getX(), csX_l = cSubLabel.getX();
+					
+					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X", csX,
+							(csX + pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X", csX_l,
+							(csX_l + pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "Alpha",
+							0.0f, 1.0f));
+
+					if (mY == alItems.get(mX).getSelectedSubitem()) {
+						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
+								0.0f, 1.0f));
+					} else {
+						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
+								0.6f, 1.0f));
+					}
+				}
+			} else {
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));				
+			}
+		}
+
+		AnimatorSet as_ef_p = new AnimatorSet();
+		as_ef_p.playTogether((Collection<Animator>) alAnims);
+		as_ef_p.setDuration(150);
+		mRoot.LockKeys(true);
+		as_ef_p.start();
+
+		hMBus.postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				mRoot.LockKeys(false);
+			}
+
+		}, 160);
 	}
 }

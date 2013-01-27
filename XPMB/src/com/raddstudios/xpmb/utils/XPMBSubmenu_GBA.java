@@ -19,25 +19,39 @@
 
 package com.raddstudios.xpmb.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import com.raddstudios.xpmb.GBA_launcher;
-
-import android.content.Context;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.raddstudios.xpmb.GBA_launcher;
+import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 
 public class XPMBSubmenu_GBA {
 
@@ -137,21 +151,24 @@ public class XPMBSubmenu_GBA {
 
 	private ArrayList<XPMBSubmenuItem_GBA> alItems = null;
 	private GBA_launcher mRoot = null;
+	private Handler hMBus = null;
+	private int intSelItem = 0;
 
-	public XPMBSubmenu_GBA(GBA_launcher root) {
+	public XPMBSubmenu_GBA(File romDirRoot, Handler messageBus,
+			GBA_launcher root) {
 		mRoot = root;
+		hMBus = messageBus;
 
-		File storPt = new File(Environment.getExternalStorageDirectory(), "GBA");
-		storPt.mkdirs();
-		if (!storPt.isDirectory()) {
+		romDirRoot.mkdirs();
+		if (!romDirRoot.isDirectory()) {
 			System.err.println("GBA_ROM_LOAD: can't create or access "
-					+ storPt.getAbsolutePath());
+					+ romDirRoot.getAbsolutePath());
 			return;
 		}
 
 		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
 		try {
-			File[] storPtCont = storPt.listFiles();
+			File[] storPtCont = romDirRoot.listFiles();
 			for (File f : storPtCont) {
 				if (f.getName().endsWith(".zip")) {
 					ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
@@ -174,7 +191,6 @@ public class XPMBSubmenu_GBA {
 													.getConfiguration().locale);
 							XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(
 									f, gameCode, gameCRC);
-							// TODO Finish implementing game metadata loading
 							alItems.add(cItem);
 							break;
 						}
@@ -200,11 +216,64 @@ public class XPMBSubmenu_GBA {
 							.toHexString(cCRC.getValue())
 							.toUpperCase(
 									root.getResources().getConfiguration().locale);
-					alItems.add(new XPMBSubmenuItem_GBA(f, gameCode, gameCRC));
+
+					XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(f,
+							gameCode, gameCRC);
+					alItems.add(cItem);
 				}
+
 			}
 		} catch (Exception e) {
 			// TODO Handle errors when loading found ROMs
+			e.printStackTrace();
+		}
+	}
+
+	private void loadAssociatedMetadata(XPMBSubmenuItem_GBA item, ViewGroup base) {
+
+		try {
+			ROMInfoNode rinCData = mRoot.ridROMInfoDat.getNode(item
+					.getGameCRC());
+			if (rinCData != null) {
+				item.setGameName(rinCData.getGameName());
+			}
+			File resStor = new File(new File(
+					Environment.getExternalStorageDirectory(), "GBA"),
+					"Resources");
+			if (resStor.exists()) {
+				File fExtRes = new File(resStor, item.getGameCode() + "-CV.jpg");
+				if (fExtRes.exists()) {
+					item.setGameCover(new BitmapDrawable(mRoot.getResources(),
+							BitmapFactory.decodeStream(new FileInputStream(
+									fExtRes))));
+				} else {
+					item.setGameCover(base.getResources().getDrawable(
+							base.getResources().getIdentifier(
+									"drawable/ui_cover_not_found", null,
+									base.getContext().getPackageName())));
+				}
+				fExtRes = new File(resStor, item.getGameCode() + "-BG.jpg");
+				if (fExtRes.exists()) {
+					item.setGameBackground(new BitmapDrawable(mRoot
+							.getResources(), BitmapFactory
+							.decodeStream(new FileInputStream(fExtRes))));
+				}
+				fExtRes = new File(resStor, "META_DESC");
+				if (fExtRes.exists()) {
+					BufferedReader ebr = new BufferedReader(
+							new InputStreamReader(new FileInputStream(fExtRes)));
+					String el = null;
+					while ((el = ebr.readLine()) != null) {
+						if (el.startsWith(item.getGameCode())) {
+							item.setGameDescription(el.substring(el
+									.indexOf(item.getGameCode()) + 5));
+						}
+					}
+					ebr.close();
+				}
+			}
+		} catch (Exception e) {
+			// TODO Handle errors when loading associated ROM metadata
 			e.printStackTrace();
 		}
 	}
@@ -218,28 +287,175 @@ public class XPMBSubmenu_GBA {
 		int mY = 0;
 
 		for (mY = 0; mY < alItems.size(); mY++) {
+			loadAssociatedMetadata(alItems.get(mY), base);
 			// Setup Icon
-			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(70),
-					(int) pxFromDip(70));
+			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
+					(int) pxFromDip(50));
 			ImageView cItem = new ImageView(base.getContext());
+			cItem.setImageDrawable(alItems.get(mY).getGameCover());
 			cItem.setX(pxFromDip(48));
+			cItem.setPivotX(0.0f);
+			cItem.setPivotY(0.0f);
 			if (mY == 0) {
-				cItem.setY(pxFromDip(84));
+				cItem.setY(pxFromDip(110));
+				cItem.setScaleX(2.0f);
+				cItem.setScaleY(2.0f);
 			} else {
-				cItem.setY(pxFromDip(240 + (16 * (mY - 1)) + (75 * (mY - 1))));
+				cItem.setY(pxFromDip(226 + (50 * (mY - 1))));
 			}
-			cItem.setPivotX(pxFromDip(35));
-			cItem.setPivotY(pxFromDip(55));
-			String cCover = "drawable/" + alItems.get(mY)base.getIcon();
-			Drawable cDrawable = base.getResources().getDrawable(
-					vgParent.getResources().getIdentifier(cIcon, null,
-							vgParent.getContext().getPackageName()));
-			cItem.setImageDrawable(cDrawable);
-			if (mX > 0) {
-				cItem.setScaleX(0.7f);
-				cItem.setScaleY(0.7f);
+			cItem.setImageDrawable(alItems.get(mY).getGameCover());
+			// Setup Label
+			LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(100));
+			TextView cLabel = new TextView(base.getContext());
+			cLabel.setText(alItems.get(mY).getGameName());
+			cLabel.setTextColor(Color.WHITE);
+			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
+			cLabel.setTextAppearance(base.getContext(),
+					android.R.style.TextAppearance_Medium);
+			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+			cLabel.setX(pxFromDip(164));
+			if (mY == 0) {
+				cLabel.setY(pxFromDip(110));
+			} else {
+				cLabel.setY(pxFromDip(226 + (50 * (mY - 1))));
+				cLabel.setAlpha(0.0f);
 			}
+			alItems.get(mY).setParentView(cItem);
+			alItems.get(mY).setParentLabel(cLabel);
+			base.addView(cItem, cItemParams);
+			base.addView(cLabel, cLabelParams);
 		}
 	}
 
+	public void moveToNextItem() {
+		if (intSelItem == (alItems.size() - 1)) {
+			return;
+		}
+
+		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		int mY = 0;
+
+		for (mY = 0; mY < alItems.size(); mY++) {
+
+			ImageView ivCurItem = alItems.get(mY).getParentView();
+			TextView tvCurLabel = alItems.get(mY).getParentLabel();
+			float cY = ivCurItem.getY(), cY_l = tvCurLabel.getY();
+
+			if (mY == intSelItem) {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY - pxFromDip(66))));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 2.0f,
+						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 2.0f,
+						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l - pxFromDip(91))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 1.0f,
+						0.0f));
+			} else if (mY == (intSelItem + 1)) {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY - pxFromDip(116))));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 1.0f,
+						2.0f));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 1.0f,
+						2.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l - pxFromDip(116))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 0.0f,
+						1.0f));
+			} else {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY - pxFromDip(50))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l - pxFromDip(50))));
+			}
+		}
+
+		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
+		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
+		ag_xmb_sm_mu.setDuration(150);
+		mRoot.LockKeys(true);
+		ag_xmb_sm_mu.start();
+		hMBus.postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				mRoot.LockKeys(false);
+			}
+
+		}, 160);
+
+		++intSelItem;
+	}
+
+	public void moveToPrevItem() {
+		if (intSelItem == 0) {
+			return;
+		}
+
+		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		int mY = 0;
+
+		for (mY = 0; mY < alItems.size(); mY++) {
+
+			ImageView ivCurItem = alItems.get(mY).getParentView();
+			TextView tvCurLabel = alItems.get(mY).getParentLabel();
+			float cY = ivCurItem.getY(), cY_l = tvCurLabel.getY();
+
+			if (mY == intSelItem) {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY + pxFromDip(116))));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 2.0f,
+						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 2.0f,
+						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l + pxFromDip(116))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 1.0f,
+						0.0f));
+			} else if (mY == (intSelItem - 1)) {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY + pxFromDip(66))));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 1.0f,
+						2.0f));
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 1.0f,
+						2.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l + pxFromDip(91))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 0.0f,
+						1.0f));
+			} else {
+				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "Y", cY,
+						(cY + pxFromDip(50))));
+				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Y", cY_l,
+						(cY_l + pxFromDip(50))));
+			}
+		}
+
+		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
+		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
+		ag_xmb_sm_md.setDuration(150);
+		mRoot.LockKeys(true);
+		ag_xmb_sm_md.start();
+		hMBus.postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				mRoot.LockKeys(false);
+			}
+
+		}, 160);
+
+		--intSelItem;
+	}
+
+	public void runSelectedItem() {
+		Intent intent = new Intent("android.intent.action.VIEW");
+		intent.setComponent(ComponentName
+				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
+		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
+		intent.setFlags(0x10000000);
+		mRoot.startActivity(intent);
+	}
 }

@@ -60,22 +60,23 @@ public class XPMB_Main extends Activity {
 			KEYCODE_VOLOUME_DOWN = 25, KEYCODE_VOLUME_UP = 24;
 
 	public static final int RESULT_RUN_APP_FINISHED = 0x104;
-	
+
 	private XPMBMenu mMenu = null;
 	private Handler hMessageBus = null;
 	private boolean firstBackPress = false, showingSideMenu = false,
-			bLockedKeys = false;
+			bLockedKeys = false, firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		hMessageBus = new Handler();
 		if (!Build.BOARD.equalsIgnoreCase("zeus")
 				&& !Build.BOARD.equalsIgnoreCase("zeusc")) {
 			Toast tst = Toast.makeText(getWindow().getContext(),
 					getString(R.string.strIncorrectDevice), Toast.LENGTH_SHORT);
 			tst.show();
 
-			new Handler().postDelayed(new Runnable() {
+			hMessageBus.postDelayed(new Runnable() {
 
 				@Override
 				public void run() {
@@ -87,8 +88,6 @@ public class XPMB_Main extends Activity {
 			return;
 		}
 
-		super.onCreate(savedInstanceState);
-
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD) {
 			requestWindowFeature(Window.FEATURE_NO_TITLE);
 			this.getWindow().setFlags(
@@ -98,20 +97,7 @@ public class XPMB_Main extends Activity {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
 		setContentView(R.layout.xpmb_main);
 
-		bmAnim = new AnimationDrawable();
-		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(),
-				R.drawable.ui_loading);
-		for (int dp = 0; (dp * 128) < drwAnimSrc.getWidth(); dp++) {
-			bmAnim.addFrame(
-					new BitmapDrawable(getResources(), Bitmap.createBitmap(
-							drwAnimSrc, dp * 128, 0, 128, 128)), 50);
-		}
-
-		bmAnim.setOneShot(false);
-		drwAnimSrc = null;
-		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
-
-		hMessageBus = new Handler();
+		setupAnimations();
 
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 
@@ -130,21 +116,52 @@ public class XPMB_Main extends Activity {
 		}, 0, 10000);
 
 		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout),
-				hMessageBus, (ViewGroup) findViewById(R.id.absl_main), this);
-		mMenu.parseInitLayout();
+				hMessageBus, this);
+
+		super.onCreate(savedInstanceState);
+	}
+
+	private void setupAnimations() {
+
+		bmAnim = new AnimationDrawable();
+		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(),
+				R.drawable.ui_loading);
+		for (int dp = 0; (dp * 128) < drwAnimSrc.getWidth(); dp++) {
+			bmAnim.addFrame(
+					new BitmapDrawable(getResources(), Bitmap.createBitmap(
+							drwAnimSrc, dp * 128, 0, 128, 128)), 50);
+		}
+
+		bmAnim.setOneShot(false);
+		drwAnimSrc = null;
+		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
 	}
 
 	@Override
-	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
-		if (requestCode == RESULT_RUN_APP_FINISHED){
-			showLoadingAnim(false);
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == RESULT_RUN_APP_FINISHED) {
+			mMenu.postExecuteFinished();
 		}
 	}
-	
+
 	@Override
 	public void onResume() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
+		if (!firstInitDone) {
+			showLoadingAnim(true);
+
+			hMessageBus.post(new Runnable() {
+
+				@Override
+				public void run() {
+					mMenu.parseInitLayout((ViewGroup) findViewById(R.id.absl_main));
+					showLoadingAnim(false);
+					firstInitDone = true;
+				}
+
+			});
+		}
 		super.onResume();
 	}
 

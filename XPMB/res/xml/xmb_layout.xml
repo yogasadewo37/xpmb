@@ -2,26 +2,28 @@
 <xmbroot>
 
     <item
-        id="Ajustes"
+        id="Settings"
         icon="ui_xmb_settings">
         <subitem
-            id="Ajustes del sistema"
+            id="System settings"
             exec="com.android.settings/.Settings"
             icon="ui_xmb_settings_system"
             type="exec" />
     </item>
     <item
-        id="Fotos"
+        id="Photos"
         icon="ui_xmb_photo">
         <subitem
-            id="Cámara"
-            icon="ui_xmb_photo_camera" />
+            id="Camera"
+            exec="com.android.gallery3d/com.android.camera.CameraLauncher"
+            icon="ui_xmb_photo_camera"
+            type="exec" />
         <subitem
-            id="Memoria externa"
+            id="External memory"
             icon="ui_xmb_external_memory" />
     </item>
     <item
-        id="Música"
+        id="Music"
         icon="ui_xmb_music">
         <subitem
             id="TrackID"
@@ -29,18 +31,18 @@
             icon="ui_xmb_trackid"
             type="exec" />
         <subitem
-            id="Memoria externa"
+            id="External memory"
             icon="ui_xmb_external_memory" />
     </item>
     <item
         id="Video"
         icon="ui_xmb_video">
         <subitem
-            id="Memoria externa"
+            id="External memory"
             icon="ui_xmb_external_memory" />
     </item>
     <item
-        id="Juegos"
+        id="Games"
         icon="ui_xmb_games">
         <subitem
             id="Nintendo Entertainment System"
@@ -50,24 +52,26 @@
             icon="ui_xmb_game_folder" />
         <subitem
             id="Gameboy Advance"
-            exec="com.raddstudios.xpmb/.GBA_Launcher"
+            exec="com.raddstudios.xpmb/.GBA_launcher"
             icon="ui_xmb_game_folder"
-            type="exec" />
+            type="submenu" />
         <subitem
             id="NeoGeo Arcade"
             icon="ui_xmb_game_folder" />
     </item>
     <item
-        id="Web"
+        id="Net"
         icon="ui_xmb_web">
         <subitem
-            id="Navegador web"
+            id="Web browser"
             exec="com.android.browser/.BrowserActivity"
             icon="ui_xmb_web_browser"
             type="exec" />
         <subitem
-            id="Búsqueda por internet"
-            icon="ui_xmb_web_search" />
+            id="Internet search"
+            exec="com.google.android.googlequicksearchbox/.SearchActivity"
+            icon="ui_xmb_web_search"
+            type="exec" />
     </item>
 
 </xmbroot>

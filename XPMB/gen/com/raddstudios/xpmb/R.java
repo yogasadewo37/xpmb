@@ -54,58 +54,51 @@ public final class R {
         public static final int ui_xmb_web_search=0x7f020028;
     }
     public static final class id {
-        public static final int absl_gbalauncher_land=0x7f090000;
-        public static final int absl_gbalauncher_port=0x7f09000d;
-        public static final int absl_main=0x7f090012;
-        public static final int ivBattStatus=0x7f09000a;
-        public static final int ivCover=0x7f090003;
-        public static final int ivGameBackground=0x7f090001;
-        public static final int ivLoadAnim=0x7f090008;
-        public static final int ivNextCover=0x7f090004;
-        public static final int ivNextFill=0x7f090002;
-        public static final int ivNextGame=0x7f090010;
-        public static final int ivPrevCover=0x7f090005;
-        public static final int ivPrevFill=0x7f090009;
-        public static final int ivPrevGame=0x7f09000e;
-        public static final int ivRunGame=0x7f090011;
-        public static final int ivSideMenu=0x7f09000c;
-        public static final int lbCoverNotFound=0x7f090007;
-        public static final int lbCurTime=0x7f09000b;
-        public static final int lbGameDescription=0x7f09000f;
-        public static final int lbGameName=0x7f090006;
+        public static final int absl_gbalauncher=0x7f080000;
+        public static final int absl_gbalauncher_port=0x7f080006;
+        public static final int absl_main=0x7f08000e;
+        public static final int ivBattStatus=0x7f080003;
+        public static final int ivCover=0x7f080009;
+        public static final int ivGameBackground=0x7f080001;
+        public static final int ivLoadAnim=0x7f080002;
+        public static final int ivNextGame=0x7f08000c;
+        public static final int ivPrevGame=0x7f080007;
+        public static final int ivRunGame=0x7f08000d;
+        public static final int ivSideMenu=0x7f080005;
+        public static final int lbCoverNotFound=0x7f08000a;
+        public static final int lbCurTime=0x7f080004;
+        public static final int lbGameDescription=0x7f080008;
+        public static final int lbGameName=0x7f08000b;
     }
     public static final class layout {
         public static final int gba_launcher=0x7f030000;
         public static final int xpmb_main=0x7f030001;
     }
     public static final class menu {
-        public static final int activity_launcher=0x7f080000;
-    }
-    public static final class raw {
-        public static final int rominfo=0x7f050000;
+        public static final int activity_launcher=0x7f070000;
     }
     public static final class string {
-        public static final int app_name=0x7f060000;
-        public static final int ivCover_desc=0x7f060003;
-        public static final int ivNextGame_desc=0x7f060008;
-        public static final int ivPrevGame_desc=0x7f060009;
-        public static final int ivRunGame_desc=0x7f060002;
-        public static final int lbGameDescription_defText=0x7f060007;
-        public static final int lbGameDescription_desc=0x7f06000a;
-        public static final int lbGameName_deftext=0x7f060004;
-        public static final int lbGameName_desc=0x7f060005;
-        public static final int strBackKeyHint=0x7f060014;
-        public static final int strCoverNotFound=0x7f060006;
-        public static final int strIncorrectDevice=0x7f060001;
-        public static final int strLangCh=0x7f060010;
-        public static final int strLangDe=0x7f06000f;
-        public static final int strLangEn=0x7f06000b;
-        public static final int strLangEs=0x7f06000c;
-        public static final int strLangFr=0x7f06000d;
-        public static final int strLangIt=0x7f06000e;
-        public static final int strLangJa=0x7f060012;
-        public static final int strLangKo=0x7f060011;
-        public static final int strLangNl=0x7f060013;
+        public static final int app_name=0x7f050000;
+        public static final int ivCover_desc=0x7f050003;
+        public static final int ivNextGame_desc=0x7f050008;
+        public static final int ivPrevGame_desc=0x7f050009;
+        public static final int ivRunGame_desc=0x7f050002;
+        public static final int lbGameDescription_defText=0x7f050007;
+        public static final int lbGameDescription_desc=0x7f05000a;
+        public static final int lbGameName_deftext=0x7f050004;
+        public static final int lbGameName_desc=0x7f050005;
+        public static final int strBackKeyHint=0x7f050014;
+        public static final int strCoverNotFound=0x7f050006;
+        public static final int strIncorrectDevice=0x7f050001;
+        public static final int strLangCh=0x7f050010;
+        public static final int strLangDe=0x7f05000f;
+        public static final int strLangEn=0x7f05000b;
+        public static final int strLangEs=0x7f05000c;
+        public static final int strLangFr=0x7f05000d;
+        public static final int strLangIt=0x7f05000e;
+        public static final int strLangJa=0x7f050012;
+        public static final int strLangKo=0x7f050011;
+        public static final int strLangNl=0x7f050013;
     }
     public static final class style {
         /** 
@@ -118,13 +111,14 @@ public final class R {
             backward-compatibility can go here.
         
          */
-        public static final int AppBaseTheme=0x7f070000;
+        public static final int AppBaseTheme=0x7f060000;
         /**  Application theme. 
  All customizations that are NOT specific to a particular API-level can go here. 
          */
-        public static final int AppTheme=0x7f070001;
+        public static final int AppTheme=0x7f060001;
     }
     public static final class xml {
-        public static final int xmb_layout=0x7f040000;
+        public static final int rominfo_gba=0x7f040000;
+        public static final int xmb_layout=0x7f040001;
     }
 }
