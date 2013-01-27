@@ -2,25 +2,25 @@
 <resources>
 
     <string name="app_name">XPMB</string>
-    <string name="strIncorrectDevice">¡Tu dispositivo no es un XPERIA Play!\r\nNo puedes ejecutar esta aplicación.</string>
-    <string name="ivRunGame_desc">Iniciar Juego</string>
-    <string name="ivCover_desc">Carátula del Juego</string>
-    <string name="lbGameName_deftext">Juegos GBA</string>
-    <string name="lbGameName_desc">Nombre del Juego</string>
-    <string name="strCoverNotFound">Carátula no encontrada</string>
-    <string name="lbGameDescription_defText">No se ha encontrado ningún juego en el directorio de juegos para la Game Boy Advance. Puede cargar algunos juegos utilizando la aplicación de escritorio proporcionada por la ROM en la carpeta sdcard/GameManager.</string>
-    <string name="ivNextGame_desc">Siguiente Juego</string>
-    <string name="ivPrevGame_desc">Juego Anterior</string>
-    <string name="lbGameDescription_desc">Descripción del juego.</string>
-    <string name="strLangEn">Inglés</string>
-    <string name="strLangEs">Español</string>
-    <string name="strLangFr">Francés</string>
-    <string name="strLangIt">Italiano</string>
-    <string name="strLangDe">Alemán</string>
-    <string name="strLangCh">Chino</string>
-    <string name="strLangKo">Coreano</string>
-    <string name="strLangJa">Japonés</string>
-    <string name="strLangNl">Holandés</string>
-    <string name="strBackKeyHint">Presione otra vez la tecla atrás/círculo para salir</string>
+    <string name="strIncorrectDevice">Your device is not an XPERIA Play!\r\nYou can\'t run this application.</string>
+    <string name="ivRunGame_desc">Run Game</string>
+    <string name="ivCover_desc">Game Cover</string>
+    <string name="lbGameName_deftext">GBA Games</string>
+    <string name="lbGameName_desc">Game Name</string>
+    <string name="strCoverNotFound">Cover not found</string>
+    <string name="lbGameDescription_defText">There are no games in the rom directory for Gameboy Advance games. You can load some games using the desktop application provisioned by the ROM in the directory sdcard/GameManager.</string>
+    <string name="ivNextGame_desc">Next Game</string>
+    <string name="ivPrevGame_desc">Previous Game</string>
+    <string name="lbGameDescription_desc">Game description.</string>
+    <string name="strLangEn">English</string>
+    <string name="strLangEs">Spanish</string>
+    <string name="strLangFr">French</string>
+    <string name="strLangIt">Italian</string>
+    <string name="strLangDe">German</string>
+    <string name="strLangCh">Chinese</string>
+    <string name="strLangKo">Korean</string>
+    <string name="strLangJa">Japanese</string>
+    <string name="strLangNl">Dutvh</string>
+    <string name="strBackKeyHint">Press again the back/circle key again to exit</string>
 
 </resources>
