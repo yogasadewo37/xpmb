@@ -68,8 +68,7 @@ public class XPMB_Submenu_App extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		if (!Build.BOARD.equalsIgnoreCase("zeus")
-				&& !Build.BOARD.equalsIgnoreCase("zeusc")) {
+		if (checkUnsupportedDevice()) {
 			Toast tst = Toast.makeText(getWindow().getContext(),
 					getString(R.string.strIncorrectDevice), Toast.LENGTH_SHORT);
 			tst.show();
@@ -116,6 +115,15 @@ public class XPMB_Submenu_App extends Activity {
 		mSubmenu = new XPMBSubmenu_App(hMessageBus, this);
 
 		super.onCreate(savedInstanceState);
+	}
+
+	private boolean checkUnsupportedDevice() {
+		return (!Build.BOARD.equalsIgnoreCase("zeus") && !Build.BOARD
+				.equalsIgnoreCase("zeusc"))
+				|| (!Build.PRODUCT.equalsIgnoreCase("r800a")
+						&& !Build.PRODUCT.equalsIgnoreCase("r800at")
+						&& !Build.PRODUCT.equalsIgnoreCase("r800i") && !Build.PRODUCT
+							.equalsIgnoreCase("r800x"));
 	}
 
 	private void setupAnimations() {
@@ -263,7 +271,8 @@ public class XPMB_Submenu_App extends Activity {
 				showingSideMenu = false;
 				break;
 			}
-			return super.onKeyUp(keyCode, event);
+			finish();
+			break;
 		default:
 			break;
 		}

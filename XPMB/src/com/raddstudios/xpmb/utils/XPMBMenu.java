@@ -40,6 +40,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 
 public class XPMBMenu {
@@ -655,6 +656,8 @@ public class XPMBMenu {
 				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));
 			}
 		}
+		alAnims.add(ObjectAnimator.ofFloat(
+				mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 0.0f, 1.0f));
 
 		AnimatorSet as_ef_p = new AnimatorSet();
 		as_ef_p.playTogether((Collection<Animator>) alAnims);
@@ -702,6 +705,8 @@ public class XPMBMenu {
 				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));
 			}
 		}
+		alAnims.add(ObjectAnimator.ofFloat(
+				mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 1.0f, 0.0f));
 
 		AnimatorSet as_ef_p = new AnimatorSet();
 		as_ef_p.playTogether((Collection<Animator>) alAnims);

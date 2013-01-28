@@ -51,4 +51,14 @@
         android:visibility="invisible"
         tools:ignore="ContentDescription" />
 
+    <ImageView
+        android:id="@+id/ivSubmenuShown"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_x="4dp"
+        android:layout_y="141dp"
+        android:alpha="0.0"
+        android:src="@drawable/ui_xmb_back"
+        tools:ignore="ContentDescription" />
+
 </AbsoluteLayout>
