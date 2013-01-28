@@ -53,7 +53,7 @@ import android.widget.Toast;
 import com.raddstudios.xpmb.utils.ROMInfo;
 import com.raddstudios.xpmb.utils.XPMBSubmenu_GBA;
 
-public class GBA_launcher extends Activity {
+public class XPMB_Submenu_GBA extends Activity {
 
 	// XPERIA Play's physical button Key Codes
 	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20,
@@ -63,8 +63,8 @@ public class GBA_launcher extends Activity {
 			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103,
 			KEYCODE_VOLOUME_DOWN = 25, KEYCODE_VOLUME_UP = 24;
 
-	private boolean firstBackPress = false, showingSideMenu = false,
-			bLockedKeys = false, firstInitDone = false;
+	private boolean showingSideMenu = false, bLockedKeys = false,
+			firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 	final Handler hMessageBus = new Handler();
 	private XPMBSubmenu_GBA mSubmenu = null;
@@ -97,7 +97,7 @@ public class GBA_launcher extends Activity {
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 		// getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
-		setContentView(R.layout.gba_launcher);
+		setContentView(R.layout.xpmb_submenu);
 
 		setupAnimations();
 
@@ -176,11 +176,12 @@ public class GBA_launcher extends Activity {
 				public void run() {
 					ridROMInfoDat = new ROMInfo(getResources().getXml(
 							R.xml.rominfo_gba), ROMInfo.TYPE_CRC);
+					mSubmenu.doInit();
 					hMessageBus.post(new Runnable() {
 
 						@Override
 						public void run() {
-							mSubmenu.parseInitLayout((ViewGroup) findViewById(R.id.absl_gbalauncher));
+							mSubmenu.parseInitLayout((ViewGroup) findViewById(R.id.absl_submenu_root));
 							showLoadingAnim(false);
 							firstInitDone = true;
 						}

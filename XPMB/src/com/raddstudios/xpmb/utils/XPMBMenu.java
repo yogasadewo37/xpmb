@@ -35,7 +35,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
@@ -110,7 +109,8 @@ public class XPMBMenu {
 		static final int TYPE_DUMMY = 0, TYPE_EXEC = 1, TYPE_SUBMENU = 2;
 
 		private int intType = TYPE_DUMMY;
-		private String strID = null, strExecString = null, strIcon = null;
+		private String strID = null, strExecString = null, strIcon = null,
+				strSubmenu;
 		private ImageView ivParentView = null;
 		private TextView tvParentLabel = null;
 
@@ -129,6 +129,14 @@ public class XPMBMenu {
 
 		public void setExecString(String execString) {
 			strExecString = execString;
+		}
+
+		public void setSubmenu(String submenu) {
+			strSubmenu = submenu;
+		}
+
+		public String getSubmenu() {
+			return strSubmenu;
 		}
 
 		public String getExecString() {
@@ -164,13 +172,18 @@ public class XPMBMenu {
 	private ArrayList<XPMBMenuItem> alItems = null;
 	private int cMenuItem = 0;
 	private XPMB_Main mRoot = null;
+	XmlResourceParser xrpRes = null;
 
-	public XPMBMenu(XmlResourceParser layout, Handler messageBus, XPMB_Main root) {
+	public XPMBMenu(XmlResourceParser source, Handler messageBus, XPMB_Main root) {
 		hMBus = messageBus;
 		mRoot = root;
+		xrpRes = source;
+	}
+
+	public void doInit() {
 
 		try {
-			int eventType = layout.getEventType();
+			int eventType = xrpRes.getEventType();
 			boolean done = false;
 			XPMBMenuItem cItem = null;
 
@@ -182,11 +195,11 @@ public class XPMBMenu {
 					alItems = new ArrayList<XPMBMenuItem>();
 					break;
 				case XmlResourceParser.START_TAG:
-					cName = layout.getName();
+					cName = xrpRes.getName();
 					if (cName.equals("item")) {
-						cItem = new XPMBMenuItem(layout.getAttributeValue(null,
+						cItem = new XPMBMenuItem(xrpRes.getAttributeValue(null,
 								"id"));
-						String cAtt = layout.getAttributeValue(null, "icon");
+						String cAtt = xrpRes.getAttributeValue(null, "icon");
 						if (cAtt != null) {
 							cItem.setIcon(cAtt);
 						} else {
@@ -195,32 +208,36 @@ public class XPMBMenu {
 					}
 					if (cName.equals("subitem")) {
 						XPMBMenuSubitem cSubitem = new XPMBMenuSubitem(
-								layout.getAttributeValue(null, "id"),
-								getSubitemTypeFromString(layout
+								xrpRes.getAttributeValue(null, "id"),
+								getSubitemTypeFromString(xrpRes
 										.getAttributeValue(null, "type")));
-						String cAtt = layout.getAttributeValue(null, "icon");
+						String cAtt = xrpRes.getAttributeValue(null, "icon");
 						if (cAtt != null) {
 							cSubitem.setIcon(cAtt);
 						} else {
 							cItem.setIcon("ui_xmb_default_icon");
 						}
-						cAtt = layout.getAttributeValue(null, "exec");
+						cAtt = xrpRes.getAttributeValue(null, "exec");
 						if (cAtt != null) {
 							cSubitem.setExecString(cAtt);
+						}
+						cAtt = xrpRes.getAttributeValue(null, "submenu");
+						if (cAtt != null) {
+							cSubitem.setSubmenu(cAtt);
 						}
 						cItem.addSubItem(cSubitem);
 					}
 					break;
 				case XmlResourceParser.END_TAG:
-					cName = layout.getName();
+					cName = xrpRes.getName();
 					if (cName.equals("item")) {
 						alItems.add(cItem);
 					}
 					break;
 				}
-				eventType = layout.next();
+				eventType = xrpRes.next();
 			}
-			layout.close();
+			xrpRes.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -587,7 +604,8 @@ public class XPMBMenu {
 				public void run() {
 					Intent int_sm = new Intent("android.intent.action.MAIN");
 					int_sm.setComponent(ComponentName
-							.unflattenFromString(selItem.getExecString()));
+							.unflattenFromString("com.raddstudios.xpmb/."
+									+ selItem.getSubmenu()));
 					mRoot.startActivityForResult(int_sm,
 							XPMB_Main.RESULT_RUN_APP_FINISHED);
 				}
@@ -606,6 +624,8 @@ public class XPMBMenu {
 			float cX = cItem.getX();
 
 			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
+					(cX - pxFromDip(121))));
+			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cX,
 					(cX - pxFromDip(121))));
 			if (mX == cMenuItem) {
 				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 1.0f, 0.0f));
@@ -632,7 +652,7 @@ public class XPMBMenu {
 					}
 				}
 			} else {
-				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));				
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));
 			}
 		}
 
@@ -652,6 +672,8 @@ public class XPMBMenu {
 
 			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
 					(cX + pxFromDip(121))));
+			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cX,
+					(cX + pxFromDip(121))));
 			if (mX == cMenuItem) {
 				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 0.0f, 1.0f));
 				for (int mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
@@ -660,7 +682,7 @@ public class XPMBMenu {
 					TextView cSubLabel = alItems.get(mX).getSubItem(mY)
 							.getParentLabel();
 					float csX = cSubItem.getX(), csX_l = cSubLabel.getX();
-					
+
 					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X", csX,
 							(csX + pxFromDip(121))));
 					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X", csX_l,
@@ -677,7 +699,7 @@ public class XPMBMenu {
 					}
 				}
 			} else {
-				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));				
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));
 			}
 		}
 

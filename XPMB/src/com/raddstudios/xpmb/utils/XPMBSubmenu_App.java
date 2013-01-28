@@ -19,29 +19,19 @@
 
 package com.raddstudios.xpmb.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.List;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -50,86 +40,35 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.raddstudios.xpmb.XPMB_Submenu_GBA;
-import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.XPMB_Submenu_App;
 
-public class XPMBSubmenu_GBA {
+public class XPMBSubmenu_App {
 
-	class XPMBSubmenuItem_GBA {
+	class XPMBSubmenuItem_App {
 
-		private Drawable bmGameCover = null, bmGameBackground = null;
-		private File fROMPath = null;
-		private String strGameName = null, strGameCode = null,
-				strGameCRC = null, strGameDescription = null,
-				strGameRegions = null, strGameLanguages;
+		private Drawable drAppIcon = null;
+		private String strAppName = null;
+		private Intent intAppIntent = null;
 		private ImageView ivParentView = null;
 		private TextView tvParentLabel = null;
 
-		public XPMBSubmenuItem_GBA(File romPath, String gameCode, String gameCRC) {
-			fROMPath = romPath;
-			strGameCode = gameCode;
-			strGameName = fROMPath.getName();
-			strGameCRC = gameCRC;
+		public XPMBSubmenuItem_App(String appName, Drawable appIcon,
+				Intent appIntent) {
+			strAppName = appName;
+			drAppIcon = appIcon;
+			intAppIntent = appIntent;
 		}
 
-		public File getROMPath() {
-			return fROMPath;
+		public String getAppName() {
+			return strAppName;
 		}
 
-		public String getGameCode() {
-			return strGameCode;
+		public Drawable getAppIcon() {
+			return drAppIcon;
 		}
 
-		public void setGameRegions(String gameRegions) {
-			strGameRegions = gameRegions;
-		}
-
-		public String getGameRegions() {
-			return strGameRegions;
-		}
-
-		public void setGameLanguages(String gameLanguages) {
-			strGameLanguages = gameLanguages;
-		}
-
-		public String getGameLanguages() {
-			return strGameLanguages;
-		}
-
-		public void setGameBackground(Drawable gameBackground) {
-			bmGameBackground = gameBackground;
-		}
-
-		public Drawable getGameBackground() {
-			return bmGameBackground;
-		}
-
-		public void setGameCover(Drawable cover) {
-			bmGameCover = cover;
-		}
-
-		public Drawable getGameCover() {
-			return bmGameCover;
-		}
-
-		public void setGameName(String gameName) {
-			strGameName = gameName;
-		}
-
-		public String getGameName() {
-			return strGameName;
-		}
-
-		public String getGameCRC() {
-			return strGameCRC;
-		}
-
-		public void setGameDescription(String gameDescription) {
-			strGameDescription = gameDescription;
-		}
-
-		public String getGameDescription() {
-			return strGameDescription;
+		public Intent getAppIntent() {
+			return intAppIntent;
 		}
 
 		public void setParentView(ImageView parent) {
@@ -149,138 +88,26 @@ public class XPMBSubmenu_GBA {
 		}
 	}
 
-	private ArrayList<XPMBSubmenuItem_GBA> alItems = null;
-	private XPMB_Submenu_GBA mRoot = null;
+	private ArrayList<XPMBSubmenuItem_App> alItems = null;
+	private XPMB_Submenu_App mRoot = null;
 	private Handler hMBus = null;
 	private int intSelItem = 0;
-	private File mROMRoot = null;
 
-	public XPMBSubmenu_GBA(File fROMRoot, Handler messageBus,
-			XPMB_Submenu_GBA root) {
+	public XPMBSubmenu_App(Handler messageBus, XPMB_Submenu_App root) {
 		mRoot = root;
 		hMBus = messageBus;
-		mROMRoot = fROMRoot;
 
-		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
+		alItems = new ArrayList<XPMBSubmenuItem_App>();
 	}
-
-	public void doInit() {
-		mROMRoot.mkdirs();
-		if (!mROMRoot.isDirectory()) {
-			System.err.println("GBA_ROM_LOAD: can't create or access "
-					+ mROMRoot.getAbsolutePath());
-			return;
-		}
-
-		try {
-			File[] storPtCont = mROMRoot.listFiles();
-			for (File f : storPtCont) {
-				if (f.getName().endsWith(".zip")) {
-					ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
-					Enumeration<? extends ZipEntry> ze = zf.entries();
-					while (ze.hasMoreElements()) {
-						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba")
-								|| zef.getName().endsWith(".GBA")) {
-							InputStream fi = zf.getInputStream(zef);
-							fi.skip(0xAC);
-							String gameCode = "";
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							fi.close();
-							String gameCRC = Long.toHexString(zef.getCrc())
-									.toUpperCase(
-											mRoot.getResources()
-													.getConfiguration().locale);
-							XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(
-									f, gameCode, gameCRC);
-							alItems.add(cItem);
-							break;
-						}
-					}
-					zf.close();
-				} else if (f.getName().endsWith(".gba")) {
-					InputStream fi = new FileInputStream(f);
-					fi.skip(0xAC);
-					String gameCode = "";
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					fi.close();
-					CRC32 cCRC = new CRC32();
-					fi = new FileInputStream(f);
-					int cByte = 0;
-					while ((cByte = fi.read()) != -1) {
-						cCRC.update(cByte);
-					}
-					fi.close();
-					String gameCRC = Long
-							.toHexString(cCRC.getValue())
-							.toUpperCase(
-									mRoot.getResources().getConfiguration().locale);
-
-					XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(f,
-							gameCode, gameCRC);
-					alItems.add(cItem);
-				}
-
-			}
-		} catch (Exception e) {
-			// TODO Handle errors when loading found ROMs
-			e.printStackTrace();
-		}
-	}
-
-	private void loadAssociatedMetadata(XPMBSubmenuItem_GBA item, ViewGroup base) {
-
-		try {
-			ROMInfoNode rinCData = mRoot.ridROMInfoDat.getNode(item
-					.getGameCRC());
-			if (rinCData != null) {
-				item.setGameName(rinCData.getGameName());
-			}
-			File resStor = new File(new File(
-					Environment.getExternalStorageDirectory(), "GBA"),
-					"Resources");
-			if (resStor.exists()) {
-				File fExtRes = new File(resStor, item.getGameCode() + "-CV.jpg");
-				if (fExtRes.exists()) {
-					item.setGameCover(new BitmapDrawable(mRoot.getResources(),
-							BitmapFactory.decodeStream(new FileInputStream(
-									fExtRes))));
-				} else {
-					item.setGameCover(base.getResources().getDrawable(
-							base.getResources().getIdentifier(
-									"drawable/ui_cover_not_found", null,
-									base.getContext().getPackageName())));
-				}
-				fExtRes = new File(resStor, item.getGameCode() + "-BG.jpg");
-				if (fExtRes.exists()) {
-					item.setGameBackground(new BitmapDrawable(mRoot
-							.getResources(), BitmapFactory
-							.decodeStream(new FileInputStream(fExtRes))));
-				}
-				fExtRes = new File(resStor, "META_DESC");
-				if (fExtRes.exists()) {
-					BufferedReader ebr = new BufferedReader(
-							new InputStreamReader(new FileInputStream(fExtRes)));
-					String el = null;
-					while ((el = ebr.readLine()) != null) {
-						if (el.startsWith(item.getGameCode())) {
-							item.setGameDescription(el.substring(el
-									.indexOf(item.getGameCode()) + 5));
-						}
-					}
-					ebr.close();
-				}
-			}
-		} catch (Exception e) {
-			// TODO Handle errors when loading associated ROM metadata
-			e.printStackTrace();
-		}
+	
+	public void doInit(){
+		PackageManager pm = mRoot.getPackageManager();
+		Intent filter = new Intent(Intent.ACTION_MAIN);
+		filter.addCategory(Intent.CATEGORY_LAUNCHER);		
+		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
+		for (ResolveInfo r: ri){
+			alItems.add(new XPMBSubmenuItem_App(r.loadLabel(pm).toString(), r.loadIcon(pm), pm.getLaunchIntentForPackage(r.activityInfo.packageName)));
+		}	
 	}
 
 	private float pxFromDip(int dip) {
@@ -289,15 +116,15 @@ public class XPMBSubmenu_GBA {
 	}
 
 	public void parseInitLayout(ViewGroup base) {
+
 		int mY = 0;
 
 		for (mY = 0; mY < alItems.size(); mY++) {
-			loadAssociatedMetadata(alItems.get(mY), base);
 			// Setup Icon
 			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
 					(int) pxFromDip(50));
 			ImageView cItem = new ImageView(base.getContext());
-			cItem.setImageDrawable(alItems.get(mY).getGameCover());
+			cItem.setImageDrawable(alItems.get(mY).getAppIcon());
 			cItem.setX(pxFromDip(48));
 			cItem.setPivotX(0.0f);
 			cItem.setPivotY(0.0f);
@@ -308,12 +135,11 @@ public class XPMBSubmenu_GBA {
 			} else {
 				cItem.setY(pxFromDip(226 + (50 * (mY - 1))));
 			}
-			cItem.setImageDrawable(alItems.get(mY).getGameCover());
 			// Setup Label
 			LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
 					(int) pxFromDip(100));
 			TextView cLabel = new TextView(base.getContext());
-			cLabel.setText(alItems.get(mY).getGameName());
+			cLabel.setText(alItems.get(mY).getAppName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
 			cLabel.setTextAppearance(base.getContext(),
@@ -456,11 +282,6 @@ public class XPMBSubmenu_GBA {
 	}
 
 	public void runSelectedItem() {
-		Intent intent = new Intent("android.intent.action.VIEW");
-		intent.setComponent(ComponentName
-				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
-		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
-		intent.setFlags(0x10000000);
-		mRoot.startActivity(intent);
+		mRoot.startActivity(alItems.get(intSelItem).getAppIntent());
 	}
 }

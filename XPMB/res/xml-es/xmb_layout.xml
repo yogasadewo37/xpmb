@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xmbroot>
+<xpmbroot>
 
     <item
         id="Ajustes"
@@ -52,7 +52,7 @@
             icon="ui_xmb_game_folder" />
         <subitem
             id="Gameboy Advance"
-            exec="com.raddstudios.xpmb/.GBA_launcher"
+            submenu="XPMB_Submenu_GBA"
             icon="ui_xmb_game_folder"
             type="submenu" />
         <subitem
@@ -73,5 +73,15 @@
             icon="ui_xmb_web_search"
             type="exec" />
     </item>
+    <item
+        id="Aplicaciones"
+        icon="ui_xmb_apps">
+        <subitem
+            id="Aplicaciones instaladas"
+            submenu="XPMB_Submenu_App"
+            icon="ui_xmb_apps_installed"
+            type="submenu" >
+        </subitem>
+    </item>
 
-</xmbroot>
+</xpmbroot>

@@ -73,5 +73,14 @@
             icon="ui_xmb_web_search"
             type="exec" />
     </item>
+    <item
+        id="Applications"
+        icon="ui_xmb_apps">
+        <subitem
+            id="Installed applications"
+            icon="ui_xmb_apps_installed"
+            submenu="XPMB_Submenu_App"
+            type="subemnu" />
+    </item>
 
 </xmbroot>
