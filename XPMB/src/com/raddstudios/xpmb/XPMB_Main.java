@@ -19,6 +19,7 @@
 
 package com.raddstudios.xpmb;
 
+import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -69,8 +70,9 @@ public class XPMB_Main extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
 		hMessageBus = new Handler();
-		if (checkUnsupportedDevice()) {
+		if (!checkForSupportedDevice()) {
 			Toast tst = Toast.makeText(getWindow().getContext(),
 					getString(R.string.strIncorrectDevice), Toast.LENGTH_SHORT);
 			tst.show();
@@ -120,13 +122,8 @@ public class XPMB_Main extends Activity {
 		super.onCreate(savedInstanceState);
 	}
 
-	private boolean checkUnsupportedDevice() {
-		return (!Build.BOARD.equalsIgnoreCase("zeus") && !Build.BOARD
-				.equalsIgnoreCase("zeusc"))
-				|| (!Build.PRODUCT.equalsIgnoreCase("r800a")
-						&& !Build.PRODUCT.equalsIgnoreCase("r800at")
-						&& !Build.PRODUCT.equalsIgnoreCase("r800i") && !Build.PRODUCT
-							.equalsIgnoreCase("r800x"));
+	private boolean checkForSupportedDevice() {
+		return new File("/system/framework/xperiaplaycertified.jar").exists();
 	}
 
 	private void setupAnimations() {
