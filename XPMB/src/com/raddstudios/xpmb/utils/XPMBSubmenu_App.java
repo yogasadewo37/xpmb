@@ -26,6 +26,7 @@ import java.util.List;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -43,7 +44,7 @@ import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Submenu_App;
 
 public class XPMBSubmenu_App {
-
+	
 	class XPMBSubmenuItem_App {
 
 		private Drawable drAppIcon = null;
@@ -89,11 +90,11 @@ public class XPMBSubmenu_App {
 	}
 
 	private ArrayList<XPMBSubmenuItem_App> alItems = null;
-	private XPMB_Submenu_App mRoot = null;
+	private XPMB_Submenu_Activity mRoot = null;
 	private Handler hMBus = null;
 	private int intSelItem = 0;
 
-	public XPMBSubmenu_App(Handler messageBus, XPMB_Submenu_App root) {
+	public XPMBSubmenu_App(Handler messageBus, XPMB_Submenu_Activity root) {
 		mRoot = root;
 		hMBus = messageBus;
 
@@ -224,13 +225,13 @@ public class XPMBSubmenu_App {
 		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
 		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_mu.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_sm_mu.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
@@ -285,13 +286,13 @@ public class XPMBSubmenu_App {
 		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
 		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_md.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_sm_md.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);

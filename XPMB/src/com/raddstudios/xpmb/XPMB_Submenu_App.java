@@ -49,9 +49,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.raddstudios.xpmb.utils.XPMB_Submenu_Activity;
 import com.raddstudios.xpmb.utils.XPMBSubmenu_App;
+import com.raddstudios.xpmb.utils.XPMB_Submenu_Layout;
 
-public class XPMB_Submenu_App extends Activity {
+public class XPMB_Submenu_App extends Activity implements XPMB_Submenu_Activity {
 
 	// XPERIA Play's physical button Key Codes
 	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20,
@@ -65,7 +67,7 @@ public class XPMB_Submenu_App extends Activity {
 			firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 	final Handler hMessageBus = new Handler();
-	private XPMBSubmenu_App mSubmenu = null;
+	private XPMB_Submenu_Layout mSubmenu = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -181,10 +183,11 @@ public class XPMB_Submenu_App extends Activity {
 		super.onPause();
 	}
 
-	public void LockKeys(boolean locked) {
+	public void lockKeys(boolean locked) {
 		bLockedKeys = locked;
 	}
 
+	@Override
 	public void showLoadingAnim(boolean show) {
 		ImageView iv_la = (ImageView) findViewById(R.id.ivLoadAnim);
 		if (iv_la != null) {
