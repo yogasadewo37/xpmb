@@ -20,7 +20,12 @@
     <string name="strLangCh">Chinese</string>
     <string name="strLangKo">Korean</string>
     <string name="strLangJa">Japanese</string>
-    <string name="strLangNl">Dutvh</string>
+    <string name="strLangNl">Dutch</string>
     <string name="strBackKeyHint">Press again the back/circle key again to exit</string>
+    <string name="strNoVideos">There are no videos.You can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
+    <string name="strNoPictures">There are no images.You can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
+    <string name="strNoMusic">There are no tracks.You can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
+    <string name="strNoGames">There are no games.\r\nYou can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
+    <string name="strNoApps">There are no applications.\r\nYou can install new apps from the Play Store.\r\nFor details, refer to the wiki at (wiki uri here)</string>
 
 </resources>

@@ -22,5 +22,10 @@
     <string name="strLangJa">Japonés</string>
     <string name="strLangNl">Holandés</string>
     <string name="strBackKeyHint">Presione otra vez la tecla atrás/círculo para salir</string>
+    <string name="strNoVideos">No hay videos.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
+    <string name="strNoPictures">No hay imágenes.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
+    <string name="strNoMusic">No hay pistas.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
+    <string name="strNoGames">No hay juegos.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
+    <string name="strNoApps">No hay aplicaciones.\r\nPuede instalar aplicaciones desde la tienda Play Store.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
 
 </resources>

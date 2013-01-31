@@ -100,6 +100,11 @@ public final class R {
         public static final int strLangJa=0x7f050012;
         public static final int strLangKo=0x7f050011;
         public static final int strLangNl=0x7f050013;
+        public static final int strNoApps=0x7f050019;
+        public static final int strNoGames=0x7f050018;
+        public static final int strNoMusic=0x7f050017;
+        public static final int strNoPictures=0x7f050016;
+        public static final int strNoVideos=0x7f050015;
     }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;

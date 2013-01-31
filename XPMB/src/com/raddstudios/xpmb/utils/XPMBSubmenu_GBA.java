@@ -50,6 +50,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Submenu_GBA;
 import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 
@@ -289,6 +290,22 @@ public class XPMBSubmenu_GBA {
 	}
 
 	public void parseInitLayout(ViewGroup base) {
+		if (alItems.size() == 0) {
+			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(100));
+			TextView cItem = new TextView(base.getContext());
+			cItem.setText(mRoot.getText(R.string.strNoGames));
+			cItem.setTextColor(Color.WHITE);
+			cItem.setShadowLayer(16, 0, 0, Color.WHITE);
+			cItem.setTextAppearance(base.getContext(),
+					android.R.style.TextAppearance_Medium);
+			cItem.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+			cItem.setX(pxFromDip(48));
+			cItem.setY(pxFromDip(110));
+			base.addView(cItem, cItemParams);
+			return;
+		}
+
 		int mY = 0;
 
 		for (mY = 0; mY < alItems.size(); mY++) {
@@ -334,7 +351,7 @@ public class XPMBSubmenu_GBA {
 	}
 
 	public void moveToNextItem() {
-		if (intSelItem == (alItems.size() - 1)) {
+		if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
 			return;
 		}
 
@@ -395,7 +412,7 @@ public class XPMBSubmenu_GBA {
 	}
 
 	public void moveToPrevItem() {
-		if (intSelItem == 0) {
+		if (intSelItem == 0 || alItems.size() == 0) {
 			return;
 		}
 

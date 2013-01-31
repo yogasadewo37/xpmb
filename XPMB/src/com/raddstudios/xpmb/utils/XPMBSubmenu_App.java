@@ -27,7 +27,6 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
@@ -40,6 +39,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Submenu_App;
 
 public class XPMBSubmenu_App {
@@ -99,15 +99,18 @@ public class XPMBSubmenu_App {
 
 		alItems = new ArrayList<XPMBSubmenuItem_App>();
 	}
-	
-	public void doInit(){
+
+	public void doInit() {
 		PackageManager pm = mRoot.getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
-		filter.addCategory(Intent.CATEGORY_LAUNCHER);		
-		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
-		for (ResolveInfo r: ri){
-			alItems.add(new XPMBSubmenuItem_App(r.loadLabel(pm).toString(), r.loadIcon(pm), pm.getLaunchIntentForPackage(r.activityInfo.packageName)));
-		}	
+		filter.addCategory(Intent.CATEGORY_LAUNCHER);
+		List<ResolveInfo> ri = pm.queryIntentActivities(filter,
+				PackageManager.GET_META_DATA);
+		for (ResolveInfo r : ri) {
+			alItems.add(new XPMBSubmenuItem_App(r.loadLabel(pm).toString(), r
+					.loadIcon(pm), pm
+					.getLaunchIntentForPackage(r.activityInfo.packageName)));
+		}
 	}
 
 	private float pxFromDip(int dip) {
@@ -116,6 +119,21 @@ public class XPMBSubmenu_App {
 	}
 
 	public void parseInitLayout(ViewGroup base) {
+		if (alItems.size() == 0) {
+			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(100));
+			TextView cItem = new TextView(base.getContext());
+			cItem.setText(mRoot.getText(R.string.strNoApps));
+			cItem.setTextColor(Color.WHITE);
+			cItem.setShadowLayer(16, 0, 0, Color.WHITE);
+			cItem.setTextAppearance(base.getContext(),
+					android.R.style.TextAppearance_Medium);
+			cItem.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+			cItem.setX(pxFromDip(48));
+			cItem.setY(pxFromDip(110));
+			base.addView(cItem, cItemParams);
+			return;
+		}
 
 		int mY = 0;
 
@@ -160,7 +178,7 @@ public class XPMBSubmenu_App {
 	}
 
 	public void moveToNextItem() {
-		if (intSelItem == (alItems.size() - 1)) {
+		if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
 			return;
 		}
 
@@ -221,7 +239,7 @@ public class XPMBSubmenu_App {
 	}
 
 	public void moveToPrevItem() {
-		if (intSelItem == 0) {
+		if (intSelItem == 0 || alItems.size() == 0) {
 			return;
 		}
 
