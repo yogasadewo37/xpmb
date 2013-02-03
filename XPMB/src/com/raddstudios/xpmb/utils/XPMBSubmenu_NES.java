@@ -52,31 +52,26 @@ import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 
 @SuppressWarnings("deprecation")
-public class XPMBSubmenu_GBA extends XPMB_Layout {
+public class XPMBSubmenu_NES extends XPMB_Layout {
 
-	class XPMBSubmenuItem_GBA {
+	class XPMBSubmenuItem_NES {
 
 		private Drawable bmGameCover = null, bmGameBackground = null;
 		private File fROMPath = null;
-		private String strGameName = null, strGameCode = null,
-				strGameCRC = null, strGameDescription = null,
-				strGameRegions = null, strGameLanguages;
+		private String strGameName = null, strGameCRC = null,
+				strGameDescription = null, strGameRegions = null,
+				strGameLanguages;
 		private ImageView ivParentView = null;
 		private TextView tvParentLabel = null;
 
-		public XPMBSubmenuItem_GBA(File romPath, String gameCode, String gameCRC) {
+		public XPMBSubmenuItem_NES(File romPath, String gameCRC) {
 			fROMPath = romPath;
-			strGameCode = gameCode;
 			strGameName = fROMPath.getName();
 			strGameCRC = gameCRC;
 		}
 
 		public File getROMPath() {
 			return fROMPath;
-		}
-
-		public String getGameCode() {
-			return strGameCode;
 		}
 
 		public void setGameRegions(String gameRegions) {
@@ -148,7 +143,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
-	private ArrayList<XPMBSubmenuItem_GBA> alItems = null;
+	private ArrayList<XPMBSubmenuItem_NES> alItems = null;
 	private XPMB_Activity mRoot = null;
 	private Handler hMBus = null;
 	private int intSelItem = 0;
@@ -156,20 +151,20 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	private ROMInfo ridROMInfoDat = null;
 	private TextView tv_no_game = null;
 
-	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus, File fROMRoot) {
+	public XPMBSubmenu_NES(XPMB_Activity root, Handler messageBus, File fROMRoot) {
 		super(root, messageBus);
 		mRoot = root;
 		hMBus = messageBus;
 		mROMRoot = fROMRoot;
 
-		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
+		alItems = new ArrayList<XPMBSubmenuItem_NES>();
 	}
 
 	public void doInit() {
 		mROMRoot.mkdirs();
 		if (!mROMRoot.isDirectory()) {
 			System.err
-					.println("XPMBSubmenu_GBA::doInit() : can't create or access "
+					.println("XPMBSubmenu_NES::doInit() : can't create or access "
 							+ mROMRoot.getAbsolutePath());
 			return;
 		}
@@ -178,13 +173,14 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			mROMResDir.mkdirs();
 			if (!mROMResDir.isDirectory()) {
 				System.err
-						.println("XPMBSubmenu_GBA::doInit() : can't create or access "
+						.println("XPMBSubmenu_NES::doInit() : can't create or access "
 								+ mROMResDir.getAbsolutePath());
 				return;
 			}
 		}
+
 		ridROMInfoDat = new ROMInfo(mRoot.getResources().getXml(
-				R.xml.rominfo_gba), ROMInfo.TYPE_CRC);
+				R.xml.rominfo_nes), ROMInfo.TYPE_CRC);
 
 		try {
 			File[] storPtCont = mROMRoot.listFiles();
@@ -194,40 +190,24 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 					Enumeration<? extends ZipEntry> ze = zf.entries();
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba")
-								|| zef.getName().endsWith(".GBA")) {
-							InputStream fi = zf.getInputStream(zef);
-							fi.skip(0xAC);
-							String gameCode = "";
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							gameCode += (char) fi.read();
-							fi.close();
+						if (zef.getName().endsWith(".nes")
+								|| zef.getName().endsWith(".NES")) {
 							String gameCRC = Long.toHexString(zef.getCrc())
 									.toUpperCase(
 											mRoot.getResources()
 													.getConfiguration().locale);
-							XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(
-									f, gameCode, gameCRC);
+							XPMBSubmenuItem_NES cItem = new XPMBSubmenuItem_NES(
+									f, gameCRC);
 							loadAssociatedMetadata(cItem);
 							alItems.add(cItem);
 							break;
 						}
 					}
 					zf.close();
-				} else if (f.getName().endsWith(".gba")
-						|| f.getName().endsWith(".GBA")) {
-					InputStream fi = new FileInputStream(f);
-					fi.skip(0xAC);
-					String gameCode = "";
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					gameCode += (char) fi.read();
-					fi.close();
+				} else if (f.getName().endsWith(".nes")
+						|| f.getName().endsWith(".NES")) {
 					CRC32 cCRC = new CRC32();
-					fi = new FileInputStream(f);
+					InputStream fi = new FileInputStream(f);
 					int cByte = 0;
 					while ((cByte = fi.read()) != -1) {
 						cCRC.update(cByte);
@@ -238,8 +218,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 							.toUpperCase(
 									mRoot.getResources().getConfiguration().locale);
 
-					XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(f,
-							gameCode, gameCRC);
+					XPMBSubmenuItem_NES cItem = new XPMBSubmenuItem_NES(f,
+							gameCRC);
 					loadAssociatedMetadata(cItem);
 					alItems.add(cItem);
 				}
@@ -251,7 +231,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
-	private void loadAssociatedMetadata(XPMBSubmenuItem_GBA item) {
+	private void loadAssociatedMetadata(XPMBSubmenuItem_NES item) {
 
 		try {
 			ROMInfoNode rinCData = ridROMInfoDat.getNode(item.getGameCRC());
@@ -279,7 +259,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 								romName.indexOf('(') - 1));
 					} else {
 						item.setGameName(romName.substring(0,
-								romName.indexOf(".gba")));
+								romName.indexOf(".nes")));
 					}
 				} else {
 					item.setGameName(rinCData.getReleaseData(0)
@@ -297,7 +277,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				} else {
 					item.setGameCover(mRoot.getResources().getDrawable(
 							mRoot.getResources().getIdentifier(
-									"drawable/ui_cover_not_found_gba", null,
+									"drawable/ui_cover_not_found_nes", null,
 									mRoot.getPackageName())));
 				}
 				fExtRes = new File(resStor, item.getGameName() + "-BG.jpg");
@@ -344,7 +324,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			return;
 		}
 
-		for (XPMBSubmenuItem_GBA xsi : alItems) {
+		for (XPMBSubmenuItem_NES xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
 			ImageView cItem = new ImageView(base.getContext());
 			TextView cLabel = new TextView(base.getContext());
@@ -407,7 +387,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
 
-		for (XPMBSubmenuItem_GBA xsi : alItems) {
+		for (XPMBSubmenuItem_NES xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
 			ImageView iv_c_i = xsi.getParentView();
 			TextView tv_c_l = xsi.getParentLabel();
@@ -465,7 +445,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
 
-		for (XPMBSubmenuItem_GBA xsi : alItems) {
+		for (XPMBSubmenuItem_NES xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
 			ImageView iv_c_i = xsi.getParentView();
 			TextView tv_c_l = xsi.getParentLabel();
@@ -547,7 +527,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	public void execSelectedItem() {
 		Intent intent = new Intent("android.intent.action.VIEW");
 		intent.setComponent(ComponentName
-				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
+				.unflattenFromString("com.androidemu.nes/.EmulatorActivity"));
 		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
 		intent.setFlags(0x10000000);
 		mRoot.startActivity(intent);
@@ -559,7 +539,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			base.removeView(tv_no_game);
 			return;
 		}
-		for (XPMBSubmenuItem_GBA xig : alItems) {
+		for (XPMBSubmenuItem_NES xig : alItems) {
 			base.removeView(xig.getParentView());
 			base.removeView(xig.getParentLabel());
 		}

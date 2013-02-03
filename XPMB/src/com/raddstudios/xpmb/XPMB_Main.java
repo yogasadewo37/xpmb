@@ -23,10 +23,6 @@ import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.raddstudios.xpmb.utils.XPMBMenu;
-
-import android.animation.ObjectAnimator;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,9 +34,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.text.format.Time;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,27 +46,32 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class XPMB_Main extends Activity {
+import com.raddstudios.xpmb.utils.XPMBMenu;
+import com.raddstudios.xpmb.utils.XPMBSubmenu_APP;
+import com.raddstudios.xpmb.utils.XPMBSubmenu_GBA;
+import com.raddstudios.xpmb.utils.XPMBSubmenu_MUSIC;
+import com.raddstudios.xpmb.utils.XPMBSubmenu_NES;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
+
+public class XPMB_Main extends XPMB_Activity {
 
 	// XPERIA Play's physical button Key Codes
-	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20,
-			KEYCODE_LEFT = 21, KEYCODE_RIGHT = 22, KEYCODE_CROSS = 23,
-			KEYCODE_CIRCLE = 4, KEYCODE_SQUARE = 99, KEYCODE_TRIANGLE = 100,
-			KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
-			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103,
-			KEYCODE_VOLOUME_DOWN = 25, KEYCODE_VOLUME_UP = 24;
+	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20, KEYCODE_LEFT = 21,
+			KEYCODE_RIGHT = 22, KEYCODE_CROSS = 23, KEYCODE_CIRCLE = 4, KEYCODE_SQUARE = 99,
+			KEYCODE_TRIANGLE = 100, KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
+			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLOUME_DOWN = 25,
+			KEYCODE_VOLUME_UP = 24;
 
-	public static final int RESULT_RUN_APP_FINISHED = 0x104;
-
-	private XPMBMenu mMenu = null;
+	private XPMB_Layout mMenu = null, mSub = null;
 	private Handler hMessageBus = null;
-	private boolean firstBackPress = false, showingSideMenu = false,
-			bLockedKeys = false, firstInitDone = false;
+	private boolean firstBackPress = false, showingSubmenu = false, bLockedKeys = false,
+			firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		
+
 		hMessageBus = new Handler();
 		if (!checkForSupportedDevice()) {
 			Toast tst = Toast.makeText(getWindow().getContext(),
@@ -91,8 +92,7 @@ public class XPMB_Main extends Activity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD) {
 			requestWindowFeature(Window.FEATURE_NO_TITLE);
-			this.getWindow().setFlags(
-					WindowManager.LayoutParams.FLAG_FULLSCREEN,
+			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
@@ -116,8 +116,7 @@ public class XPMB_Main extends Activity {
 
 		}, 0, 10000);
 
-		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout),
-				hMessageBus, this);
+		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus, this);
 
 		super.onCreate(savedInstanceState);
 	}
@@ -129,24 +128,16 @@ public class XPMB_Main extends Activity {
 	private void setupAnimations() {
 
 		bmAnim = new AnimationDrawable();
-		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(),
-				R.drawable.ui_loading);
+		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(), R.drawable.ui_loading);
 		for (int dp = 0; (dp * 128) < drwAnimSrc.getWidth(); dp++) {
 			bmAnim.addFrame(
-					new BitmapDrawable(getResources(), Bitmap.createBitmap(
-							drwAnimSrc, dp * 128, 0, 128, 128)), 50);
+					new BitmapDrawable(getResources(), Bitmap.createBitmap(drwAnimSrc, dp * 128, 0,
+							128, 128)), 50);
 		}
 
 		bmAnim.setOneShot(false);
 		drwAnimSrc = null;
 		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == RESULT_RUN_APP_FINISHED) {
-			mMenu.postExecuteFinished();
-		}
 	}
 
 	@Override
@@ -164,7 +155,7 @@ public class XPMB_Main extends Activity {
 
 						@Override
 						public void run() {
-							mMenu.parseInitLayout((ViewGroup) findViewById(R.id.absl_main));
+							mMenu.parseInitLayout((ViewGroup) findViewById(R.id.main_l));
 							showLoadingAnim(false);
 							firstInitDone = true;
 						}
@@ -191,69 +182,55 @@ public class XPMB_Main extends Activity {
 		switch (keyCode) {
 		case KEYCODE_LEFT:
 			firstBackPress = false;
-			mMenu.moveToPrevItem();
+			if (showingSubmenu) {
+				mSub.moveLeft();
+				break;
+			}
+			mMenu.moveLeft();
 			break;
 		case KEYCODE_RIGHT:
 			firstBackPress = false;
-			mMenu.moveToNextItem();
+			if (showingSubmenu) {
+				mSub.moveRight();
+				break;
+			}
+			mMenu.moveRight();
 			break;
 		case KEYCODE_UP:
 			firstBackPress = false;
-			mMenu.moveToPrevSubitem();
+			if (showingSubmenu) {
+				mSub.moveUp();
+				break;
+			}
+			mMenu.moveUp();
 			break;
 		case KEYCODE_DOWN:
 			firstBackPress = false;
-			mMenu.moveToNextSubitem();
+			if (showingSubmenu) {
+				mSub.moveDown();
+				break;
+			}
+			mMenu.moveDown();
 			break;
 		case KEYCODE_TRIANGLE:
 			firstBackPress = false;
-			ImageView iv_sm = (ImageView) findViewById(R.id.ivSideMenu);
-			if (!showingSideMenu) {
-				iv_sm.setVisibility(View.VISIBLE);
-				ObjectAnimator sm_tx_s = ObjectAnimator.ofFloat(iv_sm,
-						"TranslationX", pxFromDip(145), 0);
-				sm_tx_s.setDuration(150);
-				sm_tx_s.start();
-				showingSideMenu = true;
-			} else {
-				ObjectAnimator sm_tx_h = ObjectAnimator.ofFloat(iv_sm,
-						"TranslationX", 0, pxFromDip(164));
-				sm_tx_h.setDuration(150);
-				sm_tx_h.start();
-				new Handler().postDelayed(new Runnable() {
-
-					@Override
-					public void run() {
-						ImageView iv_sm = (ImageView) findViewById(R.id.ivSideMenu);
-						iv_sm.setVisibility(View.INVISIBLE);
-					}
-
-				}, 150);
-				showingSideMenu = false;
-			}
+			showLoadingAnim(true);
+			break;
+		case KEYCODE_SQUARE:
+			firstBackPress = false;
+			showLoadingAnim(false);
 			break;
 		case KEYCODE_CROSS:
 			firstBackPress = false;
-			mMenu.executeSelectedSubitem();
+			if (showingSubmenu) {
+				mSub.execSelectedItem();
+				break;
+			}
+			mMenu.execSelectedItem();
 			break;
 		case KEYCODE_CIRCLE:
-			if (showingSideMenu) {
-				firstBackPress = false;
-				ObjectAnimator sm_tx_h = ObjectAnimator.ofFloat(
-						findViewById(R.id.ivSideMenu), "TranslationX", 0,
-						pxFromDip(164));
-				sm_tx_h.setDuration(150);
-				sm_tx_h.start();
-				new Handler().postDelayed(new Runnable() {
-
-					@Override
-					public void run() {
-						ImageView iv_sm = (ImageView) findViewById(R.id.ivSideMenu);
-						iv_sm.setVisibility(View.INVISIBLE);
-					}
-
-				}, 150);
-				showingSideMenu = false;
+			if (showingSubmenu) {
+				requestUnloadSubmenu();
 				break;
 			}
 			if (!firstBackPress) {
@@ -272,21 +249,132 @@ public class XPMB_Main extends Activity {
 		return true;
 	}
 
-	public void LockKeys(boolean locked) {
+	@Override
+	public void requestUnloadSubmenu() {
+		if (showingSubmenu) {
+			unloadSubmenu();
+			mMenu.postExecuteFinished();
+			showingSubmenu = false;
+		}
+	}
+
+	@Override
+	public ImageView getCustomBGView() {
+		return (ImageView) findViewById(R.id.ivCustomBG);
+	}
+
+	@Override
+	public void lockKeys(boolean locked) {
 		bLockedKeys = locked;
 	}
 
+	@Override
 	public void showLoadingAnim(boolean show) {
 		ImageView iv_la = (ImageView) findViewById(R.id.ivLoadAnim);
 		if (iv_la != null) {
 			if (show) {
-				bmAnim.start();
 				iv_la.setVisibility(View.VISIBLE);
+				bmAnim.start();
 			} else {
 				bmAnim.stop();
 				iv_la.setVisibility(View.INVISIBLE);
 			}
 		}
+	}
+
+	@Override
+	public void preloadSubmenu(String submenu) {
+		if (!showingSubmenu) {
+			if (submenu.equals("XPMB_Submenu_APP")) {
+				mSub = new XPMBSubmenu_APP(this, hMessageBus);
+			} else if (submenu.equals("XPMB_Submenu_GBA")) {
+				boolean mExternalStorageAvailable = false;
+				boolean mExternalStorageWriteable = false;
+				String state = Environment.getExternalStorageState();
+
+				if (Environment.MEDIA_MOUNTED.equals(state)) {
+					mExternalStorageAvailable = mExternalStorageWriteable = true;
+				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+					mExternalStorageAvailable = true;
+					mExternalStorageWriteable = false;
+				} else {
+					mExternalStorageAvailable = mExternalStorageWriteable = false;
+				}
+
+				if (mExternalStorageAvailable && mExternalStorageWriteable) {
+					mSub = new XPMBSubmenu_GBA(this, hMessageBus, new File(
+							Environment.getExternalStorageDirectory(), "GBA"));
+				}
+			} else if (submenu.equals("XPMB_Submenu_NES")) {
+				boolean mExternalStorageAvailable = false;
+				boolean mExternalStorageWriteable = false;
+				String state = Environment.getExternalStorageState();
+
+				if (Environment.MEDIA_MOUNTED.equals(state)) {
+					mExternalStorageAvailable = mExternalStorageWriteable = true;
+				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+					mExternalStorageAvailable = true;
+					mExternalStorageWriteable = false;
+				} else {
+					mExternalStorageAvailable = mExternalStorageWriteable = false;
+				}
+
+				if (mExternalStorageAvailable && mExternalStorageWriteable) {
+					mSub = new XPMBSubmenu_NES(this, hMessageBus, new File(
+							Environment.getExternalStorageDirectory(), "NES"));
+				}
+
+			} else if (submenu.equals("XPMB_Submenu_MUSIC")) {
+				boolean mExternalStorageAvailable = false;
+				boolean mExternalStorageWriteable = false;
+				String state = Environment.getExternalStorageState();
+
+				if (Environment.MEDIA_MOUNTED.equals(state)) {
+					mExternalStorageAvailable = mExternalStorageWriteable = true;
+				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+					mExternalStorageAvailable = true;
+					mExternalStorageWriteable = false;
+				} else {
+					mExternalStorageAvailable = mExternalStorageWriteable = false;
+				}
+
+				if (mExternalStorageAvailable && mExternalStorageWriteable) {
+					mSub = new XPMBSubmenu_MUSIC(this, hMessageBus);
+				}
+
+			}
+			if (mSub == null) {
+				System.err.println("XPMB_Main::preloadSubmenu() : can't load submenu '" + submenu
+						+ "'");
+				return;
+			}
+			showLoadingAnim(true);
+			lockKeys(true);
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					mSub.doInit();
+
+					hMessageBus.post(new Runnable() {
+
+						@Override
+						public void run() {
+							mSub.parseInitLayout((ViewGroup) findViewById(R.id.main_l));
+							showLoadingAnim(false);
+							showingSubmenu = true;
+							lockKeys(false);
+						}
+
+					});
+				}
+
+			}).start();
+		}
+	}
+
+	private void unloadSubmenu() {
+		mSub.doCleanup((ViewGroup) findViewById(R.id.main_l));
 	}
 
 	private void updateTimeLabel() {
@@ -308,30 +396,19 @@ public class XPMB_Main extends Activity {
 			ImageView iv_bt = (ImageView) findViewById(R.id.ivBattStatus);
 			if (iv_bt != null) {
 				if (percent > 80) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_100));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_100));
 				} else if (percent < 81 && percent > 60) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_080));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_080));
 				} else if (percent < 61 && percent > 40) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_060));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_060));
 				} else if (percent < 41 && percent > 20) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_040));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_040));
 				} else if (percent < 21 && percent > 4) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_020));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_020));
 				} else if (percent < 5) {
-					iv_bt.setImageDrawable(getResources().getDrawable(
-							R.drawable.ui_batt_000));
+					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_000));
 				}
 			}
 		}
 	};
-
-	private float pxFromDip(int dip) {
-		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
-				getResources().getDisplayMetrics());
-	}
 }

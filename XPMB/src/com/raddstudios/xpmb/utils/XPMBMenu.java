@@ -33,17 +33,17 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
+import android.widget.AbsoluteLayout.LayoutParams;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 import android.widget.TextView;
 
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.XPMB_Main;
 
-public class XPMBMenu {
+@SuppressWarnings("deprecation")
+public class XPMBMenu extends XPMB_Layout {
 
 	private class XPMBMenuItem {
 		private String strID = null, strIcon = null;
@@ -103,6 +103,14 @@ public class XPMBMenu {
 
 		public int getSelectedSubitem() {
 			return intCurSubitem;
+		}
+
+		public XPMBMenuSubitem[] getSubitems() {
+			return alSubitems.toArray(new XPMBMenuSubitem[0]);
+		}
+
+		public int getIndexOf(XPMBMenuSubitem value) {
+			return alSubitems.indexOf(value);
 		}
 	}
 
@@ -172,10 +180,12 @@ public class XPMBMenu {
 	private Handler hMBus = null;
 	private ArrayList<XPMBMenuItem> alItems = null;
 	private int cMenuItem = 0;
-	private XPMB_Main mRoot = null;
+	private XPMB_Activity mRoot = null;
 	XmlResourceParser xrpRes = null;
 
-	public XPMBMenu(XmlResourceParser source, Handler messageBus, XPMB_Main root) {
+	public XPMBMenu(XmlResourceParser source, Handler messageBus,
+			XPMB_Activity root) {
+		super(root, messageBus);
 		hMBus = messageBus;
 		mRoot = root;
 		xrpRes = source;
@@ -258,59 +268,60 @@ public class XPMBMenu {
 		return XPMBMenuSubitem.TYPE_DUMMY;
 	}
 
-	private float pxFromDip(int dip) {
-		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
-				mRoot.getResources().getDisplayMetrics());
-	}
-
 	public void parseInitLayout(ViewGroup base) {
+		int cId = 0xC0DE;
 
 		int mX = 0, mY = 0;
 
 		for (mX = 0; mX < alItems.size(); mX++) {
-			// Setup Icon
-			LayoutParams cItemParams = new LayoutParams((int) pxFromDip(70),
-					(int) pxFromDip(70));
+			// Setup Item Icon
 			ImageView cItem = new ImageView(base.getContext());
-			cItem.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
-			cItem.setY(pxFromDip(48));
-			cItem.setPivotX(pxFromDip(35));
-			cItem.setPivotY(pxFromDip(55));
+			LayoutParams cItemParams = new LayoutParams(pxFromDip(80),
+					pxFromDip(80), pxFromDip(56 + (80 * mX)), pxFromDip(48));
+			cItem.setLayoutParams(cItemParams);
+			if (mX != 0) {
+				cItem.setScaleX(0.7f);
+				cItem.setScaleY(0.7f);
+			}
+			cItem.setPivotX(pxFromDip(40));
+			cItem.setPivotY(pxFromDip(80));
+			cItem.setScaleType(ScaleType.CENTER_INSIDE);
 			String cIcon = "drawable/" + alItems.get(mX).getIcon();
 			Drawable cDrawable = base.getResources().getDrawable(
 					base.getResources().getIdentifier(cIcon, null,
 							base.getContext().getPackageName()));
 			cItem.setImageDrawable(cDrawable);
-			if (mX > 0) {
-				cItem.setScaleX(0.7f);
-				cItem.setScaleY(0.7f);
-			}
-			// Setup label
-			LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(70),
-					(int) pxFromDip(16));
+			cItem.setId(cId);
+			++cId;
+			// Setup Item Label
 			TextView cLabel = new TextView(base.getContext());
+			LayoutParams cLabelParams = new LayoutParams(pxFromDip(90),
+					pxFromDip(20), pxFromDip(56 + ((80 * mX) - 5)),
+					pxFromDip(108));
+			cLabel.setLayoutParams(cLabelParams);
 			cLabel.setText(alItems.get(mX).getID());
-			cLabel.setGravity(Gravity.CENTER_HORIZONTAL);
-			cLabel.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
-			cLabel.setY(pxFromDip(104));
+			cLabel.setGravity(Gravity.CENTER_HORIZONTAL
+					| Gravity.CENTER_VERTICAL);
 			cLabel.setTextAppearance(base.getContext(),
-					android.R.style.TextAppearance_Small);
+					android.R.style.TextAppearance_Medium);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
 			if (mX > 0) {
 				cLabel.setAlpha(0.0f);
 			}
+			cLabel.setId(cId);
+			++cId;
 			alItems.get(mX).setParentView(cItem);
 			alItems.get(mX).setParentLabel(cLabel);
-			base.addView(cItem, cItemParams);
-			base.addView(cLabel, cLabelParams);
+			base.addView(cItem);
+			base.addView(cLabel);
 			// Setup Subitems
 			for (mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
-				// Set Subitem Icon
-				LayoutParams cSubitemParams = new LayoutParams(
-						(int) pxFromDip(70), (int) pxFromDip(70));
+				// Setup Subitem Icon
 				ImageView cSubitem = new ImageView(base.getContext());
-				cSubitem.setX(pxFromDip(86 + (16 * mX) + (70 * mX)));
-				cSubitem.setY(pxFromDip(118 + (70 * mY)));
+				LayoutParams cSubitemParams = new LayoutParams(pxFromDip(80),
+						pxFromDip(80), pxFromDip(56 + (80 * mX)),
+						pxFromDip(128 + (80 * mY)));
+				cSubitem.setLayoutParams(cSubitemParams);
 				String cSubicon = "drawable/"
 						+ alItems.get(mX).getSubItem(mY).getIcon();
 				Drawable cSubdrawable = base.getResources().getDrawable(
@@ -320,84 +331,79 @@ public class XPMBMenu {
 				if (mX > 0) {
 					cSubitem.setAlpha(0.0f);
 				}
-				// Set Subitem Label
-				LayoutParams cSublabelParams = new LayoutParams(
-						(int) pxFromDip(240), (int) pxFromDip(70));
+				cSubitem.setId(cId);
+				++cId;
+				// Setup Subitem Label
 				TextView cSublabel = new TextView(base.getContext());
+				LayoutParams cSublabelParams = new LayoutParams(pxFromDip(320),
+						pxFromDip(80), pxFromDip(152 + (80 * mX)),
+						pxFromDip(128 + (80 * mY)));
+				cSublabel.setLayoutParams(cSublabelParams);
 				cSublabel.setText(alItems.get(mX).getSubItem(mY).getID());
 				cSublabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-				cSublabel.setX(pxFromDip(156 + (16 * mX) + (70 * mX)));
-				cSublabel.setY(pxFromDip(118 + (70 * mY)));
 				cSublabel.setTextAppearance(base.getContext(),
 						android.R.style.TextAppearance_Medium);
 				cSublabel.setShadowLayer(16, 0, 0, Color.WHITE);
 				if (mX > 0 | mY > 0) {
 					cSublabel.setAlpha(0.0f);
 				}
+				cSublabel.setId(cId);
+				++cId;
 				alItems.get(mX).getSubItem(mY).setParentView(cSubitem);
 				alItems.get(mX).getSubItem(mY).setParentLabel(cSublabel);
-				base.addView(cSubitem, cSubitemParams);
-				base.addView(cSublabel, cSublabelParams);
+				base.addView(cSubitem);
+				base.addView(cSublabel);
 			}
 		}
 	}
 
-	public void moveToNextItem() {
+	@Override
+	public void moveRight() {
 		if (cMenuItem == (alItems.size() - 1)) {
 			return;
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-		int mX = 0, mY = 0;
 
-		for (mX = 0; mX < alItems.size(); mX++) {
-			ImageView ivCurItem = alItems.get(mX).getParentView();
-			TextView tvCurLabel = alItems.get(mX).getParentLabel();
-			float cX = ivCurItem.getX();
+		for (XPMBMenuItem xmi : alItems) {
+			int idx = alItems.indexOf(xmi);
+			ImageView iv_i = xmi.getParentView();
+			TextView tv_l = xmi.getParentLabel();
 
-			alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "X", cX,
-					(cX - pxFromDip(86))));
-			alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "X", cX,
-					(cX - pxFromDip(86))));
-			if (mX == cMenuItem) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 1.0f,
-						0.7f));
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 1.0f,
-						0.7f));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 1.0f,
-						0.0f));
+			alAnims.add(ObjectAnimator.ofFloat(iv_i, "X", iv_i.getX(),
+					iv_i.getX() - pxFromDip(80)));
+			alAnims.add(ObjectAnimator.ofFloat(tv_l, "X", tv_l.getX(),
+					tv_l.getX() - pxFromDip(80)));
+
+			if (idx == cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleX", 1.0f, 0.7f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleY", 1.0f, 0.7f));
+				alAnims.add(ObjectAnimator.ofFloat(tv_l, "Alpha", 1.0f, 0.0f));
+			} else if (idx == (cMenuItem + 1)) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleX", 0.7f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleY", 0.7f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tv_l, "Alpha", 0.0f, 1.0f));
 			}
-			if (mX == (cMenuItem + 1)) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 0.7f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 0.7f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 0.0f,
-						1.0f));
-			}
-			for (mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
-				ImageView ivCurSubitem = alItems.get(mX).getSubItem(mY)
-						.getParentView();
-				TextView tvCurSublabel = alItems.get(mX).getSubItem(mY)
-						.getParentLabel();
-				float cSubX = ivCurSubitem.getX(), cSublX = tvCurSublabel
-						.getX();
 
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "X", cSubX,
-						(cSubX - pxFromDip(86))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "X", cSublX,
-						(cSublX - pxFromDip(86))));
-				if (mX == cMenuItem) {
-					alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Alpha",
-							1.0f, 0.0f));
-					alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Alpha",
-							1.0f, 0.0f));
-				}
-				if (mX == cMenuItem + 1) {
-					alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Alpha",
-							0.0f, 1.0f));
-					alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Alpha",
-							0.0f, 1.0f));
+			for (XPMBMenuSubitem xms : xmi.getSubitems()) {
+				ImageView iv_s_i = xms.getParentView();
+				TextView tv_s_l = xms.getParentLabel();
+
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "X", iv_s_i.getX(),
+						iv_s_i.getX() - pxFromDip(80)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "X", tv_s_l.getX(),
+						tv_s_l.getX() - pxFromDip(80)));
+				if (idx == cMenuItem) {
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(),
+							"Alpha", 1.0f, 0.0f));
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(),
+							"Alpha", 1.0f, 0.0f));
+				} else if (idx == (cMenuItem + 1)) {
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(),
+							"Alpha", 0.0f, 1.0f));
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(),
+							"Alpha", 0.0f, 1.0f));
+
 				}
 			}
 		}
@@ -405,75 +411,66 @@ public class XPMBMenu {
 		AnimatorSet ag_xmb_ml = new AnimatorSet();
 		ag_xmb_ml.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_ml.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_ml.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
 		++cMenuItem;
 	}
 
-	public void moveToPrevItem() {
+	@Override
+	public void moveLeft() {
 		if (cMenuItem == 0) {
 			return;
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-		int mX = 0, mY;
 
-		for (mX = 0; mX < alItems.size(); mX++) {
-			ImageView ivCurItem = alItems.get(mX).getParentView();
-			TextView tvCurLabel = alItems.get(mX).getParentLabel();
-			float cX = ivCurItem.getX();
+		for (XPMBMenuItem xmi : alItems) {
+			int idx = alItems.indexOf(xmi);
+			ImageView iv_i = xmi.getParentView();
+			TextView tv_l = xmi.getParentLabel();
 
-			alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "X", cX,
-					(cX + pxFromDip(86))));
-			alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "X", cX,
-					(cX + pxFromDip(86))));
-			if (mX == cMenuItem) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 1.0f,
-						0.7f));
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 1.0f,
-						0.7f));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 1.0f,
-						0.0f));
+			alAnims.add(ObjectAnimator.ofFloat(iv_i, "X", iv_i.getX(),
+					iv_i.getX() + pxFromDip(80)));
+			alAnims.add(ObjectAnimator.ofFloat(tv_l, "X", tv_l.getX(),
+					tv_l.getX() + pxFromDip(80)));
+			if (idx == cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleX", 1.0f, 0.7f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleY", 1.0f, 0.7f));
+				alAnims.add(ObjectAnimator.ofFloat(tv_l, "Alpha", 1.0f, 0.0f));
+			} else if (idx == cMenuItem - 1) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleX", 0.7f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_i, "ScaleY", 0.7f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(tv_l, "Alpha", 0.0f, 1.0f));
 			}
-			if (mX == (cMenuItem - 1)) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleX", 0.7f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(ivCurItem, "ScaleY", 0.7f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurLabel, "Alpha", 0.0f,
-						1.0f));
-			}
-			for (mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
-				ImageView ivCurSubitem = alItems.get(mX).getSubItem(mY)
-						.getParentView();
-				TextView tvCurSublabel = alItems.get(mX).getSubItem(mY)
-						.getParentLabel();
-				float cSubX = ivCurSubitem.getX(), cSublX = tvCurSublabel
-						.getX();
 
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "X", cSubX,
-						(cSubX + pxFromDip(86))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "X", cSublX,
-						(cSublX + pxFromDip(86))));
-				if (mX == cMenuItem) {
-					alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Alpha",
-							1.0f, 0.0f));
-					alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Alpha",
-							1.0f, 0.0f));
-				}
-				if (mX == cMenuItem - 1) {
-					alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Alpha",
-							0.0f, 1.0f));
-					alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Alpha",
-							0.0f, 1.0f));
+			for (XPMBMenuSubitem xms : xmi.getSubitems()) {
+				ImageView iv_s_i = xms.getParentView();
+				TextView tv_s_l = xms.getParentLabel();
+
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "X", iv_s_i.getX(),
+						iv_s_i.getX() + pxFromDip(80)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "X", tv_s_l.getX(),
+						tv_s_l.getX() + pxFromDip(80)));
+
+				if (idx == cMenuItem) {
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(),
+							"Alpha", 1.0f, 0.0f));
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(),
+							"Alpha", 1.0f, 0.0f));
+				} else if (idx == (cMenuItem - 1)) {
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(),
+							"Alpha", 0.0f, 1.0f));
+					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(),
+							"Alpha", 0.0f, 1.0f));
+
 				}
 			}
 		}
@@ -481,58 +478,56 @@ public class XPMBMenu {
 		AnimatorSet ag_xmb_mr = new AnimatorSet();
 		ag_xmb_mr.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_mr.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_mr.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
 		--cMenuItem;
 	}
 
-	public void moveToNextSubitem() {
+	@Override
+	public void moveDown() {
 		if (alItems.get(cMenuItem).getSelectedSubitem() == (alItems.get(
 				cMenuItem).getNumSubItems() - 1)) {
 			return;
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-		int mY = 0;
 
-		for (mY = 0; mY < alItems.get(cMenuItem).getNumSubItems(); mY++) {
-			ImageView ivCurSubitem = alItems.get(cMenuItem).getSubItem(mY)
-					.getParentView();
-			TextView tvCurSublabel = alItems.get(cMenuItem).getSubItem(mY)
-					.getParentLabel();
-			float cY = ivCurSubitem.getY();
+		for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
+			int idx = alItems.get(cMenuItem).getIndexOf(xms);
+			ImageView iv_s_i = xms.getParentView();
+			TextView tv_s_l = xms.getParentLabel();
 
-			if (mY == alItems.get(cMenuItem).getSelectedSubitem()) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Y", cY,
-						(cY - pxFromDip(140))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Y", cY,
-						(cY - pxFromDip(140))));
+			if (idx == alItems.get(cMenuItem).getSelectedSubitem()) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "Y", iv_s_i.getY(),
+						iv_s_i.getY() - pxFromDip(160)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "Y", tv_s_l.getY(),
+						tv_s_l.getY() - pxFromDip(160)));
 			} else {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Y", cY,
-						(cY - pxFromDip(70))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Y", cY,
-						(cY - pxFromDip(70))));
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "Y", iv_s_i.getY(),
+						iv_s_i.getY() - pxFromDip(80)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "Y", tv_s_l.getY(),
+						tv_s_l.getY() - pxFromDip(80)));
 			}
 		}
 
 		AnimatorSet ag_xmb_mu = new AnimatorSet();
 		ag_xmb_mu.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_mu.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_mu.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
@@ -541,44 +536,42 @@ public class XPMBMenu {
 				alItems.get(cMenuItem).getSelectedSubitem() + 1);
 	}
 
-	public void moveToPrevSubitem() {
+	@Override
+	public void moveUp() {
 		if (alItems.get(cMenuItem).getSelectedSubitem() == 0) {
 			return;
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-		int mY = 0;
 
-		for (mY = 0; mY < alItems.get(cMenuItem).getNumSubItems(); mY++) {
-			ImageView ivCurSubitem = alItems.get(cMenuItem).getSubItem(mY)
-					.getParentView();
-			TextView tvCurSublabel = alItems.get(cMenuItem).getSubItem(mY)
-					.getParentLabel();
-			float cY = ivCurSubitem.getY();
+		for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
+			int idx = alItems.get(cMenuItem).getIndexOf(xms);
+			ImageView iv_s_i = xms.getParentView();
+			TextView tv_s_l = xms.getParentLabel();
 
-			if (mY == alItems.get(cMenuItem).getSelectedSubitem() - 1) {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Y", cY,
-						(cY + pxFromDip(140))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Y", cY,
-						(cY + pxFromDip(140))));
+			if (idx == alItems.get(cMenuItem).getSelectedSubitem() - 1) {
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "Y", iv_s_i.getY(),
+						iv_s_i.getY() + pxFromDip(160)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "Y", tv_s_l.getY(),
+						tv_s_l.getY() + pxFromDip(160)));
 			} else {
-				alAnims.add(ObjectAnimator.ofFloat(ivCurSubitem, "Y", cY,
-						(cY + pxFromDip(70))));
-				alAnims.add(ObjectAnimator.ofFloat(tvCurSublabel, "Y", cY,
-						(cY + pxFromDip(70))));
+				alAnims.add(ObjectAnimator.ofFloat(iv_s_i, "Y", iv_s_i.getY(),
+						iv_s_i.getY() + pxFromDip(80)));
+				alAnims.add(ObjectAnimator.ofFloat(tv_s_l, "Y", tv_s_l.getY(),
+						tv_s_l.getY() + pxFromDip(80)));
 			}
 		}
 
 		AnimatorSet ag_xmb_md = new AnimatorSet();
 		ag_xmb_md.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_md.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		ag_xmb_md.start();
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
@@ -587,7 +580,8 @@ public class XPMBMenu {
 				alItems.get(cMenuItem).getSelectedSubitem() - 1);
 	}
 
-	public void executeSelectedSubitem() {
+	@Override
+	public void execSelectedItem() {
 		final XPMBMenuSubitem selItem = alItems.get(cMenuItem).getSubItem(
 				alItems.get(cMenuItem).getSelectedSubitem());
 		switch (selItem.getType()) {
@@ -603,12 +597,7 @@ public class XPMBMenu {
 
 				@Override
 				public void run() {
-					Intent int_sm = new Intent("android.intent.action.MAIN");
-					int_sm.setComponent(ComponentName
-							.unflattenFromString("com.raddstudios.xpmb/."
-									+ selItem.getSubmenu()));
-					mRoot.startActivityForResult(int_sm,
-							XPMB_Main.RESULT_RUN_APP_FINISHED);
+					mRoot.preloadSubmenu(selItem.getSubmenu());
 				}
 
 			}, 160);
@@ -619,32 +608,34 @@ public class XPMBMenu {
 	private void doPreExecute() {
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
 
-		for (int mX = 0; mX < alItems.size(); mX++) {
-			ImageView cItem = alItems.get(mX).getParentView();
-			TextView cLabel = alItems.get(mX).getParentLabel();
-			float cX = cItem.getX();
+		for (XPMBMenuItem xmi : alItems) {
+			int idx = alItems.indexOf(xmi);
+			ImageView cItem = xmi.getParentView();
+			TextView cLabel = xmi.getParentLabel();
 
-			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
-					(cX - pxFromDip(121))));
-			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cX,
-					(cX - pxFromDip(121))));
-			if (mX == cMenuItem) {
+			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cItem.getX(),
+					(cItem.getX() - pxFromDip(96))));
+			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cLabel.getX(),
+					(cLabel.getX() - pxFromDip(96))));
+			if (idx != cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));
+			}
+			if (idx == cMenuItem) {
 				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 1.0f, 0.0f));
-				for (int mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
-					ImageView cSubItem = alItems.get(mX).getSubItem(mY)
-							.getParentView();
-					TextView cSubLabel = alItems.get(mX).getSubItem(mY)
-							.getParentLabel();
-					float csX = cSubItem.getX(), csX_l = cSubLabel.getX();
+				for (XPMBMenuSubitem xms : xmi.getSubitems()) {
+					int idx_s = xmi.getIndexOf(xms);
+					ImageView cSubItem = xms.getParentView();
+					TextView cSubLabel = xms.getParentLabel();
 
-					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X", csX,
-							(csX - pxFromDip(121))));
-					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X", csX_l,
-							(csX_l - pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X",
+							cSubItem.getX(), (cSubItem.getX() - pxFromDip(96))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X",
+							cSubLabel.getX(),
+							(cSubLabel.getX() - pxFromDip(96))));
 					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "Alpha",
 							1.0f, 0.0f));
 
-					if (mY == alItems.get(mX).getSelectedSubitem()) {
+					if (idx_s == xmi.getSelectedSubitem()) {
 						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
 								1.0f, 0.0f));
 					} else {
@@ -652,10 +643,9 @@ public class XPMBMenu {
 								1.0f, 0.6f));
 					}
 				}
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 1.0f, 0.0f));
 			}
 		}
+
 		alAnims.add(ObjectAnimator.ofFloat(
 				mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 0.0f, 1.0f));
 
@@ -665,35 +655,37 @@ public class XPMBMenu {
 		as_ef_p.start();
 	}
 
+	@Override
 	public void postExecuteFinished() {
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		for (XPMBMenuItem xmi : alItems) {
+			int idx = alItems.indexOf(xmi);
+			ImageView cItem = xmi.getParentView();
+			TextView cLabel = xmi.getParentLabel();
 
-		for (int mX = 0; mX < alItems.size(); mX++) {
-			ImageView cItem = alItems.get(mX).getParentView();
-			TextView cLabel = alItems.get(mX).getParentLabel();
-			float cX = cItem.getX();
-
-			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cX,
-					(cX + pxFromDip(121))));
-			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cX,
-					(cX + pxFromDip(121))));
-			if (mX == cMenuItem) {
+			alAnims.add(ObjectAnimator.ofFloat(cItem, "X", cItem.getX(),
+					(cItem.getX() + pxFromDip(96))));
+			alAnims.add(ObjectAnimator.ofFloat(cLabel, "X", cLabel.getX(),
+					(cLabel.getX() + pxFromDip(96))));
+			if (idx != cMenuItem) {
+				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));
+			}
+			if (idx == cMenuItem) {
 				alAnims.add(ObjectAnimator.ofFloat(cLabel, "Alpha", 0.0f, 1.0f));
-				for (int mY = 0; mY < alItems.get(mX).getNumSubItems(); mY++) {
-					ImageView cSubItem = alItems.get(mX).getSubItem(mY)
-							.getParentView();
-					TextView cSubLabel = alItems.get(mX).getSubItem(mY)
-							.getParentLabel();
-					float csX = cSubItem.getX(), csX_l = cSubLabel.getX();
+				for (XPMBMenuSubitem xms : xmi.getSubitems()) {
+					int idx_s = xmi.getIndexOf(xms);
+					ImageView cSubItem = xms.getParentView();
+					TextView cSubLabel = xms.getParentLabel();
 
-					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X", csX,
-							(csX + pxFromDip(121))));
-					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X", csX_l,
-							(csX_l + pxFromDip(121))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubItem, "X",
+							cSubItem.getX(), (cSubItem.getX() + pxFromDip(96))));
+					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "X",
+							cSubLabel.getX(),
+							(cSubLabel.getX() + pxFromDip(96))));
 					alAnims.add(ObjectAnimator.ofFloat(cSubLabel, "Alpha",
 							0.0f, 1.0f));
 
-					if (mY == alItems.get(mX).getSelectedSubitem()) {
+					if (idx_s == xmi.getSelectedSubitem()) {
 						alAnims.add(ObjectAnimator.ofFloat(cSubItem, "Alpha",
 								0.0f, 1.0f));
 					} else {
@@ -701,26 +693,37 @@ public class XPMBMenu {
 								0.6f, 1.0f));
 					}
 				}
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(cItem, "Alpha", 0.0f, 1.0f));
 			}
 		}
+
 		alAnims.add(ObjectAnimator.ofFloat(
 				mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 1.0f, 0.0f));
 
 		AnimatorSet as_ef_p = new AnimatorSet();
 		as_ef_p.playTogether((Collection<Animator>) alAnims);
 		as_ef_p.setDuration(150);
-		mRoot.LockKeys(true);
+		mRoot.lockKeys(true);
 		as_ef_p.start();
 
 		hMBus.postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.LockKeys(false);
+				mRoot.lockKeys(false);
 			}
 
 		}, 160);
+	}
+
+	@Override
+	public void doCleanup(ViewGroup base) {
+		for (XPMBMenuItem xmi : alItems) {
+			base.removeView(xmi.getParentView());
+			base.removeView(xmi.getParentLabel());
+			for (Object xms : xmi.getSubitems()) {
+				base.removeView(((XPMBMenuSubitem) xms).getParentView());
+				base.removeView(((XPMBMenuSubitem) xms).getParentLabel());
+			}
+		}
 	}
 }

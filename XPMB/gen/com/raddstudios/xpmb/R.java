@@ -11,72 +11,64 @@ public final class R {
     public static final class attr {
     }
     public static final class drawable {
-        public static final int cd_glass_cover=0x7f020000;
-        public static final int flag_ch=0x7f020001;
-        public static final int flag_de=0x7f020002;
-        public static final int flag_es=0x7f020003;
-        public static final int flag_fr=0x7f020004;
-        public static final int flag_it=0x7f020005;
-        public static final int flag_ja=0x7f020006;
-        public static final int flag_ko=0x7f020007;
-        public static final int flag_nl=0x7f020008;
-        public static final int flag_us=0x7f020009;
-        public static final int ic_launcher=0x7f02000a;
-        public static final int ui_batt_000=0x7f02000b;
-        public static final int ui_batt_020=0x7f02000c;
-        public static final int ui_batt_040=0x7f02000d;
-        public static final int ui_batt_060=0x7f02000e;
-        public static final int ui_batt_080=0x7f02000f;
-        public static final int ui_batt_100=0x7f020010;
-        public static final int ui_cover_not_found=0x7f020011;
-        public static final int ui_edit=0x7f020012;
-        public static final int ui_loading=0x7f020013;
-        public static final int ui_lock=0x7f020014;
-        public static final int ui_next=0x7f020015;
-        public static final int ui_ok=0x7f020016;
-        public static final int ui_previous=0x7f020017;
-        public static final int ui_properties=0x7f020018;
-        public static final int ui_side_menu=0x7f020019;
-        public static final int ui_xmb_apps=0x7f02001a;
-        public static final int ui_xmb_apps_installed=0x7f02001b;
-        public static final int ui_xmb_back=0x7f02001c;
-        public static final int ui_xmb_default_icon=0x7f02001d;
-        public static final int ui_xmb_external_memory=0x7f02001e;
-        public static final int ui_xmb_game_folder=0x7f02001f;
-        public static final int ui_xmb_games=0x7f020020;
-        public static final int ui_xmb_music=0x7f020021;
-        public static final int ui_xmb_photo=0x7f020022;
-        public static final int ui_xmb_photo_camera=0x7f020023;
-        public static final int ui_xmb_settings=0x7f020024;
-        public static final int ui_xmb_settings_system=0x7f020025;
-        public static final int ui_xmb_trackid=0x7f020026;
-        public static final int ui_xmb_video=0x7f020027;
-        public static final int ui_xmb_web=0x7f020028;
-        public static final int ui_xmb_web_browser=0x7f020029;
-        public static final int ui_xmb_web_search=0x7f02002a;
+        public static final int flag_ch=0x7f020000;
+        public static final int flag_de=0x7f020001;
+        public static final int flag_es=0x7f020002;
+        public static final int flag_fr=0x7f020003;
+        public static final int flag_it=0x7f020004;
+        public static final int flag_ja=0x7f020005;
+        public static final int flag_ko=0x7f020006;
+        public static final int flag_nl=0x7f020007;
+        public static final int flag_us=0x7f020008;
+        public static final int ic_launcher=0x7f020009;
+        public static final int ui_batt_000=0x7f02000a;
+        public static final int ui_batt_020=0x7f02000b;
+        public static final int ui_batt_040=0x7f02000c;
+        public static final int ui_batt_060=0x7f02000d;
+        public static final int ui_batt_080=0x7f02000e;
+        public static final int ui_batt_100=0x7f02000f;
+        public static final int ui_cover_not_found_gba=0x7f020010;
+        public static final int ui_cover_not_found_md=0x7f020011;
+        public static final int ui_cover_not_found_nes=0x7f020012;
+        public static final int ui_cover_not_found_snes=0x7f020013;
+        public static final int ui_edit=0x7f020014;
+        public static final int ui_loading=0x7f020015;
+        public static final int ui_lock=0x7f020016;
+        public static final int ui_next=0x7f020017;
+        public static final int ui_ok=0x7f020018;
+        public static final int ui_previous=0x7f020019;
+        public static final int ui_properties=0x7f02001a;
+        public static final int ui_side_menu=0x7f02001b;
+        public static final int ui_xmb_apps=0x7f02001c;
+        public static final int ui_xmb_apps_installed=0x7f02001d;
+        public static final int ui_xmb_back=0x7f02001e;
+        public static final int ui_xmb_default_icon=0x7f02001f;
+        public static final int ui_xmb_default_music_icon=0x7f020020;
+        public static final int ui_xmb_external_memory=0x7f020021;
+        public static final int ui_xmb_game_folder=0x7f020022;
+        public static final int ui_xmb_games=0x7f020023;
+        public static final int ui_xmb_music=0x7f020024;
+        public static final int ui_xmb_photo=0x7f020025;
+        public static final int ui_xmb_photo_camera=0x7f020026;
+        public static final int ui_xmb_settings=0x7f020027;
+        public static final int ui_xmb_settings_system=0x7f020028;
+        public static final int ui_xmb_video=0x7f020029;
+        public static final int ui_xmb_web=0x7f02002a;
+        public static final int ui_xmb_web_browser=0x7f02002b;
+        public static final int ui_xmb_web_search=0x7f02002c;
     }
     public static final class id {
-        public static final int absl_gbalauncher_port=0x7f060000;
-        public static final int absl_main=0x7f060008;
-        public static final int absl_submenu_root=0x7f06000e;
-        public static final int ivBattStatus=0x7f06000a;
-        public static final int ivCover=0x7f060003;
-        public static final int ivGameBackground=0x7f06000f;
-        public static final int ivLoadAnim=0x7f060009;
-        public static final int ivNextGame=0x7f060006;
-        public static final int ivPrevGame=0x7f060001;
-        public static final int ivRunGame=0x7f060007;
-        public static final int ivSideMenu=0x7f06000c;
-        public static final int ivSubmenuShown=0x7f06000d;
-        public static final int lbCoverNotFound=0x7f060004;
-        public static final int lbCurTime=0x7f06000b;
-        public static final int lbGameDescription=0x7f060002;
-        public static final int lbGameName=0x7f060005;
+        public static final int absl_main=0x7f070006;
+        public static final int ivBattStatus=0x7f070002;
+        public static final int ivCustomBG=0x7f070001;
+        public static final int ivLoadAnim=0x7f070005;
+        public static final int ivSideMenu=0x7f070007;
+        public static final int ivSubmenuShown=0x7f070004;
+        public static final int lbCurTime=0x7f070003;
+        public static final int main_l=0x7f070000;
     }
     public static final class layout {
-        public static final int gba_launcher=0x7f030000;
-        public static final int xpmb_main=0x7f030001;
-        public static final int xpmb_submenu=0x7f030002;
+        public static final int xpmb_main=0x7f030000;
     }
     public static final class string {
         public static final int app_name=0x7f050000;
@@ -106,8 +98,13 @@ public final class R {
         public static final int strNoPictures=0x7f050016;
         public static final int strNoVideos=0x7f050015;
     }
+    public static final class style {
+        public static final int mytransparent_windowNoTitle=0x7f060000;
+    }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;
-        public static final int xmb_layout=0x7f040001;
+        public static final int rominfo_nes=0x7f040001;
+        public static final int rominfo_snes=0x7f040002;
+        public static final int xmb_layout=0x7f040003;
     }
 }

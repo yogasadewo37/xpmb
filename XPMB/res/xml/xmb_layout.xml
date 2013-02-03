@@ -26,13 +26,10 @@
         id="Music"
         icon="ui_xmb_music">
         <subitem
-            id="TrackID"
-            exec="com.sonyericsson.trackid/.activity.WidgetHandlerActivity"
-            icon="ui_xmb_trackid"
-            type="exec" />
-        <subitem
             id="External memory"
-            icon="ui_xmb_external_memory" />
+            icon="ui_xmb_external_memory"
+            submenu="XPMB_Submenu_MUSIC"
+            type="submenu" />
     </item>
     <item
         id="Video"
@@ -46,14 +43,16 @@
         icon="ui_xmb_games">
         <subitem
             id="Nintendo Entertainment System"
-            icon="ui_xmb_game_folder" />
+            icon="ui_xmb_game_folder"
+            submenu="XPMB_Submenu_NES"
+            type="submenu" />
         <subitem
             id="Super Nintendo"
             icon="ui_xmb_game_folder" />
         <subitem
             id="Gameboy Advance"
-            exec="com.raddstudios.xpmb/.GBA_launcher"
             icon="ui_xmb_game_folder"
+            submenu="XPMB_Submenu_GBA"
             type="submenu" />
         <subitem
             id="NeoGeo Arcade"
@@ -79,8 +78,8 @@
         <subitem
             id="Installed applications"
             icon="ui_xmb_apps_installed"
-            submenu="XPMB_Submenu_App"
-            type="subemnu" />
+            submenu="XPMB_Submenu_APP"
+            type="submenu" />
     </item>
 
 </xmbroot>
