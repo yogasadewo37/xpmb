@@ -8,6 +8,7 @@ public class XPMB_Layout {
 
 	XPMB_Activity mRoot = null;
 	Handler hMessageBus = null;
+	int cID = 0xC0DD;
 
 	public XPMB_Layout(XPMB_Activity root, Handler messageBus) {
 		mRoot = root;
@@ -46,6 +47,11 @@ public class XPMB_Layout {
 
 	public void doCleanup(ViewGroup base) {
 
+	}
+	
+	protected int getNextID(){
+		cID++;
+		return cID;
 	}
 
 }

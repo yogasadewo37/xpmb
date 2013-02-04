@@ -96,6 +96,7 @@ public class XPMB_Main extends XPMB_Activity {
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.xpmb_main);
 
 		setupAnimations();
@@ -247,6 +248,13 @@ public class XPMB_Main extends XPMB_Activity {
 			break;
 		}
 		return true;
+	}
+
+	@Override
+	public void onDestroy() {
+		requestUnloadSubmenu();
+		mMenu.doCleanup((ViewGroup) findViewById(R.id.main_l));
+		super.onDestroy();
 	}
 
 	@Override

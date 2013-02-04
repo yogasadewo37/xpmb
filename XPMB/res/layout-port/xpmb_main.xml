@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<AbsoluteLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/main_l"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:isScrollContainer="false"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     tools:context=".XPMB_Main"
     tools:ignore="Deprecated" >
 
@@ -19,11 +18,20 @@
         tools:ignore="ContentDescription" />
 
     <ImageView
+        android:id="@+id/ivLoadAnim"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_x="285dp"
+        android:layout_y="530dp"
+        android:visibility="invisible"
+        tools:ignore="ContentDescription" />
+
+    <ImageView
         android:id="@+id/ivBattStatus"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        android:layout_x="538dp"
-        android:layout_y="4dp"
+        android:layout_x="290dp"
+        android:layout_y="0dp"
         android:src="@drawable/ui_batt_100"
         tools:ignore="ContentDescription" />
 
@@ -31,8 +39,8 @@
         android:id="@+id/lbCurTime"
         android:layout_width="176dp"
         android:layout_height="28dp"
-        android:layout_x="358dp"
-        android:layout_y="4dp"
+        android:layout_x="110dp"
+        android:layout_y="0dp"
         android:gravity="right|center_vertical"
         android:shadowColor="#000000"
         android:shadowDx="4"
@@ -46,19 +54,10 @@
         android:id="@+id/ivSubmenuShown"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_x="8dp"
-        android:layout_y="156dp"
+        android:layout_x="4dp"
+        android:layout_y="141dp"
         android:alpha="0.0"
         android:src="@drawable/ui_xmb_back"
-        tools:ignore="ContentDescription" />
-
-    <ImageView
-        android:id="@+id/ivLoadAnim"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_x="534dp"
-        android:layout_y="286dp"
-        android:visibility="visible"
         tools:ignore="ContentDescription" />
 
 </AbsoluteLayout>
