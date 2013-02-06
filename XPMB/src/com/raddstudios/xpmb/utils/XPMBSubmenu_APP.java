@@ -39,6 +39,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.raddstudios.xpmb.R;
+import com.raddstudios.xpmb.XPMB_Main;
 
 @SuppressWarnings("deprecation")
 public class XPMBSubmenu_APP extends XPMB_Layout {
@@ -51,8 +52,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		private ImageView ivParentView = null;
 		private TextView tvParentLabel = null;
 
-		public XPMBSubmenuItem_APP(String appName, Drawable appIcon,
-				Intent appIntent) {
+		public XPMBSubmenuItem_APP(String appName, Drawable appIcon, Intent appIntent) {
 			strAppName = appName;
 			drAppIcon = appIcon;
 			intAppIntent = appIntent;
@@ -105,11 +105,12 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		PackageManager pm = mRoot.getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
 		filter.addCategory(Intent.CATEGORY_LAUNCHER);
-		List<ResolveInfo> ri = pm.queryIntentActivities(filter,
-				PackageManager.GET_META_DATA);
+		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
 		for (ResolveInfo r : ri) {
-			alItems.add(new XPMBSubmenuItem_APP(r.loadLabel(pm).toString(), r
-					.loadIcon(pm), pm
+			if(r.activityInfo.packageName.equals(mRoot.getPackageName())){
+				continue;
+			}
+			alItems.add(new XPMBSubmenuItem_APP(r.loadLabel(pm).toString(), r.loadIcon(pm), pm
 					.getLaunchIntentForPackage(r.activityInfo.packageName)));
 		}
 	}
@@ -120,19 +121,18 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 		if (alItems.size() == 0) {
 			tv_no_app = new TextView(base.getContext());
-			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320),
-					(int) pxFromDip(100), pxFromDip(48), pxFromDip(128));
+			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
+					pxFromDip(48), pxFromDip(128));
 			tv_no_app.setLayoutParams(lp_ng);
 			tv_no_app.setText(mRoot.getText(R.string.strNoApps));
 			tv_no_app.setTextColor(Color.WHITE);
 			tv_no_app.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_app.setTextAppearance(base.getContext(),
-					android.R.style.TextAppearance_Medium);
+			tv_no_app.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
 			tv_no_app.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			base.addView(tv_no_app);
 			return;
 		}
-		
+
 		for (XPMBSubmenuItem_APP xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
 			ImageView cItem = new ImageView(base.getContext());
@@ -145,14 +145,12 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			if (idx == 0) {
 				cItem.setScaleX(2.56f);
 				cItem.setScaleY(2.56f);
-				LayoutParams cItemParams = new LayoutParams(
-						(int) pxFromDip(50), (int) pxFromDip(50),
-						pxFromDip(48), pxFromDip(104));
+				LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
+						(int) pxFromDip(50), pxFromDip(48), pxFromDip(104));
 				cItem.setLayoutParams(cItemParams);
 			} else {
-				LayoutParams cItemParams = new LayoutParams(
-						(int) pxFromDip(50), (int) pxFromDip(50),
-						pxFromDip(48), pxFromDip(248 + (50 * (idx - 1))));
+				LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
+						(int) pxFromDip(50), pxFromDip(48), pxFromDip(248 + (50 * (idx - 1))));
 				cItem.setLayoutParams(cItemParams);
 			}
 			cItem.setId(cId);
@@ -161,19 +159,16 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			cLabel.setText(xsi.getAppName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(base.getContext(),
-					android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 
 			if (idx == 0) {
-				LayoutParams cLabelParams = new LayoutParams(
-						(int) pxFromDip(320), (int) pxFromDip(128),
-						pxFromDip(184), pxFromDip(104));
+				LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
+						(int) pxFromDip(128), pxFromDip(184), pxFromDip(104));
 				cLabel.setLayoutParams(cLabelParams);
 			} else {
-				LayoutParams cLabelParams = new LayoutParams(
-						(int) pxFromDip(320), (int) pxFromDip(128),
-						pxFromDip(184),
+				LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
+						(int) pxFromDip(128), pxFromDip(184),
 						pxFromDip((248 + (50 * (idx - 1)) - 39)));
 				cLabel.setLayoutParams(cLabelParams);
 				cLabel.setAlpha(0.0f);
@@ -189,7 +184,26 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 	}
 
 	@Override
-	public void moveDown() {
+	public void sendKeyUp(int keyCode) {
+		switch (keyCode) {
+		case XPMB_Main.KEYCODE_DOWN:
+			moveDown();
+			break;
+		case XPMB_Main.KEYCODE_UP:
+			moveUp();
+			break;
+		case XPMB_Main.KEYCODE_START:
+		case XPMB_Main.KEYCODE_CROSS:
+			execSelectedItem();
+			break;
+		case XPMB_Main.KEYCODE_LEFT:
+		case XPMB_Main.KEYCODE_CIRCLE:
+			mRoot.requestUnloadSubmenu();
+			break;
+		}
+	}
+
+	private void moveDown() {
 		if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
 			return;
 		}
@@ -204,20 +218,16 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			if (idx == intSelItem) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
 						(iv_c_i.getY() - pxFromDip(66))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f,
-						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f, 1.0f));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
 						(tv_c_l.getY() - pxFromDip(105))));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 1.0f, 0.0f));
 			} else if (idx == (intSelItem + 1)) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
 						(iv_c_i.getY() - pxFromDip(144))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f,
-						2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f,
-						2.56f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f, 2.56f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f, 2.56f));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
 						(tv_c_l.getY() - pxFromDip(105))));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 0.0f, 1.0f));
@@ -246,8 +256,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		++intSelItem;
 	}
 
-	@Override
-	public void moveUp() {
+	private void moveUp() {
 		if (intSelItem == 0 || alItems.size() == 0) {
 			return;
 		}
@@ -262,20 +271,16 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			if (idx == intSelItem) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
 						(iv_c_i.getY() + pxFromDip(144))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f,
-						1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f,
-						1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f, 1.0f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f, 1.0f));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
 						(tv_c_l.getY() + pxFromDip(105))));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 1.0f, 0.0f));
 			} else if (idx == (intSelItem - 1)) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
 						(iv_c_i.getY() + pxFromDip(66))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f,
-						2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f,
-						2.56f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f, 2.56f));
+				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f, 2.56f));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
 						(tv_c_l.getY() + pxFromDip(105))));
 				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 0.0f, 1.0f));
@@ -304,8 +309,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		--intSelItem;
 	}
 
-	@Override
-	public void execSelectedItem() {
+	private void execSelectedItem() {
+		mRoot.showLoadingAnim(true);
 		mRoot.startActivity(alItems.get(intSelItem).getAppIntent());
 	}
 

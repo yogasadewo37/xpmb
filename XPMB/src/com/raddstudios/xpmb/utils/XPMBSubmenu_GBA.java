@@ -53,6 +53,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.raddstudios.xpmb.R;
+import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 
 @SuppressWarnings("deprecation")
@@ -417,6 +418,26 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		tlRoot.addView(tlFiller);
 		base.addView(tlRoot);
 		reloadGameBG();
+	}
+
+	@Override
+	public void sendKeyUp(int keyCode) {
+		switch (keyCode) {
+		case XPMB_Main.KEYCODE_DOWN:
+			moveDown();
+			break;
+		case XPMB_Main.KEYCODE_UP:
+			moveUp();
+			break;
+		case XPMB_Main.KEYCODE_START:
+		case XPMB_Main.KEYCODE_CROSS:
+			execSelectedItem();
+			break;
+		case XPMB_Main.KEYCODE_LEFT:
+		case XPMB_Main.KEYCODE_CIRCLE:
+			mRoot.requestUnloadSubmenu();
+			break;
+		}
 	}
 
 	public void moveDown() {

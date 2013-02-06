@@ -32,25 +32,25 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.AbsoluteLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
-import android.widget.AbsoluteLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.utils.XPMBSubmenu_GBA.XPMBSubmenuItem_GBA;
+import com.raddstudios.xpmb.XPMB_Main;
 
 @SuppressWarnings("deprecation")
-public class XPMBMenu extends XPMB_Layout {
+public class XPMBMenu extends XPMB_MainMenu {
 
 	private class XPMBMenuItem {
 		private String strID = null, strIcon = null;
@@ -216,6 +216,7 @@ public class XPMBMenu extends XPMB_Layout {
 	private XPMB_Activity mRoot = null;
 	private XmlResourceParser xrpRes = null;
 	private LinearLayout tlRoot = null;
+	private boolean firstBackPress = false;
 
 	public XPMBMenu(XmlResourceParser source, Handler messageBus, XPMB_Activity root) {
 		super(root, messageBus);
@@ -431,7 +432,42 @@ public class XPMBMenu extends XPMB_Layout {
 	}
 
 	@Override
-	public void moveRight() {
+	public void sendKeyUp(int keyCode) {
+		switch (keyCode) {
+		case XPMB_Main.KEYCODE_LEFT:
+			firstBackPress = false;
+			moveLeft();
+			break;
+		case XPMB_Main.KEYCODE_RIGHT:
+			firstBackPress = false;
+			moveRight();
+			break;
+		case XPMB_Main.KEYCODE_UP:
+			firstBackPress = false;
+			moveUp();
+			break;
+		case XPMB_Main.KEYCODE_DOWN:
+			firstBackPress = false;
+			moveDown();
+			break;
+		case XPMB_Main.KEYCODE_CROSS:
+			firstBackPress = false;
+			execSelectedItem();
+			break;
+		case XPMB_Main.KEYCODE_CIRCLE:
+			if (!firstBackPress) {
+				firstBackPress = true;
+				Toast tst = Toast.makeText(mRoot.getWindow().getContext(),
+						mRoot.getString(R.string.strBackKeyHint), Toast.LENGTH_SHORT);
+				tst.show();
+			} else {
+				mRoot.requestActivityEnd();
+			}
+			break;
+		}
+	}
+
+	private void moveRight() {
 		if (cMenuItem == (alItems.size() - 1)) {
 			return;
 		}
@@ -474,8 +510,7 @@ public class XPMBMenu extends XPMB_Layout {
 		++cMenuItem;
 	}
 
-	@Override
-	public void moveLeft() {
+	private void moveLeft() {
 		if (cMenuItem == 0) {
 			return;
 		}
@@ -517,8 +552,7 @@ public class XPMBMenu extends XPMB_Layout {
 		--cMenuItem;
 	}
 
-	@Override
-	public void moveDown() {
+	private void moveDown() {
 		if (alItems.get(cMenuItem).getSelectedSubitem() == (alItems.get(cMenuItem).getNumSubItems() - 1)) {
 			return;
 		}
@@ -579,8 +613,7 @@ public class XPMBMenu extends XPMB_Layout {
 		alItems.get(cMenuItem).setSelectedSubItem(alItems.get(cMenuItem).getSelectedSubitem() + 1);
 	}
 
-	@Override
-	public void moveUp() {
+	private void moveUp() {
 		if (alItems.get(cMenuItem).getSelectedSubitem() == 0) {
 			return;
 		}
@@ -641,8 +674,7 @@ public class XPMBMenu extends XPMB_Layout {
 		alItems.get(cMenuItem).setSelectedSubItem(alItems.get(cMenuItem).getSelectedSubitem() - 1);
 	}
 
-	@Override
-	public void execSelectedItem() {
+	private void execSelectedItem() {
 		final XPMBMenuSubitem selItem = alItems.get(cMenuItem).getSubItem(
 				alItems.get(cMenuItem).getSelectedSubitem());
 		switch (selItem.getType()) {
@@ -752,9 +784,7 @@ public class XPMBMenu extends XPMB_Layout {
 
 	@Override
 	public void doCleanup(ViewGroup base) {
-		for (XPMBMenuItem xmi : alItems) {
-			base.removeView(xmi.getChildContainer());
-		}
+		tlRoot.removeAllViews();
 		base.removeView(tlRoot);
 	}
 }

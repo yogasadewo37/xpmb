@@ -53,6 +53,7 @@ import com.raddstudios.xpmb.utils.XPMBSubmenu_MUSIC;
 import com.raddstudios.xpmb.utils.XPMBSubmenu_NES;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
+import com.raddstudios.xpmb.utils.XPMB_MainMenu;
 
 public class XPMB_Main extends XPMB_Activity {
 
@@ -63,10 +64,10 @@ public class XPMB_Main extends XPMB_Activity {
 			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLOUME_DOWN = 25,
 			KEYCODE_VOLUME_UP = 24;
 
-	private XPMB_Layout mMenu = null, mSub = null;
+	private XPMB_MainMenu mMenu = null;
+	private XPMB_Layout mSub = null;
 	private Handler hMessageBus = null;
-	private boolean firstBackPress = false, showingSubmenu = false, bLockedKeys = false,
-			firstInitDone = false;
+	private boolean showingSubmenu = false, bLockedKeys = false, firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 
 	@Override
@@ -180,74 +181,25 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-		switch (keyCode) {
-		case KEYCODE_LEFT:
-			firstBackPress = false;
-			if (showingSubmenu) {
-				mSub.moveLeft();
-				break;
-			}
-			mMenu.moveLeft();
-			break;
-		case KEYCODE_RIGHT:
-			firstBackPress = false;
-			if (showingSubmenu) {
-				mSub.moveRight();
-				break;
-			}
-			mMenu.moveRight();
-			break;
-		case KEYCODE_UP:
-			firstBackPress = false;
-			if (showingSubmenu) {
-				mSub.moveUp();
-				break;
-			}
-			mMenu.moveUp();
-			break;
-		case KEYCODE_DOWN:
-			firstBackPress = false;
-			if (showingSubmenu) {
-				mSub.moveDown();
-				break;
-			}
-			mMenu.moveDown();
-			break;
-		case KEYCODE_TRIANGLE:
-			firstBackPress = false;
-			showLoadingAnim(true);
-			break;
-		case KEYCODE_SQUARE:
-			firstBackPress = false;
-			showLoadingAnim(false);
-			break;
-		case KEYCODE_CROSS:
-			firstBackPress = false;
-			if (showingSubmenu) {
-				mSub.execSelectedItem();
-				break;
-			}
-			mMenu.execSelectedItem();
-			break;
-		case KEYCODE_CIRCLE:
-			if (showingSubmenu) {
-				requestUnloadSubmenu();
-				break;
-			}
-			if (!firstBackPress) {
-				firstBackPress = true;
-				Toast tst = Toast.makeText(getWindow().getContext(),
-						getString(R.string.strBackKeyHint), Toast.LENGTH_SHORT);
-				tst.show();
-			} else {
-				finish();
-			}
-			break;
-		default:
-			firstBackPress = false;
-			break;
+		if (showingSubmenu) {
+			mSub.sendKeyUp(keyCode);
+		} else {
+			mMenu.sendKeyUp(keyCode);
 		}
 		return true;
+	}
+
+	@Override
+	public void requestActivityEnd() {
+		if (mSub != null) {
+			mSub.doCleanup((ViewGroup) findViewById(R.id.main_l));
+			mSub.requestDestroy();
+		}
+		if (mMenu != null) {
+			mMenu.doCleanup((ViewGroup) findViewById(R.id.main_l));
+			mMenu.requestDestroy();
+		}
+		finish();
 	}
 
 	@Override

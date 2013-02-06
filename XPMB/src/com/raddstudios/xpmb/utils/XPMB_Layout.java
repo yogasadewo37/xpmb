@@ -21,35 +21,28 @@ public class XPMB_Layout {
 	public void parseInitLayout(ViewGroup base) {
 	}
 
-	public void moveDown() {
+	public void sendKeyDown(int keyCode) {
+
 	}
 
-	public void moveUp() {
-	}
+	public void sendKeyUp(int keyCode) {
 
-	public void moveLeft() {
-	}
-
-	public void moveRight() {
-	}
-
-	public void execSelectedItem() {
 	}
 
 	public int pxFromDip(int dip) {
-		return (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip,
-				mRoot.getResources().getDisplayMetrics());
-	}
-	
-	public void postExecuteFinished(){
-		
+		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip, mRoot
+				.getResources().getDisplayMetrics());
 	}
 
 	public void doCleanup(ViewGroup base) {
+		
+	}
+
+	public void requestDestroy() {
 
 	}
-	
-	protected int getNextID(){
+
+	protected int getNextID() {
 		cID++;
 		return cID;
 	}
