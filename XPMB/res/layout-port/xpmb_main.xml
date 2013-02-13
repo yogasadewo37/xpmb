@@ -13,7 +13,6 @@
         android:layout_height="fill_parent"
         android:layout_x="0dp"
         android:layout_y="0dp"
-        android:alpha="0.0"
         android:scaleType="fitXY"
         tools:ignore="ContentDescription" />
 
@@ -23,6 +22,7 @@
         android:layout_height="32dp"
         android:layout_x="285dp"
         android:layout_y="530dp"
+        android:scaleType="fitXY"
         android:visibility="invisible"
         tools:ignore="ContentDescription" />
 
@@ -56,7 +56,6 @@
         android:layout_height="24dp"
         android:layout_x="4dp"
         android:layout_y="141dp"
-        android:alpha="0.0"
         android:src="@drawable/ui_xmb_back"
         tools:ignore="ContentDescription" />
 

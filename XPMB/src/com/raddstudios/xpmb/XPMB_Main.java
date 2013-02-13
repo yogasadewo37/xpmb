@@ -32,7 +32,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.BatteryManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -54,6 +53,7 @@ import com.raddstudios.xpmb.utils.XPMBSubmenu_NES;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.XPMB_MainMenu;
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 public class XPMB_Main extends XPMB_Activity {
 
@@ -90,12 +90,9 @@ public class XPMB_Main extends XPMB_Activity {
 			super.onCreate(savedInstanceState);
 			return;
 		}
-
-		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD) {
-			requestWindowFeature(Window.FEATURE_NO_TITLE);
-			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-					WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		}
+		
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.xpmb_main);
@@ -118,12 +115,17 @@ public class XPMB_Main extends XPMB_Activity {
 
 		}, 0, 10000);
 
-		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus, this);
+		if (firstInitDone && mMenu != null) {
+			return;
+		}
+		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus,
+				(ViewGroup) findViewById(R.id.main_l), this);
 
 		super.onCreate(savedInstanceState);
 	}
 
 	private boolean checkForSupportedDevice() {
+		// return true;
 		return new File("/system/framework/xperiaplaycertified.jar").exists();
 	}
 
@@ -131,10 +133,11 @@ public class XPMB_Main extends XPMB_Activity {
 
 		bmAnim = new AnimationDrawable();
 		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(), R.drawable.ui_loading);
-		for (int dp = 0; (dp * 128) < drwAnimSrc.getWidth(); dp++) {
+		int bmSizeX = drwAnimSrc.getWidth(), bmSizeY = drwAnimSrc.getHeight(), bmFrameSzx = bmSizeX / 18;
+		for (int dp = 0; (dp * bmFrameSzx) < bmSizeX; dp++) {
 			bmAnim.addFrame(
-					new BitmapDrawable(getResources(), Bitmap.createBitmap(drwAnimSrc, dp * 128, 0,
-							128, 128)), 50);
+					new BitmapDrawable(getResources(), Bitmap.createBitmap(drwAnimSrc, dp
+							* bmFrameSzx, 0, bmFrameSzx, bmSizeY)), 50);
 		}
 
 		bmAnim.setOneShot(false);
@@ -146,7 +149,7 @@ public class XPMB_Main extends XPMB_Activity {
 	public void onResume() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
-		if (!firstInitDone) {
+		if (!firstInitDone && mMenu != null) {
 			showLoadingAnim(true);
 			new Thread(new Runnable() {
 
@@ -157,7 +160,7 @@ public class XPMB_Main extends XPMB_Activity {
 
 						@Override
 						public void run() {
-							mMenu.parseInitLayout((ViewGroup) findViewById(R.id.main_l));
+							mMenu.parseInitLayout();
 							showLoadingAnim(false);
 							firstInitDone = true;
 						}
@@ -192,11 +195,11 @@ public class XPMB_Main extends XPMB_Activity {
 	@Override
 	public void requestActivityEnd() {
 		if (mSub != null) {
-			mSub.doCleanup((ViewGroup) findViewById(R.id.main_l));
+			mSub.doCleanup();
 			mSub.requestDestroy();
 		}
 		if (mMenu != null) {
-			mMenu.doCleanup((ViewGroup) findViewById(R.id.main_l));
+			mMenu.doCleanup();
 			mMenu.requestDestroy();
 		}
 		finish();
@@ -205,7 +208,9 @@ public class XPMB_Main extends XPMB_Activity {
 	@Override
 	public void onDestroy() {
 		requestUnloadSubmenu();
-		mMenu.doCleanup((ViewGroup) findViewById(R.id.main_l));
+		if (mMenu != null) {
+			mMenu.doCleanup();
+		}
 		super.onDestroy();
 	}
 
@@ -219,8 +224,8 @@ public class XPMB_Main extends XPMB_Activity {
 	}
 
 	@Override
-	public ImageView getCustomBGView() {
-		return (ImageView) findViewById(R.id.ivCustomBG);
+	public XPMB_ImageView getCustomBGView() {
+		return (XPMB_ImageView) findViewById(R.id.ivCustomBG);
 	}
 
 	@Override
@@ -246,7 +251,7 @@ public class XPMB_Main extends XPMB_Activity {
 	public void preloadSubmenu(String submenu) {
 		if (!showingSubmenu) {
 			if (submenu.equals("XPMB_Submenu_APP")) {
-				mSub = new XPMBSubmenu_APP(this, hMessageBus);
+				mSub = new XPMBSubmenu_APP(this, hMessageBus, (ViewGroup) findViewById(R.id.main_l));
 			} else if (submenu.equals("XPMB_Submenu_GBA")) {
 				boolean mExternalStorageAvailable = false;
 				boolean mExternalStorageWriteable = false;
@@ -262,8 +267,9 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_GBA(this, hMessageBus, new File(
-							Environment.getExternalStorageDirectory(), "GBA"));
+					mSub = new XPMBSubmenu_GBA(this, hMessageBus,
+							(ViewGroup) findViewById(R.id.main_l), new File(
+									Environment.getExternalStorageDirectory(), "GBA"));
 				}
 			} else if (submenu.equals("XPMB_Submenu_NES")) {
 				boolean mExternalStorageAvailable = false;
@@ -280,8 +286,9 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_NES(this, hMessageBus, new File(
-							Environment.getExternalStorageDirectory(), "NES"));
+					mSub = new XPMBSubmenu_NES(this, hMessageBus,
+							(ViewGroup) findViewById(R.id.main_l), new File(
+									Environment.getExternalStorageDirectory(), "NES"));
 				}
 
 			} else if (submenu.equals("XPMB_Submenu_MUSIC")) {
@@ -299,7 +306,8 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_MUSIC(this, hMessageBus);
+					mSub = new XPMBSubmenu_MUSIC(this, hMessageBus,
+							(ViewGroup) findViewById(R.id.main_l));
 				}
 
 			}
@@ -320,7 +328,7 @@ public class XPMB_Main extends XPMB_Activity {
 
 						@Override
 						public void run() {
-							mSub.parseInitLayout((ViewGroup) findViewById(R.id.main_l));
+							mSub.parseInitLayout();
 							showLoadingAnim(false);
 							showingSubmenu = true;
 							lockKeys(false);
@@ -334,7 +342,7 @@ public class XPMB_Main extends XPMB_Activity {
 	}
 
 	private void unloadSubmenu() {
-		mSub.doCleanup((ViewGroup) findViewById(R.id.main_l));
+		mSub.doCleanup();
 	}
 
 	private void updateTimeLabel() {

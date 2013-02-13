@@ -24,41 +24,51 @@ import java.util.Collection;
 
 import org.xmlpull.v1.XmlPullParser;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Handler;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsoluteLayout;
-import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
+import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
+import com.raddstudios.xpmb.utils.backports.XPMB_LinearLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
+import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
+@SuppressLint("NewApi")
 @SuppressWarnings("deprecation")
 public class XPMBMenu extends XPMB_MainMenu {
 
 	private class XPMBMenuItem {
 		private String strID = null, strIcon = null;
 		private ArrayList<XPMBMenuSubitem> alSubitems = null;
-		private ImageView ivParentView = null;
-		private TextView tvParentLabel = null;
-		private RelativeLayout rlParentContainer = null;
-		private TableLayout tlChildContainer = null;
+		private XPMB_ImageView ivParentView = null;
+		private XPMB_TextView tvParentLabel = null;
+		// private XPMB_RelativeLayout rlParentContainer = null;
+		private XPMB_TableLayout tlChildContainer = null;
 		private int intCurSubitem = 0;
 
 		public XPMBMenuItem(String id) {
@@ -86,35 +96,35 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return alSubitems.get(index);
 		}
 
-		public void setParentView(ImageView parent) {
+		public void setParentView(XPMB_ImageView parent) {
 			ivParentView = parent;
 		}
 
-		public ImageView getParentView() {
+		public XPMB_ImageView getParentView() {
 			return ivParentView;
 		}
 
-		public void setParentLabel(TextView parent) {
+		public void setParentLabel(XPMB_TextView parent) {
 			tvParentLabel = parent;
 		}
 
-		public TextView getParentLabel() {
+		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
 
-		public void setParentContainer(RelativeLayout container) {
-			rlParentContainer = container;
-		}
+		// public void setParentContainer(XPMB_RelativeLayout container) {
+		// rlParentContainer = container;
+		// }
 
-		public RelativeLayout getParentContainer() {
-			return rlParentContainer;
-		}
+		// public XPMB_RelativeLayout getParentContainer() {
+		// return rlParentContainer;
+		// }
 
-		public void setChildContainer(TableLayout container) {
+		public void setChildContainer(XPMB_TableLayout container) {
 			tlChildContainer = container;
 		}
 
-		public TableLayout getChildContainer() {
+		public XPMB_TableLayout getChildContainer() {
 			return tlChildContainer;
 		}
 
@@ -144,9 +154,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 		private int intType = TYPE_DUMMY;
 		private String strID = null, strExecString = null, strIcon = null, strSubmenu;
-		private ImageView ivParentView = null;
-		private TextView tvParentLabel = null;
-		private TableRow trParentContainer = null;
+		private XPMB_ImageView ivParentView = null;
+		private XPMB_TextView tvParentLabel = null;
+		private XPMB_TableRow trParentContainer = null;
 
 		public XPMBMenuSubitem(String id, int type) {
 			intType = type;
@@ -185,46 +195,44 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return strIcon;
 		}
 
-		public void setParentView(ImageView parent) {
+		public void setParentView(XPMB_ImageView parent) {
 			ivParentView = parent;
 		}
 
-		public ImageView getParentView() {
+		public XPMB_ImageView getParentView() {
 			return ivParentView;
 		}
 
-		public void setParentLabel(TextView label) {
+		public void setParentLabel(XPMB_TextView label) {
 			tvParentLabel = label;
 		}
 
-		public TextView getParentLabel() {
+		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
 
-		public void setParentContainer(TableRow parent) {
+		public void setParentContainer(XPMB_TableRow parent) {
 			trParentContainer = parent;
 		}
 
-		public TableRow getParentContainer() {
+		public XPMB_TableRow getParentContainer() {
 			return trParentContainer;
 		}
 	}
 
-	private Handler hMBus = null;
 	private ArrayList<XPMBMenuItem> alItems = null;
 	private int cMenuItem = 0;
-	private XPMB_Activity mRoot = null;
 	private XmlResourceParser xrpRes = null;
-	private LinearLayout tlRoot = null;
+	private XPMB_LinearLayout tlRoot = null;
 	private boolean firstBackPress = false;
 
-	public XPMBMenu(XmlResourceParser source, Handler messageBus, XPMB_Activity root) {
-		super(root, messageBus);
-		hMBus = messageBus;
-		mRoot = root;
+	public XPMBMenu(XmlResourceParser source, Handler messageBus, ViewGroup rootView,
+			XPMB_Activity root) {
+		super(root, messageBus, rootView);
 		xrpRes = source;
 	}
 
+	@Override
 	public void doInit() {
 
 		try {
@@ -300,9 +308,99 @@ public class XPMBMenu extends XPMB_MainMenu {
 		return XPMBMenuSubitem.TYPE_DUMMY;
 	}
 
-	public void parseInitLayout(ViewGroup base) {
+	private float motStX = 0;
+	private long downTime = 0;
+	private boolean isMoving = false;
+	private OnTouchListener mTouchMenuListener = new OnTouchListener() {
 
-		tlRoot = new LinearLayout(base.getContext());
+		@Override
+		public boolean onTouch(View arg0, MotionEvent arg1) {
+			int action = arg1.getActionMasked();
+			int pointerIndex = arg1.getActionIndex();
+			int pointerId = arg1.getPointerId(pointerIndex);
+			if (pointerId != 0) {
+				return true;
+			}
+
+			switch (action) {
+			case MotionEvent.ACTION_DOWN:
+				downTime = arg1.getEventTime();
+				doCenterOnMenuItemPre();
+				break;
+			case MotionEvent.ACTION_MOVE:
+				if (!isMoving && (arg1.getEventTime() - downTime) > 100) {
+					motStX = arg1.getX(pointerId) * arg1.getXPrecision();
+					isMoving = true;
+					break;
+				}
+				if (isMoving) {
+					float nX = (motStX + (arg1.getX(pointerId) * arg1.getXPrecision()));
+					tlRoot.setX((tlRoot.getX() + nX) - pxFromDip(90));
+					for (XPMBMenuItem xmi : alItems) {
+						float nIX = xmi.getChildContainer().getX();
+						xmi.getChildContainer().setX((int) ((nIX + nX) - pxFromDip(90)));
+					}
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				centerOnNearesMenutItem();
+				doCenterOnMenuItemPos();
+				motStX = 0;
+				isMoving = false;
+				break;
+			}
+			return true;
+		}
+	};
+
+	private void doCenterOnMenuItemPre() {
+		XPMBMenuItem xmi = alItems.get(cMenuItem);
+
+		xmi.getParentView().setScaleX(0.7f);
+		xmi.getParentView().setScaleY(0.7f);
+		xmi.getParentLabel().setAlpha(0.0f);
+		xmi.getChildContainer().setAlpha(0.0f);
+	}
+
+	private void doCenterOnMenuItemPos() {
+		XPMBMenuItem xmi = alItems.get(cMenuItem);
+
+		ObjectAnimator ao_mi_scx = ObjectAnimator.ofFloat(xmi.getParentView(), "ScaleX", 1.0f);
+		ObjectAnimator ao_mi_scy = ObjectAnimator.ofFloat(xmi.getParentView(), "ScaleY", 1.0f);
+		ObjectAnimator ao_mi_la = ObjectAnimator.ofFloat(xmi.getParentLabel(), "Alpha", 1.0f);
+		ObjectAnimator ao_mi_cc = ObjectAnimator.ofFloat(xmi.getChildContainer(), "Alpha", 1.0f);
+		AnimatorSet as_mi_comip = new AnimatorSet();
+		as_mi_comip.playTogether(ao_mi_scx, ao_mi_scy, ao_mi_la, ao_mi_cc);
+		as_mi_comip.setDuration(250);
+		as_mi_comip.start();
+	}
+
+	private void centerOnNearesMenutItem() {
+		float cPosX = tlRoot.getX();
+		int destItem = ((int) (pxFromDip(56) - cPosX) / pxFromDip(90)) + 1;
+		if (destItem < 0) {
+			destItem = 0;
+		} else if (destItem > (alItems.size() - 1)) {
+			destItem = (alItems.size() - 1);
+		}
+		centerOnMenuItem(destItem);
+
+	}
+
+	private void centerOnMenuItem(int index) {
+
+		float cPosX = tlRoot.getX();
+		float destPos = pxFromDip(56) - (pxFromDip(90) * index);
+
+		ObjectAnimator.ofFloat(tlRoot, "X", cPosX, destPos).setDuration(250).start();
+
+		cMenuItem = index;
+	}
+
+	@Override
+	public void parseInitLayout() {
+
+		tlRoot = new XPMB_LinearLayout(getRootView().getContext());
 		tlRoot.setOrientation(LinearLayout.HORIZONTAL);
 		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(
 				pxFromDip(90 * alItems.size()), pxFromDip(80), pxFromDip(56), pxFromDip(48));
@@ -311,32 +409,32 @@ public class XPMBMenu extends XPMB_MainMenu {
 		for (XPMBMenuItem xmi : alItems) {
 			int idx = alItems.indexOf(xmi);
 
-			RelativeLayout cCont = new RelativeLayout(base.getContext());
-			ImageView cIcon = new ImageView(base.getContext());
-			TextView cLabel = new TextView(base.getContext());
+			XPMB_RelativeLayout cCont = new XPMB_RelativeLayout(getRootView().getContext());
+			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
+			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
 			cIcon.setId(getNextID());
 			cLabel.setId(getNextID());
 			cCont.setId(getNextID());
 
 			// Setup Item Container
-			LayoutParams cContP = new LayoutParams(pxFromDip(80), pxFromDip(80));
+			LinearLayout.LayoutParams cContP = new LinearLayout.LayoutParams(pxFromDip(80), pxFromDip(80));
 			cCont.setLayoutParams(cContP);
 
 			// Setup Item Icon
 			RelativeLayout.LayoutParams cIconP = new RelativeLayout.LayoutParams(pxFromDip(80),
 					pxFromDip(80));
 			cIconP.addRule(RelativeLayout.CENTER_HORIZONTAL | RelativeLayout.ALIGN_PARENT_BOTTOM);
-			cIcon.setScaleType(ScaleType.CENTER_INSIDE);
+			cIcon.setLayoutParams(cIconP);
+			cIcon.setScaleGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
 			if (idx != 0) {
 				cIcon.setScaleX(0.7f);
 				cIcon.setScaleY(0.7f);
 			}
-			cIcon.setPivotX(pxFromDip(40));
-			cIcon.setPivotY(pxFromDip(80));
-			cIcon.setScaleType(ScaleType.CENTER_INSIDE);
-			cIcon.setImageDrawable(base.getResources().getDrawable(
-					base.getResources().getIdentifier("drawable/" + xmi.getIcon(), null,
-							base.getContext().getPackageName())));
+			cIcon.setImageDrawable(getRootView().getResources().getDrawable(
+					getRootView().getResources().getIdentifier("drawable/" + xmi.getIcon(), null,
+							getRootView().getContext().getPackageName())));
+			cIcon.setTag(idx);
+			cIcon.setOnTouchListener(mTouchMenuListener);
 
 			// Setup Item Label
 			RelativeLayout.LayoutParams cLabelP = new RelativeLayout.LayoutParams(pxFromDip(90),
@@ -345,28 +443,31 @@ public class XPMBMenu extends XPMB_MainMenu {
 			cLabel.setLayoutParams(cLabelP);
 			cLabel.setText(xmi.getID());
 			cLabel.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
-			cLabel.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
-			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
+			cLabel.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
+			cLabel.setShadowLayer(8, 0, 0, Color.WHITE);
 			if (idx > 0) {
 				cLabel.setAlpha(0.0f);
 			}
+			cLabel.setTag(idx);
+			cLabel.setOnTouchListener(mTouchMenuListener);
 
 			// Add everything to their holder classes and containers
 			cCont.addView(cIcon);
 			cCont.addView(cLabel);
 			xmi.setParentView(cIcon);
 			xmi.setParentLabel(cLabel);
-			xmi.setParentContainer(cCont);
+			// xmi.setParentContainer(cCont);
 			tlRoot.addView(cCont);
 
 			// Setup Subitems
 			if (xmi.getNumSubItems() != 0) {
-				TableLayout cSubCont = new TableLayout(base.getContext());
+				XPMB_TableLayout cSubCont = new XPMB_TableLayout(getRootView().getContext());
 
 				// Setup Subitems Root Container
 				AbsoluteLayout.LayoutParams cSubContP = new AbsoluteLayout.LayoutParams(
-						pxFromDip(416), pxFromDip(80 + (80 * xmi.getNumSubItems())),
-						pxFromDip(56 + (80 * idx)), pxFromDip(48));
+						pxFromDip(416), pxFromDip(80 + (80 * xmi.getNumSubItems())), pxFromDip(56),
+						pxFromDip(48));
 				cSubCont.setLayoutParams(cSubContP);
 				if (idx > 0) {
 					cSubCont.setAlpha(0.0f);
@@ -375,9 +476,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 				for (XPMBMenuSubitem xsi : xmi.getSubitems()) {
 					int idy = xmi.getIndexOf(xsi);
 
-					TableRow cSCont = new TableRow(base.getContext());
-					ImageView cSIcon = new ImageView(base.getContext());
-					TextView cSLabel = new TextView(base.getContext());
+					XPMB_TableRow cSCont = new XPMB_TableRow(getRootView().getContext());
+					XPMB_ImageView cSIcon = new XPMB_ImageView(getRootView().getContext());
+					XPMB_TextView cSLabel = new XPMB_TextView(getRootView().getContext());
 					cSIcon.setId(getNextID());
 					cSLabel.setId(getNextID());
 					cSCont.setId(getNextID());
@@ -395,9 +496,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 							(int) pxFromDip(80));
 					cSIconP.column = 0;
 					cSIcon.setLayoutParams(cSIconP);
-					cSIcon.setImageDrawable(base.getResources().getDrawable(
-							base.getResources().getIdentifier("drawable/" + xsi.getIcon(), null,
-									base.getContext().getPackageName())));
+					cSIcon.setImageDrawable(getRootView().getResources().getDrawable(
+							getRootView().getResources().getIdentifier("drawable/" + xsi.getIcon(),
+									null, getRootView().getContext().getPackageName())));
 
 					// Setup Subitem Label
 					TableRow.LayoutParams cSLabelP = new TableRow.LayoutParams(pxFromDip(320),
@@ -406,9 +507,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 					cSLabel.setLayoutParams(cSLabelP);
 					cSLabel.setText(xsi.getID());
 					cSLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-					cSLabel.setTextAppearance(base.getContext(),
+					cSLabel.setTextAppearance(getRootView().getContext(),
 							android.R.style.TextAppearance_Medium);
-					cSLabel.setShadowLayer(16, 0, 0, Color.WHITE);
+					cSLabel.setShadowLayer(8, 0, 0, Color.WHITE);
 					if (idx != 0 && idy > 0) {
 						cSLabel.setAlpha(0.0f);
 					} else if (idx == 0 && idy > 0) {
@@ -424,11 +525,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 					xsi.setParentContainer(cSCont);
 
 				}
-				base.addView(cSubCont);
+				getRootView().addView(cSubCont);
 				xmi.setChildContainer(cSubCont);
 			}
 		}
-		base.addView(tlRoot);
+		getRootView().addView(tlRoot);
 	}
 
 	@Override
@@ -457,11 +558,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 		case XPMB_Main.KEYCODE_CIRCLE:
 			if (!firstBackPress) {
 				firstBackPress = true;
-				Toast tst = Toast.makeText(mRoot.getWindow().getContext(),
-						mRoot.getString(R.string.strBackKeyHint), Toast.LENGTH_SHORT);
+				Toast tst = Toast.makeText(getRootActivity().getWindow().getContext(),
+						getRootActivity().getString(R.string.strBackKeyHint), Toast.LENGTH_SHORT);
 				tst.show();
 			} else {
-				mRoot.requestActivityEnd();
+				getRootActivity().requestActivityEnd();
 			}
 			break;
 		}
@@ -472,42 +573,47 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float initPosX = tlRoot.getX();
+		final int curItem = cMenuItem;
+		ValueAnimator va_mr = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mr.setInterpolator(new DecelerateInterpolator());
+		va_mr.addUpdateListener(new AnimatorUpdateListener() {
 
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() - pxFromDip(80)));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentView(), "ScaleY", 0.7f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentView(), "ScaleX", 0.7f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentLabel(), "Alpha", 0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "Alpha",
-				0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem + 1).getParentView(), "ScaleX",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem + 1).getParentView(), "ScaleY",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem + 1).getParentLabel(), "Alpha",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem + 1).getChildContainer(), "Alpha",
-				1.0f));
-		for (XPMBMenuItem xmi : alItems) {
-			alAnims.add(ObjectAnimator.ofFloat(xmi.getChildContainer(), "X", xmi
-					.getChildContainer().getX() - pxFromDip(80)));
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-		}
+				float pX = initPosX - (pxFromDip(80) * completion);
+				float scaleO = 1.0f - (0.2f * completion);
+				float alphaO = 1.0f - completion;
+				float scaleI = 0.7f + (0.2f * completion);
+				float alphaI = completion;
 
-		AnimatorSet ag_xmb_ml = new AnimatorSet();
-		ag_xmb_ml.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_ml.setDuration(150);
-		mRoot.lockKeys(true);
-		ag_xmb_ml.start();
-		hMBus.postDelayed(new Runnable() {
+
+				tlRoot.setX(pX);
+				alItems.get(curItem).getParentView().setScaleX(scaleO);
+				alItems.get(curItem).getParentView().setScaleY(scaleO);
+				alItems.get(curItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(curItem).getChildContainer().setAlpha(alphaO);
+				alItems.get(curItem + 1).getParentView().setScaleX(scaleI);
+				alItems.get(curItem + 1).getParentView().setScaleY(scaleI);
+				alItems.get(curItem + 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(curItem + 1).getChildContainer().setAlpha(alphaI);
+			}
+		});
+
+		va_mr.setDuration(550);
+		getRootActivity().lockKeys(true);
+		va_mr.start();
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
+				++cMenuItem;
 			}
 
-		}, 160);
-		++cMenuItem;
+		}, 560);
 	}
 
 	private void moveLeft() {
@@ -515,41 +621,46 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float initPosX = tlRoot.getX();
+		final int curItem = cMenuItem;
+		ValueAnimator va_mr = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mr.setInterpolator(new DecelerateInterpolator());
+		va_mr.addUpdateListener(new AnimatorUpdateListener() {
 
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() + pxFromDip(80)));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentView(), "ScaleY", 0.7f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentView(), "ScaleX", 0.7f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentLabel(), "Alpha", 0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "Alpha",
-				0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem - 1).getParentView(), "ScaleX",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem - 1).getParentView(), "ScaleY",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem - 1).getParentLabel(), "Alpha",
-				1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem - 1).getChildContainer(), "Alpha",
-				1.0f));
-		for (XPMBMenuItem xmi : alItems) {
-			alAnims.add(ObjectAnimator.ofFloat(xmi.getChildContainer(), "X", xmi
-					.getChildContainer().getX() + pxFromDip(80)));
-		}
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-		AnimatorSet ag_xmb_mr = new AnimatorSet();
-		ag_xmb_mr.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_mr.setDuration(150);
-		mRoot.lockKeys(true);
-		ag_xmb_mr.start();
-		hMBus.postDelayed(new Runnable() {
+				float pX = initPosX + (pxFromDip(80) * completion);
+				float scaleO = 1.0f - (0.2f * completion);
+				float alphaO = 1.0f - completion;
+				float scaleI = 0.7f + (0.2f * completion);
+				float alphaI = completion;
+
+				tlRoot.setX(pX);
+				alItems.get(curItem).getParentView().setScaleX(scaleO);
+				alItems.get(curItem).getParentView().setScaleY(scaleO);
+				alItems.get(curItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(curItem).getChildContainer().setAlpha(alphaO);
+				alItems.get(curItem - 1).getParentView().setScaleX(scaleI);
+				alItems.get(curItem - 1).getParentView().setScaleY(scaleI);
+				alItems.get(curItem - 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(curItem - 1).getChildContainer().setAlpha(alphaI);
+			}
+		});
+
+		va_mr.setDuration(550);
+		getRootActivity().lockKeys(true);
+		va_mr.start();
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
+				--cMenuItem;
 			}
 
-		}, 160);
-		--cMenuItem;
+		}, 560);
 	}
 
 	private void moveDown() {
@@ -599,13 +710,13 @@ public class XPMBMenu extends XPMB_MainMenu {
 		AnimatorSet ag_xmb_mu = new AnimatorSet();
 		ag_xmb_mu.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_mu.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		ag_xmb_mu.start();
-		hMBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -660,13 +771,13 @@ public class XPMBMenu extends XPMB_MainMenu {
 		AnimatorSet ag_xmb_md = new AnimatorSet();
 		ag_xmb_md.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_md.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		ag_xmb_md.start();
-		hMBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -681,15 +792,15 @@ public class XPMBMenu extends XPMB_MainMenu {
 		case XPMBMenuSubitem.TYPE_EXEC:
 			Intent int_ex = new Intent("android.intent.action.MAIN");
 			int_ex.setComponent(ComponentName.unflattenFromString(selItem.getExecString()));
-			mRoot.startActivity(int_ex);
+			getRootActivity().startActivity(int_ex);
 			break;
 		case XPMBMenuSubitem.TYPE_SUBMENU:
 			doPreExecute();
-			hMBus.postDelayed(new Runnable() {
+			getMessageBus().postDelayed(new Runnable() {
 
 				@Override
 				public void run() {
-					mRoot.preloadSubmenu(selItem.getSubmenu());
+					getRootActivity().preloadSubmenu(selItem.getSubmenu());
 				}
 
 			}, 160);
@@ -700,7 +811,8 @@ public class XPMBMenu extends XPMB_MainMenu {
 	private void doPreExecute() {
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
 
-		alAnims.add(ObjectAnimator.ofFloat(mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 1.0f));
+		alAnims.add(ObjectAnimator.ofFloat(getRootActivity().findViewById(R.id.ivSubmenuShown),
+				"Alpha", 1.0f));
 		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() - pxFromDip(96)));
 		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "X", alItems
 				.get(cMenuItem).getChildContainer().getX()
@@ -738,7 +850,8 @@ public class XPMBMenu extends XPMB_MainMenu {
 	public void postExecuteFinished() {
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
 
-		alAnims.add(ObjectAnimator.ofFloat(mRoot.findViewById(R.id.ivSubmenuShown), "Alpha", 0.0f));
+		alAnims.add(ObjectAnimator.ofFloat(getRootActivity().findViewById(R.id.ivSubmenuShown),
+				"Alpha", 0.0f));
 		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() + pxFromDip(96)));
 		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "X", alItems
 				.get(cMenuItem).getChildContainer().getX()
@@ -769,22 +882,22 @@ public class XPMBMenu extends XPMB_MainMenu {
 		AnimatorSet as_ef_p = new AnimatorSet();
 		as_ef_p.playTogether((Collection<Animator>) alAnims);
 		as_ef_p.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		as_ef_p.start();
 
-		hMBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
 	}
 
 	@Override
-	public void doCleanup(ViewGroup base) {
+	public void doCleanup() {
 		tlRoot.removeAllViews();
-		base.removeView(tlRoot);
+		getRootView().removeView(tlRoot);
 	}
 }

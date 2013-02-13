@@ -2,12 +2,12 @@
 <manifest xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.raddstudios.xpmb"
-    android:versionCode="1"
-    android:versionName="20130204" >
+    android:versionCode="235"
+    android:versionName="Crateria-0.5.235 (build 20130213+1422)" >
 
     <uses-sdk
-        android:minSdkVersion="15"
-        android:targetSdkVersion="15"
+        android:minSdkVersion="10"
+        android:targetSdkVersion="10"
         tools:ignore="OldTargetApi" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -17,15 +17,13 @@
     <application
         android:allowBackup="false"
         android:allowClearUserData="true"
-        android:hardwareAccelerated="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/mytransparent.windowNoTitle" >
+        android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" >
         <activity
             android:name="XPMB_Main"
             android:configChanges="orientation|keyboardHidden"
             android:excludeFromRecents="true"
-            android:hardwareAccelerated="true"
             android:label="@string/app_name"
             android:screenOrientation="sensor"
             tools:ignore="ExportedActivity" >

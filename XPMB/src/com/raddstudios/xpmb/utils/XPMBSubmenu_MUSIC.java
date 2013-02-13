@@ -25,10 +25,7 @@ import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -45,17 +42,23 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
-import android.widget.TableRow.LayoutParams;
-import android.widget.TextView;
 
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
+import com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
+import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
+@SuppressLint("NewApi")
 @SuppressWarnings("deprecation")
 public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
@@ -89,9 +92,9 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 		private File fTrackPath = null;
 		private XPMBSubmenuItem_MUSIC_Metadata xsimmMetadata = null;
-		private ImageView ivParentView = null;
-		private TextView tvParentLabel = null;
-		private TableRow trParentContainer = null;
+		private XPMB_ImageView ivParentView = null;
+		private XPMB_TextView tvParentLabel = null;
+		private XPMB_TableRow trParentContainer = null;
 
 		public XPMBSubmenuItem_MUSIC(File trackPath, XPMBSubmenuItem_MUSIC_Metadata trackInfo) {
 			fTrackPath = trackPath;
@@ -106,27 +109,27 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			return xsimmMetadata;
 		}
 
-		public void setParentView(ImageView parent) {
+		public void setParentView(XPMB_ImageView parent) {
 			ivParentView = parent;
 		}
 
-		public ImageView getParentView() {
+		public XPMB_ImageView getParentView() {
 			return ivParentView;
 		}
 
-		public void setParentLabel(TextView label) {
+		public void setParentLabel(XPMB_TextView label) {
 			tvParentLabel = label;
 		}
 
-		public TextView getParentLabel() {
+		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
 
-		public void setParentContainer(TableRow container) {
+		public void setParentContainer(XPMB_TableRow container) {
 			trParentContainer = container;
 		}
 
-		public TableRow getParentContainer() {
+		public XPMB_TableRow getParentContainer() {
 			return trParentContainer;
 		}
 	}
@@ -135,22 +138,19 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			PLAYER_STATUS_PLAYING = 2;
 
 	private ArrayList<XPMBSubmenuItem_MUSIC> alItems = null;
-	private XPMB_Activity mRoot = null;
-	Handler hMessageBus = null;
 	private int intSelItem = 0, intLastPlayed = -1, intPlayerStatus = PLAYER_STATUS_STOPPED;
-	private TextView tv_no_music = null;
+
+	private XPMB_TextView tv_no_music = null;
 	private MediaPlayer mpPlayer = null;
 	private View vwPlayerControlsRoot = null;
-	private RelativeLayout rlPlayerControls = null;
-	private TextView tvCurPos = null, tvTotalLen = null;
-	private ImageView ivPlayStatus = null;
+	private XPMB_RelativeLayout rlPlayerControls = null;
+	private XPMB_TextView tvCurPos = null, tvTotalLen = null;
+	private XPMB_ImageView ivPlayStatus = null;
 	private ProgressBar pbTrackPos = null;
-	private TableLayout tlRoot = null;
+	private XPMB_TableLayout tlRoot = null;
 
-	public XPMBSubmenu_MUSIC(XPMB_Activity root, Handler messageBus) {
-		super(root, messageBus);
-		mRoot = root;
-		hMessageBus = messageBus;
+	public XPMBSubmenu_MUSIC(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+		super(root, messageBus, rootView);
 
 		alItems = new ArrayList<XPMBSubmenuItem_MUSIC>();
 
@@ -158,7 +158,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 			@Override
 			public void run() {
-				hMessageBus.post(new Runnable() {
+				getMessageBus().post(new Runnable() {
 
 					@Override
 					public void run() {
@@ -177,7 +177,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			}
 		}, 0, 100);
 
-		MediaPlayer mpTemp = (MediaPlayer) mRoot.getObjectFromStore("playerObj");
+		MediaPlayer mpTemp = (MediaPlayer) getRootActivity().getObjectFromStore("playerObj");
 		if (mpTemp != null) {
 			mpPlayer = mpTemp;
 		}
@@ -188,8 +188,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		String[] projection = new String[] { MediaStore.MediaColumns.DATA,
 				MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
 				MediaStore.Audio.Media.ALBUM };
-		Cursor mCur = mRoot.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-				projection, null, null, null);
+		Cursor mCur = getRootActivity().getContentResolver().query(
+				MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, null, null, null);
 		mCur.moveToFirst();
 
 		while (mCur.isAfterLast() == false) {
@@ -221,34 +221,31 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 			switch (action) {
 			case MotionEvent.ACTION_DOWN:
-				if (!isMoving) {
-					downTime = arg1.getEventTime();
-					doCenterOnItemPre();
-					motStY = arg1.getY(pointerId) * arg1.getYPrecision();
-					isMoving = true;
-				}
+				downTime = arg1.getEventTime();
+				doCenterOnItemPre();
 				break;
 			case MotionEvent.ACTION_MOVE:
-				if (isMoving) {
-					float nY = (motStY + (arg1.getY(pointerId) * arg1.getYPrecision()));
-					tlRoot.setY((tlRoot.getY() + nY) - pxFromDip(60));
-				}
-				break;
-			case MotionEvent.ACTION_UP:
-				if ((arg1.getEventTime() - downTime) < 250) {
-					execCustItem((Integer) arg0.getTag());
-					centerOnItem((Integer) arg0.getTag());
-					doCenterOnItemPos();
-					motStY = 0;
-					isMoving = false;
+				if (!isMoving && (arg1.getEventTime() - downTime) > 100) {
+					motStY = arg1.getY(pointerId);
+					isMoving = true;
 					break;
 				}
 				if (isMoving) {
+					float nY = (motStY + arg1.getY(pointerId));
+					tlRoot.setY((int) (tlRoot.getY() + (nY - pxFromDip(76))));
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				if ((arg1.getEventTime() - downTime) < 100) {
+					execCustItem((Integer) arg0.getTag());
+					centerOnItem((Integer) arg0.getTag());
+					doCenterOnItemPos();
+				} else {
 					centerOnNearestItem();
 					doCenterOnItemPos();
-					motStY = 0;
-					isMoving = false;
 				}
+				motStY = 0;
+				isMoving = false;
 				break;
 			}
 			return true;
@@ -256,29 +253,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	};
 
 	private void doCenterOnItemPre() {
-		final int intAnimItem = intSelItem;
-		ValueAnimator va_ci_bm = ValueAnimator.ofInt(pxFromDip(16), 0);
-		va_ci_bm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_MUSIC cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		va_ci_bm.setDuration(100);
-		ObjectAnimator.ofFloat(alItems.get(intSelItem).getParentLabel(), "Alpha", 0.5f)
-				.setDuration(100).start();
-		va_ci_bm.start();
+		XPMBSubmenuItem_MUSIC cSub = alItems.get(intSelItem);
+		TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub.getParentContainer()
+				.getLayoutParams();
+		cItemP.topMargin = 0;
+		cItemP.bottomMargin = 0;
+		cSub.getParentContainer().setLayoutParams(cItemP);
+		cSub.getParentLabel().setAlpha(0.5f);
 	}
 
 	private void doCenterOnItemPos() {
@@ -288,16 +269,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			@Override
 			public void onAnimationUpdate(ValueAnimator animation) {
 				XPMBSubmenuItem_MUSIC cSub = alItems.get(intSelItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub
+						.getParentContainer().getLayoutParams();
+				cItemP.topMargin = (Integer) animation.getAnimatedValue();
+				cItemP.bottomMargin = (Integer) animation.getAnimatedValue();
+				cSub.getParentContainer().setLayoutParams(cItemP);
 			}
 		});
 		va_ci_bm.setDuration(100);
@@ -321,7 +297,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	private void centerOnItem(int index) {
 
 		float cPosY = tlRoot.getY();
-		float destPos = pxFromDip(122) - (pxFromDip(60) * index);
+		int destPos = pxFromDip(122) - (pxFromDip(60) * index);
 
 		ObjectAnimator.ofFloat(tlRoot, "Y", cPosY, destPos).setDuration(250).start();
 
@@ -329,74 +305,72 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	@Override
-	public void parseInitLayout(ViewGroup base) {
+	public void parseInitLayout() {
 
 		if (alItems.size() == 0) {
-			tv_no_music = new TextView(base.getContext());
+			tv_no_music = new XPMB_TextView(getRootView().getContext());
 			AbsoluteLayout.LayoutParams lp_ng = new AbsoluteLayout.LayoutParams(
 					(int) pxFromDip(320), (int) pxFromDip(100), pxFromDip(48), pxFromDip(128));
 			tv_no_music.setLayoutParams(lp_ng);
-			tv_no_music.setText(mRoot.getText(R.string.strNoMusic));
+			tv_no_music.setText(getRootActivity().getText(R.string.strNoMusic));
 			tv_no_music.setTextColor(Color.WHITE);
 			tv_no_music.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_music.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			tv_no_music.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			tv_no_music.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-			base.addView(tv_no_music);
+			getRootView().addView(tv_no_music);
 			return;
 		}
 
-		vwPlayerControlsRoot = ((LayoutInflater) base.getContext().getSystemService(
-				Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.mediaplayer_control, base);
-		rlPlayerControls = (RelativeLayout) vwPlayerControlsRoot.findViewById(R.id.playerc_l);
-		tvCurPos = (TextView) vwPlayerControlsRoot.findViewById(R.id.tvCurPos);
-		tvTotalLen = (TextView) vwPlayerControlsRoot.findViewById(R.id.tvTotalLen);
+		vwPlayerControlsRoot = ((LayoutInflater) getRootView().getContext().getSystemService(
+				Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.mediaplayer_control,
+				getRootView());
+		rlPlayerControls = (XPMB_RelativeLayout) vwPlayerControlsRoot.findViewById(R.id.playerc_l);
+		tvCurPos = (XPMB_TextView) vwPlayerControlsRoot.findViewById(R.id.tvCurPos);
+		tvTotalLen = (XPMB_TextView) vwPlayerControlsRoot.findViewById(R.id.tvTotalLen);
 		pbTrackPos = (ProgressBar) vwPlayerControlsRoot.findViewById(R.id.pbCurPos);
-		ivPlayStatus = (ImageView) vwPlayerControlsRoot.findViewById(R.id.ivPlayStatus);
+		ivPlayStatus = (XPMB_ImageView) vwPlayerControlsRoot.findViewById(R.id.ivPlayStatus);
 
 		rlPlayerControls.setAlpha(0.0f);
 
-		tlRoot = new TableLayout(base.getContext());
+		tlRoot = new XPMB_TableLayout(getRootView().getContext());
 		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
 				pxFromDip(32 + (60 * alItems.size())), pxFromDip(48), pxFromDip(122));
 		tlRoot.setLayoutParams(rootP);
 
 		for (XPMBSubmenuItem_MUSIC xsi : alItems) {
-
-			TableRow cItem = new TableRow(base.getContext());
-			cItem.setId(getNextID());
-
 			int idy = alItems.indexOf(xsi);
-			ImageView cIcon = new ImageView(base.getContext());
-			TextView cLabel = new TextView(base.getContext());
+			XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
+			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
+			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
+			cItem.setId(getNextID());
 			cIcon.setId(getNextID());
 			cLabel.setId(getNextID());
+
+			// Setup Item Container
+			TableLayout.LayoutParams cItemParams = new TableLayout.LayoutParams(pxFromDip(396),
+					pxFromDip(60));
+			if (idy == 0) {
+				cItemParams.topMargin = pxFromDip(16);
+				cItemParams.bottomMargin = pxFromDip(16);
+			}
+			cItem.setLayoutParams(cItemParams);
 
 			// Setup Icon
 			// TODO load embedded or custom audio cover image
 			TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(60),
 					(int) pxFromDip(60));
-			if (idy == 0) {
-				cIconParams.topMargin = pxFromDip(16);
-				cIconParams.bottomMargin = pxFromDip(16);
-			}
 			cIconParams.column = 0;
 			cIcon.setLayoutParams(cIconParams);
 			cIcon.setTag(idy);
-			cIcon.setImageDrawable(base.getResources().getDrawable(
+			cIcon.setImageDrawable(getRootView().getResources().getDrawable(
 					R.drawable.ui_xmb_default_music_icon));
-			cIcon.setPivotX(0.0f);
-			cIcon.setPivotY(0.0f);
-			// cIcon.setOnClickListener(mClickListener);
 			cIcon.setOnTouchListener(mTouchListener);
 
 			// Setup Label
 			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
 					(int) pxFromDip(60));
 			cLabelParams.leftMargin = pxFromDip(16);
-			if (idy == 0) {
-				cLabelParams.topMargin = pxFromDip(16);
-				cLabelParams.bottomMargin = pxFromDip(16);
-			}
 			cLabelParams.column = 1;
 			cLabel.setLayoutParams(cLabelParams);
 			cLabel.setTag(idy);
@@ -404,7 +378,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 					+ xsi.getTrackMetadata().getTrackAuthor());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			if (idy != 0) {
 				cLabel.setAlpha(0.5f);
@@ -420,20 +395,20 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 			tlRoot.addView(cItem);
 		}
-		base.addView(tlRoot);
+		getRootView().addView(tlRoot);
 
-		if (mRoot.getObjectFromStore("playerStatus") != null) {
-			intPlayerStatus = (Integer) mRoot.getObjectFromStore("playerStatus");
+		if (getRootActivity().getObjectFromStore("playerStatus") != null) {
+			intPlayerStatus = (Integer) getRootActivity().getObjectFromStore("playerStatus");
 			switch (intPlayerStatus) {
 			case PLAYER_STATUS_PLAYING:
-				ivPlayStatus.setImageDrawable(mRoot.getResources().getDrawable(
+				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 						R.drawable.ui_status_media_play));
 				pbTrackPos.setMax(mpPlayer.getDuration());
 				tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
 				doShowPlayerControls(true);
 				break;
 			case PLAYER_STATUS_PAUSED:
-				ivPlayStatus.setImageDrawable(mRoot.getResources().getDrawable(
+				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 						R.drawable.ui_status_media_pause));
 				pbTrackPos.setMax(mpPlayer.getDuration());
 				tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
@@ -442,18 +417,14 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 				break;
 			}
 		}
-		if (mRoot.getObjectFromStore("selectionIndex") != null) {
-			TableRow.LayoutParams cIconP = (TableRow.LayoutParams) alItems.get(0).getParentView()
-					.getLayoutParams();
-			TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) alItems.get(0).getParentLabel()
-					.getLayoutParams();
-			cIconP.topMargin = 0;
-			cIconP.bottomMargin = 0;
-			cLabelP.topMargin = 0;
-			cLabelP.bottomMargin = 0;
-			alItems.get(0).getParentView().setLayoutParams(cIconP);
-			alItems.get(0).getParentLabel().setLayoutParams(cLabelP);
-			intSelItem = (Integer) mRoot.getObjectFromStore("selectionIndex");
+		if (getRootActivity().getObjectFromStore("selectionIndex") != null) {
+			TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) alItems.get(0)
+					.getParentContainer().getLayoutParams();
+			cItemP.topMargin = 0;
+			cItemP.bottomMargin = 0;
+			alItems.get(0).getParentView().setLayoutParams(cItemP);
+			alItems.get(0).getParentLabel().setAlpha(0.5f);
+			intSelItem = (Integer) getRootActivity().getObjectFromStore("selectionIndex");
 			intLastPlayed = intSelItem;
 			centerOnItem(intSelItem);
 			doCenterOnItemPos();
@@ -479,15 +450,19 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			execSelectedItem();
 			break;
 		case XPMB_Main.KEYCODE_CIRCLE:
-			mRoot.requestUnloadSubmenu();
+			getRootActivity().requestUnloadSubmenu();
 			break;
 		case XPMB_Main.KEYCODE_SHOULDER_LEFT:
-			execCustItem(intSelItem - 1);
-			moveUp();
+			doCenterOnItemPre();
+			execCustItem(intLastPlayed - 1);
+			centerOnItem(intLastPlayed);
+			doCenterOnItemPos();
 			break;
 		case XPMB_Main.KEYCODE_SHOULDER_RIGHT:
-			execCustItem(intSelItem + 1);
-			moveDown();
+			doCenterOnItemPre();
+			execCustItem(intLastPlayed + 1);
+			centerOnItem(intLastPlayed);
+			doCenterOnItemPos();
 			break;
 		}
 	}
@@ -499,7 +474,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			}
 			return;
 		}
-		mRoot.requestUnloadSubmenu();
+		getRootActivity().requestUnloadSubmenu();
 	}
 
 	private void moveRight() {
@@ -516,8 +491,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
 		final int intAnimItem = intSelItem;
+
 		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "Y", tlRoot.getY() - pxFromDip(60)));
 		ValueAnimator va_ci_bm = ValueAnimator.ofInt(pxFromDip(16), 0);
 		va_ci_bm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -525,16 +500,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			@Override
 			public void onAnimationUpdate(ValueAnimator animation) {
 				XPMBSubmenuItem_MUSIC cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub
+						.getParentContainer().getLayoutParams();
+				cItemP.topMargin = (Integer) animation.getAnimatedValue();
+				cItemP.bottomMargin = (Integer) animation.getAnimatedValue();
+				cSub.getParentContainer().setLayoutParams(cItemP);
 			}
 		});
 		ValueAnimator va_ni_bm = ValueAnimator.ofInt(0, pxFromDip(16));
@@ -543,16 +513,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			@Override
 			public void onAnimationUpdate(ValueAnimator animation) {
 				XPMBSubmenuItem_MUSIC cSub = alItems.get(intAnimItem + 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub
+						.getParentContainer().getLayoutParams();
+				cItemP.topMargin = (Integer) animation.getAnimatedValue();
+				cItemP.bottomMargin = (Integer) animation.getAnimatedValue();
+				cSub.getParentContainer().setLayoutParams(cItemP);
 			}
 		});
 
@@ -565,13 +530,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
 		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_mu.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		ag_xmb_sm_mu.start();
-		hMessageBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -584,8 +549,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		}
 
 		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
 		final int intAnimItem = intSelItem;
+
 		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "Y", tlRoot.getY() + pxFromDip(60)));
 		ValueAnimator va_ci_bm = ValueAnimator.ofInt(pxFromDip(16), 0);
 		va_ci_bm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -593,16 +558,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			@Override
 			public void onAnimationUpdate(ValueAnimator animation) {
 				XPMBSubmenuItem_MUSIC cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub
+						.getParentContainer().getLayoutParams();
+				cItemP.topMargin = (Integer) animation.getAnimatedValue();
+				cItemP.bottomMargin = (Integer) animation.getAnimatedValue();
+				cSub.getParentContainer().setLayoutParams(cItemP);
 			}
 		});
 		ValueAnimator va_ni_bm = ValueAnimator.ofInt(0, pxFromDip(16));
@@ -611,16 +571,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			@Override
 			public void onAnimationUpdate(ValueAnimator animation) {
 				XPMBSubmenuItem_MUSIC cSub = alItems.get(intAnimItem - 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				TableLayout.LayoutParams cItemP = (TableLayout.LayoutParams) cSub
+						.getParentContainer().getLayoutParams();
+				cItemP.topMargin = (Integer) animation.getAnimatedValue();
+				cItemP.bottomMargin = (Integer) animation.getAnimatedValue();
+				cSub.getParentContainer().setLayoutParams(cItemP);
 			}
 		});
 
@@ -633,13 +588,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
 		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_md.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		ag_xmb_sm_md.start();
-		hMessageBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -660,13 +615,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			if (index == intLastPlayed) {
 				if (mpPlayer.isPlaying()) {
 					intPlayerStatus = PLAYER_STATUS_PAUSED;
-					ivPlayStatus.setImageDrawable(mRoot.getResources().getDrawable(
+					ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 							R.drawable.ui_status_media_pause));
 					mpPlayer.pause();
 					doShowPlayerControls(false);
 				} else {
 					intPlayerStatus = PLAYER_STATUS_PLAYING;
-					ivPlayStatus.setImageDrawable(mRoot.getResources().getDrawable(
+					ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 							R.drawable.ui_status_media_play));
 					mpPlayer.start();
 					doShowPlayerControls(true);
@@ -681,13 +636,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 			}
 		}
-		mpPlayer = MediaPlayer.create(mRoot.getWindow().getContext(),
+		mpPlayer = MediaPlayer.create(getRootActivity().getWindow().getContext(),
 				Uri.fromFile(alItems.get(index).getTrackPath()));
 		try {
 			mpPlayer.prepare();
 		} catch (Exception e) {
 		}
-		ivPlayStatus.setImageDrawable(mRoot.getResources().getDrawable(
+		ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 				R.drawable.ui_status_media_play));
 		pbTrackPos.setMax(mpPlayer.getDuration());
 		tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
@@ -715,25 +670,25 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	@Override
-	public void doCleanup(ViewGroup base) {
+	public void doCleanup() {
 		if (alItems.size() == 0 && tv_no_music != null) {
-			base.removeView(tv_no_music);
+			getRootView().removeView(tv_no_music);
 			return;
 		}
 		if (tlRoot != null) {
 			tlRoot.removeAllViews();
-			base.removeView(tlRoot);
+			getRootView().removeView(tlRoot);
 		}
 		if (ivPlayStatus != null) {
-			base.removeView(ivPlayStatus);
+			getRootView().removeView(ivPlayStatus);
 		}
 		if (rlPlayerControls != null) {
-			base.removeView(rlPlayerControls);
+			getRootView().removeView(rlPlayerControls);
 		}
 		if (mpPlayer != null) {
-			mRoot.putObjectInStore("playerStatus", intPlayerStatus);
-			mRoot.putObjectInStore("selectionIndex", intLastPlayed);
-			mRoot.putObjectInStore("playerObj", mpPlayer);
+			getRootActivity().putObjectInStore("playerStatus", intPlayerStatus);
+			getRootActivity().putObjectInStore("selectionIndex", intLastPlayed);
+			getRootActivity().putObjectInStore("playerObj", mpPlayer);
 		}
 	}
 

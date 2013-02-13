@@ -31,10 +31,11 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -47,15 +48,17 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.AbsoluteLayout.LayoutParams;
-import android.widget.ImageView;
-import android.widget.TableLayout;
 import android.widget.TableRow;
-import android.widget.TextView;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
+import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
+@SuppressLint("NewApi")
 @SuppressWarnings("deprecation")
 public class XPMBSubmenu_GBA extends XPMB_Layout {
 
@@ -65,9 +68,9 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		private File fROMPath = null;
 		private String strGameName = null, strGameCode = null, strGameCRC = null,
 				strGameDescription = null, strGameRegions = null, strGameLanguages;
-		private ImageView ivParentView = null;
-		private TextView tvParentLabel = null;
-		private TableRow trParentContainer = null;
+		private XPMB_ImageView ivParentView = null;
+		private XPMB_TextView tvParentLabel = null;
+		private XPMB_TableRow trParentContainer = null;
 
 		public XPMBSubmenuItem_GBA(File romPath, String gameCode, String gameCRC) {
 			fROMPath = romPath;
@@ -136,44 +139,40 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			return strGameDescription;
 		}
 
-		public void setParentView(ImageView parent) {
+		public void setParentView(XPMB_ImageView parent) {
 			ivParentView = parent;
 		}
 
-		public ImageView getParentView() {
+		public XPMB_ImageView getParentView() {
 			return ivParentView;
 		}
 
-		public void setParentLabel(TextView label) {
+		public void setParentLabel(XPMB_TextView label) {
 			tvParentLabel = label;
 		}
 
-		public TextView getParentLabel() {
+		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
 
-		public void setParentContainer(TableRow parent) {
+		public void setParentContainer(XPMB_TableRow parent) {
 			trParentContainer = parent;
 		}
 
-		public TableRow getParentContainer() {
+		public XPMB_TableRow getParentContainer() {
 			return trParentContainer;
 		}
 	}
 
 	private ArrayList<XPMBSubmenuItem_GBA> alItems = null;
-	private XPMB_Activity mRoot = null;
-	private Handler hMBus = null;
 	private int intSelItem = 0;
 	private File mROMRoot = null;
 	private ROMInfo ridROMInfoDat = null;
-	private TextView tv_no_game = null;
-	private TableLayout tlRoot = null;
+	private XPMB_TextView tv_no_game = null;
+	private XPMB_TableLayout tlRoot = null;
 
-	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus, File fROMRoot) {
-		super(root, messageBus);
-		mRoot = root;
-		hMBus = messageBus;
+	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus,ViewGroup rootView, File fROMRoot) {
+		super(root, messageBus,rootView);
 		mROMRoot = fROMRoot;
 
 		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
@@ -195,7 +194,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				return;
 			}
 		}
-		ridROMInfoDat = new ROMInfo(mRoot.getResources().getXml(R.xml.rominfo_gba),
+		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_gba),
 				ROMInfo.TYPE_CRC);
 
 		try {
@@ -216,7 +215,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 							gameCode += (char) fi.read();
 							fi.close();
 							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
-									mRoot.getResources().getConfiguration().locale);
+									getRootActivity().getResources().getConfiguration().locale);
 							XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(f, gameCode,
 									gameCRC);
 							loadAssociatedMetadata(cItem);
@@ -242,7 +241,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 					}
 					fi.close();
 					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
-							mRoot.getResources().getConfiguration().locale);
+							getRootActivity().getResources().getConfiguration().locale);
 
 					XPMBSubmenuItem_GBA cItem = new XPMBSubmenuItem_GBA(f, gameCode, gameCRC);
 					loadAssociatedMetadata(cItem);
@@ -292,16 +291,16 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			if (resStor.exists()) {
 				File fExtRes = new File(resStor, item.getGameName() + "-CV.jpg");
 				if (fExtRes.exists()) {
-					item.setGameCover(new BitmapDrawable(mRoot.getResources(), BitmapFactory
+					item.setGameCover(new BitmapDrawable(getRootActivity().getResources(), BitmapFactory
 							.decodeStream(new FileInputStream(fExtRes))));
 				} else {
-					item.setGameCover(mRoot.getResources().getDrawable(
-							mRoot.getResources().getIdentifier("drawable/ui_cover_not_found_gba",
-									null, mRoot.getPackageName())));
+					item.setGameCover(getRootActivity().getResources().getDrawable(
+							getRootActivity().getResources().getIdentifier("drawable/ui_cover_not_found_gba",
+									null, getRootActivity().getPackageName())));
 				}
 				fExtRes = new File(resStor, item.getGameName() + "-BG.jpg");
 				if (fExtRes.exists()) {
-					item.setGameBackground(new BitmapDrawable(mRoot.getResources(), BitmapFactory
+					item.setGameBackground(new BitmapDrawable(getRootActivity().getResources(), BitmapFactory
 							.decodeStream(new FileInputStream(fExtRes))));
 				}
 				fExtRes = new File(resStor, "META_DESC");
@@ -323,23 +322,23 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
-	public void parseInitLayout(ViewGroup base) {
+	public void parseInitLayout() {
 
 		if (alItems.size() == 0) {
-			tv_no_game = new TextView(base.getContext());
+			tv_no_game = new XPMB_TextView(getRootView().getContext());
 			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
 					pxFromDip(48), pxFromDip(128));
 			tv_no_game.setLayoutParams(lp_ng);
-			tv_no_game.setText(mRoot.getText(R.string.strNoGames));
+			tv_no_game.setText(getRootActivity().getText(R.string.strNoGames));
 			tv_no_game.setTextColor(Color.WHITE);
 			tv_no_game.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_game.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			tv_no_game.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
 			tv_no_game.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-			base.addView(tv_no_game);
+			getRootView().addView(tv_no_game);
 			return;
 		}
 
-		tlRoot = new TableLayout(base.getContext());
+		tlRoot = new XPMB_TableLayout(getRootView().getContext());
 		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
 				pxFromDip(160 + (60 * alItems.size())), pxFromDip(48), pxFromDip(94));
 		tlRoot.setLayoutParams(rootP);
@@ -348,9 +347,9 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 
 			int idx = alItems.indexOf(xsi);
 
-			TableRow cItem = new TableRow(base.getContext());
-			ImageView cIcon = new ImageView(base.getContext());
-			TextView cLabel = new TextView(base.getContext());
+			XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
+			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
+			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
 			cIcon.setId(getNextID());
 			cLabel.setId(getNextID());
 			cItem.setId(getNextID());
@@ -370,8 +369,6 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				cIcon.setLayoutParams(cIconParams);
 			}
 			cIcon.setImageDrawable(xsi.getGameCover());
-			cIcon.setPivotX(0.0f);
-			cIcon.setPivotY(0.0f);
 			// Setup Label
 			if (idx == 0) {
 				TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams(
@@ -392,7 +389,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			cLabel.setText(xsi.getGameName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			cItem.addView(cIcon);
 			cItem.addView(cLabel);
@@ -404,9 +401,9 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			tlRoot.addView(cItem);
 		}
 		// Prevent Image cover size change to distort layout during animations
-		TableRow tlFiller = new TableRow(base.getContext());
-		ImageView ivFiller = new ImageView(base.getContext());
-		TextView tvFiller = new TextView(base.getContext());
+		XPMB_TableRow tlFiller = new XPMB_TableRow(getRootView().getContext());
+		XPMB_ImageView ivFiller = new XPMB_ImageView(getRootView().getContext());
+		XPMB_TextView tvFiller = new XPMB_TextView(getRootView().getContext());
 		TableRow.LayoutParams iv_f_lp = new TableRow.LayoutParams(pxFromDip(128), pxFromDip(128));
 		TableRow.LayoutParams tv_f_lp = new TableRow.LayoutParams(pxFromDip(320), pxFromDip(128));
 		iv_f_lp.column = 0;
@@ -416,7 +413,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		tlFiller.addView(ivFiller);
 		tlFiller.addView(tvFiller);
 		tlRoot.addView(tlFiller);
-		base.addView(tlRoot);
+		getRootView().addView(tlRoot);
 		reloadGameBG();
 	}
 
@@ -435,7 +432,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			break;
 		case XPMB_Main.KEYCODE_LEFT:
 		case XPMB_Main.KEYCODE_CIRCLE:
-			mRoot.requestUnloadSubmenu();
+			getRootActivity().requestUnloadSubmenu();
 			break;
 		}
 	}
@@ -531,14 +528,14 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
 		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_mu.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		reloadGameBG();
 		ag_xmb_sm_mu.start();
-		hMBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -637,14 +634,14 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
 		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
 		ag_xmb_sm_md.setDuration(150);
-		mRoot.lockKeys(true);
+		getRootActivity().lockKeys(true);
 		reloadGameBG();
 		ag_xmb_sm_md.start();
-		hMBus.postDelayed(new Runnable() {
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -653,7 +650,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	}
 
 	private void reloadGameBG() {
-		ImageView iv_bg = mRoot.getCustomBGView();
+		XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
 		if (iv_bg.getDrawable() != null) {
 			ObjectAnimator rbg_a_pre = ObjectAnimator.ofFloat(iv_bg, "Alpha", 1.0f, 0.0f);
 			rbg_a_pre.setDuration(200);
@@ -663,7 +660,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 
 			@Override
 			public void run() {
-				ImageView iv_bg = mRoot.getCustomBGView();
+				XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
 				iv_bg.setAlpha(0.0f);
 				iv_bg.setImageDrawable(alItems.get(intSelItem).getGameBackground());
 				if (iv_bg.getDrawable() == null) {
@@ -683,29 +680,29 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
 		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
 		intent.setFlags(0x10000000);
-		mRoot.startActivity(intent);
+		getRootActivity().startActivity(intent);
 	}
 
 	@Override
-	public void doCleanup(ViewGroup base) {
+	public void doCleanup() {
 		if (alItems.size() == 0 && tv_no_game != null) {
-			base.removeView(tv_no_game);
+			getRootView().removeView(tv_no_game);
 			return;
 		}
 		if (tlRoot != null) {
 			tlRoot.removeAllViews();
-			base.removeView(tlRoot);
+			getRootView().removeView(tlRoot);
 		}
-		ImageView iv_bg = mRoot.getCustomBGView();
+		XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
 		if (iv_bg.getDrawable() != null) {
 			ObjectAnimator rbg_a_pre = ObjectAnimator.ofFloat(iv_bg, "Alpha", 1.0f, 0.0f);
 			rbg_a_pre.setDuration(200);
 			rbg_a_pre.start();
-			hMessageBus.postDelayed(new Runnable() {
+			getMessageBus().postDelayed(new Runnable() {
 
 				@Override
 				public void run() {
-					ImageView iv_bg = mRoot.getCustomBGView();
+					XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
 					iv_bg.setImageDrawable(null);
 					iv_bg.setAlpha(1.0f);
 				}

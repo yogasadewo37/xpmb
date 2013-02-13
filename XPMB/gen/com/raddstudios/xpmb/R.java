@@ -105,7 +105,7 @@ public final class R {
         public static final int strNoVideos=0x7f050015;
     }
     public static final class style {
-        public static final int mytransparent_windowNoTitle=0x7f060000;
+        public static final int Theme_Transparent=0x7f060000;
     }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;

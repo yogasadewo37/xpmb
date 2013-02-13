@@ -3,7 +3,8 @@ package com.raddstudios.xpmb.utils;
 import java.util.Hashtable;
 
 import android.app.Activity;
-import android.widget.ImageView;
+
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 public class XPMB_Activity extends Activity {
 	private Hashtable<String, Object> mObjectStore = null;
@@ -12,7 +13,7 @@ public class XPMB_Activity extends Activity {
 		mObjectStore = new Hashtable<String, Object>();
 	}
 
-	public ImageView getCustomBGView() {
+	public XPMB_ImageView getCustomBGView() {
 		return null;
 	}
 

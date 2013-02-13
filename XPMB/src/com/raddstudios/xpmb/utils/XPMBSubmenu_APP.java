@@ -23,9 +23,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -35,12 +36,13 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout.LayoutParams;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
+import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
+@SuppressLint("NewApi")
 @SuppressWarnings("deprecation")
 public class XPMBSubmenu_APP extends XPMB_Layout {
 
@@ -49,8 +51,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		private Drawable drAppIcon = null;
 		private String strAppName = null;
 		private Intent intAppIntent = null;
-		private ImageView ivParentView = null;
-		private TextView tvParentLabel = null;
+		private XPMB_ImageView ivParentView = null;
+		private XPMB_TextView tvParentLabel = null;
 
 		public XPMBSubmenuItem_APP(String appName, Drawable appIcon, Intent appIntent) {
 			strAppName = appName;
@@ -70,19 +72,19 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			return intAppIntent;
 		}
 
-		public void setParentView(ImageView parent) {
+		public void setParentView(XPMB_ImageView parent) {
 			ivParentView = parent;
 		}
 
-		public ImageView getParentView() {
+		public XPMB_ImageView getParentView() {
 			return ivParentView;
 		}
 
-		public void setParentLabel(TextView label) {
+		public void setParentLabel(XPMB_TextView label) {
 			tvParentLabel = label;
 		}
 
-		public TextView getParentLabel() {
+		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
 	}
@@ -91,10 +93,10 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 	private XPMB_Activity mRoot = null;
 	Handler hMessageBus = null;
 	private int intSelItem = 0;
-	private TextView tv_no_app = null;
+	private XPMB_TextView tv_no_app = null;
 
-	public XPMBSubmenu_APP(XPMB_Activity root, Handler messageBus) {
-		super(root, messageBus);
+	public XPMBSubmenu_APP(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+		super(root, messageBus, rootView);
 		mRoot = root;
 		hMessageBus = messageBus;
 
@@ -116,32 +118,30 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 	}
 
 	@Override
-	public void parseInitLayout(ViewGroup base) {
+	public void parseInitLayout() {
 		int cId = 0xC0DE;
 
 		if (alItems.size() == 0) {
-			tv_no_app = new TextView(base.getContext());
+			tv_no_app = new XPMB_TextView(getRootView().getContext());
 			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
 					pxFromDip(48), pxFromDip(128));
 			tv_no_app.setLayoutParams(lp_ng);
 			tv_no_app.setText(mRoot.getText(R.string.strNoApps));
 			tv_no_app.setTextColor(Color.WHITE);
 			tv_no_app.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_app.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			tv_no_app.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
 			tv_no_app.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-			base.addView(tv_no_app);
+			getRootView().addView(tv_no_app);
 			return;
 		}
 
 		for (XPMBSubmenuItem_APP xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
-			ImageView cItem = new ImageView(base.getContext());
-			TextView cLabel = new TextView(base.getContext());
+			XPMB_ImageView cItem = new XPMB_ImageView(getRootView().getContext());
+			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
 
 			// Setup Icon
 			cItem.setImageDrawable(xsi.getAppIcon());
-			cItem.setPivotX(0.0f);
-			cItem.setPivotY(0.0f);
 			if (idx == 0) {
 				cItem.setScaleX(2.56f);
 				cItem.setScaleY(2.56f);
@@ -159,7 +159,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			cLabel.setText(xsi.getAppName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(base.getContext(), android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 
 			if (idx == 0) {
@@ -178,8 +178,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 			xsi.setParentView(cItem);
 			xsi.setParentLabel(cLabel);
-			base.addView(cItem);
-			base.addView(cLabel);
+			getRootView().addView(cItem);
+			getRootView().addView(cLabel);
 		}
 	}
 
@@ -212,8 +212,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 		for (XPMBSubmenuItem_APP xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
-			ImageView iv_c_i = xsi.getParentView();
-			TextView tv_c_l = xsi.getParentLabel();
+			XPMB_ImageView iv_c_i = xsi.getParentView();
+			XPMB_TextView tv_c_l = xsi.getParentLabel();
 
 			if (idx == intSelItem) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
@@ -265,8 +265,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 		for (XPMBSubmenuItem_APP xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
-			ImageView iv_c_i = xsi.getParentView();
-			TextView tv_c_l = xsi.getParentLabel();
+			XPMB_ImageView iv_c_i = xsi.getParentView();
+			XPMB_TextView tv_c_l = xsi.getParentLabel();
 
 			if (idx == intSelItem) {
 				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
