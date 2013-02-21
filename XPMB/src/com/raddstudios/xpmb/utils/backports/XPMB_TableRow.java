@@ -1,17 +1,25 @@
 package com.raddstudios.xpmb.utils.backports;
 
 import android.content.Context;
-import android.view.View;
+import android.graphics.Canvas;
+import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.TableRow;
 
 @SuppressWarnings("deprecation")
 public class XPMB_TableRow extends TableRow implements XPMB_View {
 
-	private float mAlpha = 1.0f;
+	private float mAlpha = 1.0f, mScaleX = 1.0f, mScaleY = 1.0f;
+	private int baseWidth = 0, baseHeight = 0;
 
 	public XPMB_TableRow(Context context) {
 		super(context);
+	}
+
+	public void dispatchDraw(Canvas canvas) {
+		canvas.saveLayerAlpha(0, 0, canvas.getWidth(), canvas.getHeight(), (int) (255 * mAlpha),
+				Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+		super.dispatchDraw(canvas);
 	}
 
 	@Override
@@ -64,13 +72,8 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public void setAlpha(float value) {
-		for (int v = 0; v < super.getChildCount(); v++) {
-			View cView = super.getChildAt(v);
-			if (cView instanceof XPMB_View) {
-				((XPMB_View) cView).setAlpha(value);
-			}
-		}
 		mAlpha = value;
+		super.invalidate();
 	}
 
 	@Override
@@ -79,30 +82,53 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 	}
 
 	@Override
-	public void setScaleGravity(int gravity) {
+	public void setLayoutParams(ViewGroup.LayoutParams params) {
+		super.setLayoutParams(params);
+	}
+
+	@Override
+	public void resetScaleBase() {
+		baseWidth = super.getLayoutParams().width;
+		baseHeight = super.getLayoutParams().height;
+	}
+
+	private void updateScaledLayoutParams(ViewGroup.LayoutParams params) {
+		if (params.width != ViewGroup.LayoutParams.MATCH_PARENT
+				|| params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+			params.width = (int) (baseWidth * mScaleX);
+		}
+		if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
+				|| params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+			params.height = (int) (baseHeight * mScaleY);
+		}
+		super.setLayoutParams(params);
 	}
 
 	@Override
 	public void setScaleX(float scale) {
+		mScaleX = scale;
+		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
 	public float getScaleX() {
-		return 1.0f;
+		return mScaleX;
 	}
 
 	@Override
 	public void setScaleY(float scale) {
+		mScaleY = scale;
+		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
 	public float getScaleY() {
-		return 1.0f;
+		return mScaleY;
 	}
 
 	@Override
 	public void setTopMargin(int top) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).topMargin = top;
 			super.setLayoutParams(lp);
@@ -111,7 +137,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public void setBottomMargin(int bottom) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).bottomMargin = bottom;
 			super.setLayoutParams(lp);
@@ -120,7 +146,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public void setLeftMargin(int left) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).leftMargin = left;
 			super.setLayoutParams(lp);
@@ -129,7 +155,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public void setRightMargin(int right) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).rightMargin = right;
 			super.setLayoutParams(lp);
@@ -138,7 +164,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public int getTopMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).topMargin;
 		}
@@ -147,7 +173,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public int getBottomMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).bottomMargin;
 		}
@@ -156,7 +182,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public int getLeftMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).leftMargin;
 		}
@@ -165,7 +191,7 @@ public class XPMB_TableRow extends TableRow implements XPMB_View {
 
 	@Override
 	public int getRightMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).rightMargin;
 		}

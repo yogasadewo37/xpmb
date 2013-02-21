@@ -1,57 +1,48 @@
 package com.raddstudios.xpmb.utils.backports;
 
+import com.raddstudios.xpmb.R;
+
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.drawable.BitmapDrawable;
-import android.view.Gravity;
-import android.view.View;
+import android.util.AttributeSet;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.AbsoluteLayout;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 @SuppressWarnings("deprecation")
-public class XPMB_TextView extends View implements XPMB_View {
+public class XPMB_TextView extends TextView implements XPMB_View {
 
-	private float mAlpha = 1.0f;
-
-	private Bitmap bmObject = null;
-	private Canvas cvObject = null;
-	private Paint cPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
-	private TextView mItem = null;
+	private float mAlpha = 1.0f, mScaleX = 1.0f, mScaleY = 1.0f;
+	private int baseWidth = 0, baseHeight = 0;
 
 	public XPMB_TextView(Context context) {
 		super(context);
-		mItem = new TextView(context);
+	}
+
+	public XPMB_TextView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		TypedArray a = context.getTheme().obtainStyledAttributes(attrs,
+				R.styleable.com_raddstudios_xpmb_utils_backports_XPMB_TextView, 0, 0);
+
+		try {
+			mAlpha = a.getFloat(
+					R.styleable.com_raddstudios_xpmb_utils_backports_XPMB_TextView_alpha, 1.0f);
+			mScaleX = a.getFloat(
+					R.styleable.com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleX, 1.0f);
+			mScaleX = a.getFloat(
+					R.styleable.com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleY, 1.0f);
+		} finally {
+			a.recycle();
+		}
 	}
 
 	@Override
 	public void onDraw(Canvas canvas) {
-		cvObject.drawColor(0x00FFFFFF, Mode.CLEAR);
-		mItem.draw(cvObject);
-		cPaint.setAlpha((int) (255 * mAlpha));
-		canvas.drawBitmap(bmObject, 0, 0, cPaint);
-	}
-
-	@Override
-	public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		mItem.measure(widthMeasureSpec, heightMeasureSpec);
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-	}
-
-	@Override
-	public void onLayout(boolean changed, int left, int top, int right, int bottom) {
-		mItem.layout(left, top, right, bottom);
-		super.onLayout(changed, left, top, right, bottom);
+		canvas.saveLayerAlpha(0, 0, canvas.getWidth(), canvas.getHeight(), (int) (255 * mAlpha),
+				Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+		super.onDraw(canvas);
 	}
 
 	@Override
@@ -102,26 +93,6 @@ public class XPMB_TextView extends View implements XPMB_View {
 		return 0;
 	}
 
-	public void setText(CharSequence text) {
-		mItem.setText(text);
-	}
-
-	public void setTextColor(int color) {
-		mItem.setTextColor(color);
-	}
-
-	public void setTextAppearance(Context context, int resid) {
-		mItem.setTextAppearance(context, resid);
-	}
-
-	public void setShadowLayer(float radius, float dx, float dy, int color) {
-		mItem.setShadowLayer(radius, dx, dy, color);
-	}
-
-	public void setGravity(int gravity) {
-		mItem.setGravity(gravity);
-	}
-
 	@Override
 	public void setAlpha(float value) {
 		mAlpha = value;
@@ -133,40 +104,54 @@ public class XPMB_TextView extends View implements XPMB_View {
 		return mAlpha;
 	}
 
-	private void resetBitmap(int width, int height) {
-		bmObject = Bitmap.createBitmap(width, height, Config.ARGB_8888);
-		cvObject = new Canvas(bmObject);
+	@Override
+	public void setLayoutParams(ViewGroup.LayoutParams params) {
+		super.setLayoutParams(params);
 	}
 
 	@Override
-	public void setLayoutParams(LayoutParams params) {
+	public void resetScaleBase() {
+		baseWidth = super.getLayoutParams().width;
+		baseHeight = super.getLayoutParams().height;
+	}
+
+	private void updateScaledLayoutParams(ViewGroup.LayoutParams params) {
+		if (params.width != ViewGroup.LayoutParams.MATCH_PARENT
+				|| params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+			params.width = (int) (baseWidth * mScaleX);
+		}
+		if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
+				|| params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+			params.height = (int) (baseHeight * mScaleY);
+		}
 		super.setLayoutParams(params);
-		mItem.setLayoutParams(new ViewGroup.LayoutParams(params));
-		resetBitmap(params.width, params.height);
-		super.requestLayout();
 	}
 
 	@Override
 	public void setScaleX(float scale) {
+		mScaleX = scale;
+		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
 	public float getScaleX() {
-		return 1.0f;
+		return mScaleX;
 	}
 
 	@Override
 	public void setScaleY(float scale) {
+		mScaleY = scale;
+		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
 	public float getScaleY() {
-		return 1.0f;
+		return mScaleY;
 	}
 
 	@Override
 	public void setTopMargin(int top) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).topMargin = top;
 			super.setLayoutParams(lp);
@@ -175,7 +160,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public void setBottomMargin(int bottom) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).bottomMargin = bottom;
 			super.setLayoutParams(lp);
@@ -184,7 +169,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public void setLeftMargin(int left) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).leftMargin = left;
 			super.setLayoutParams(lp);
@@ -193,7 +178,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public void setRightMargin(int right) {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			((MarginLayoutParams) lp).rightMargin = right;
 			super.setLayoutParams(lp);
@@ -202,7 +187,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public int getTopMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).topMargin;
 		}
@@ -211,7 +196,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public int getBottomMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).bottomMargin;
 		}
@@ -220,7 +205,7 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public int getLeftMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).leftMargin;
 		}
@@ -229,14 +214,10 @@ public class XPMB_TextView extends View implements XPMB_View {
 
 	@Override
 	public int getRightMargin() {
-		LayoutParams lp = (LayoutParams) super.getLayoutParams();
+		ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) super.getLayoutParams();
 		if (lp instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) lp).rightMargin;
 		}
 		return 0;
-	}
-
-	@Override
-	public void setScaleGravity(int gravity) {
 	}
 }

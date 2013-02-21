@@ -29,6 +29,9 @@ public interface XPMB_View {
 
 	public float getAlpha();
 
+	//Fix for incorrect scaling behavior
+	public void resetScaleBase();
+	
 	public void setScaleX(float scale);
 
 	public float getScaleX();
@@ -36,6 +39,4 @@ public interface XPMB_View {
 	public void setScaleY(float scale);
 
 	public float getScaleY();
-	
-	public void setScaleGravity(int gravity);
 }

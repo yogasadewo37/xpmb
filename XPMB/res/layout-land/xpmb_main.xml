@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:backports="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_l"
     android:layout_width="fill_parent"
@@ -8,13 +9,14 @@
     tools:context=".XPMB_Main"
     tools:ignore="Deprecated" >
 
-    <ImageView
+    <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
         android:id="@+id/ivCustomBG"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_x="0dp"
         android:layout_y="0dp"
         android:scaleType="fitXY"
+        backports:alpha="0.0"
         tools:ignore="ContentDescription" />
 
     <ImageView
@@ -41,13 +43,14 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         tools:ignore="HardcodedText" />
 
-    <ImageView
+    <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
         android:id="@+id/ivSubmenuShown"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_x="8dp"
         android:layout_y="156dp"
         android:src="@drawable/ui_xmb_back"
+        backports:alpha="1.0"
         tools:ignore="ContentDescription" />
 
     <ImageView

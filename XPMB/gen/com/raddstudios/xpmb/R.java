@@ -9,6 +9,30 @@ package com.raddstudios.xpmb;
 
 public final class R {
     public static final class attr {
+        /** <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int alpha=0x7f010000;
+        /** <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int scaleX=0x7f010001;
+        /** <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int scaleY=0x7f010002;
     }
     public static final class drawable {
         public static final int flag_ch=0x7f020000;
@@ -113,4 +137,360 @@ public final class R {
         public static final int rominfo_snes=0x7f040002;
         public static final int xmb_layout=0x7f040003;
     }
+    public static final class styleable {
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_ImageView.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_ImageView = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_ImageView_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_ImageView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_ImageView_scaleY = 2;
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_LinearLayout_scaleY = 2;
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_RelativeLayout_scaleY = 2;
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_TableLayout.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_TableLayout = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableLayout} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableLayout_scaleY = 2;
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_TableRow.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_TableRow = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableRow_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TableRow} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TableRow_scaleY = 2;
+        /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_TextView.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView_alpha com.raddstudios.xpmb:alpha}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleX com.raddstudios.xpmb:scaleX}</code></td><td></td></tr>
+           <tr><td><code>{@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleY com.raddstudios.xpmb:scaleY}</code></td><td></td></tr>
+           </table>
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TextView_alpha
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleX
+           @see #com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleY
+         */
+        public static final int[] com_raddstudios_xpmb_utils_backports_XPMB_TextView = {
+            0x7f010000, 0x7f010001, 0x7f010002
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#alpha}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:alpha
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TextView_alpha = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleX}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleX
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleX = 1;
+        /**
+          <p>This symbol is the offset where the {@link com.raddstudios.xpmb.R.attr#scaleY}
+          attribute's value can be found in the {@link #com_raddstudios_xpmb_utils_backports_XPMB_TextView} array.
+
+
+          <p>Must be a floating point value, such as "<code>1.2</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:scaleY
+        */
+        public static final int com_raddstudios_xpmb_utils_backports_XPMB_TextView_scaleY = 2;
+    };
 }

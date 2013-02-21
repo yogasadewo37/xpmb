@@ -20,7 +20,6 @@
 package com.raddstudios.xpmb.utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -35,7 +34,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsoluteLayout;
 import android.widget.LinearLayout;
@@ -44,8 +42,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
@@ -363,16 +359,25 @@ public class XPMBMenu extends XPMB_MainMenu {
 	}
 
 	private void doCenterOnMenuItemPos() {
-		XPMBMenuItem xmi = alItems.get(cMenuItem);
+		final XPMBMenuItem xmi = alItems.get(cMenuItem);
 
-		ObjectAnimator ao_mi_scx = ObjectAnimator.ofFloat(xmi.getParentView(), "ScaleX", 1.0f);
-		ObjectAnimator ao_mi_scy = ObjectAnimator.ofFloat(xmi.getParentView(), "ScaleY", 1.0f);
-		ObjectAnimator ao_mi_la = ObjectAnimator.ofFloat(xmi.getParentLabel(), "Alpha", 1.0f);
-		ObjectAnimator ao_mi_cc = ObjectAnimator.ofFloat(xmi.getChildContainer(), "Alpha", 1.0f);
-		AnimatorSet as_mi_comip = new AnimatorSet();
-		as_mi_comip.playTogether(ao_mi_scx, ao_mi_scy, ao_mi_la, ao_mi_cc);
-		as_mi_comip.setDuration(250);
-		as_mi_comip.start();
+		ValueAnimator va_cmip = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_cmip.setInterpolator(new DecelerateInterpolator());
+		va_cmip.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
+
+				float scale = 0.7f + (0.3f * completion);
+
+				xmi.getParentView().setScaleX(scale);
+				xmi.getParentView().setScaleY(scale);
+				xmi.getParentLabel().setAlpha(completion);
+				xmi.getChildContainer().setAlpha(completion);
+			}
+		});
+		va_cmip.setDuration(250);
+		va_cmip.start();
 	}
 
 	private void centerOnNearesMenutItem() {
@@ -417,16 +422,18 @@ public class XPMBMenu extends XPMB_MainMenu {
 			cCont.setId(getNextID());
 
 			// Setup Item Container
-			LinearLayout.LayoutParams cContP = new LinearLayout.LayoutParams(pxFromDip(80), pxFromDip(80));
+			LinearLayout.LayoutParams cContP = new LinearLayout.LayoutParams(pxFromDip(80),
+					pxFromDip(80));
 			cCont.setLayoutParams(cContP);
 
 			// Setup Item Icon
 			RelativeLayout.LayoutParams cIconP = new RelativeLayout.LayoutParams(pxFromDip(80),
 					pxFromDip(80));
-			cIconP.addRule(RelativeLayout.CENTER_HORIZONTAL | RelativeLayout.ALIGN_PARENT_BOTTOM);
+			cIconP.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+			cIconP.addRule(RelativeLayout.CENTER_HORIZONTAL);
 			cIcon.setLayoutParams(cIconP);
-			cIcon.setScaleGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-			if (idx != 0) {
+			cIcon.resetScaleBase();
+			if (idx > 0) {
 				cIcon.setScaleX(0.7f);
 				cIcon.setScaleY(0.7f);
 			}
@@ -471,6 +478,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 				cSubCont.setLayoutParams(cSubContP);
 				if (idx > 0) {
 					cSubCont.setAlpha(0.0f);
+					cSubCont.setVisibility(View.INVISIBLE);
 				}
 
 				for (XPMBMenuSubitem xsi : xmi.getSubitems()) {
@@ -510,10 +518,8 @@ public class XPMBMenu extends XPMB_MainMenu {
 					cSLabel.setTextAppearance(getRootView().getContext(),
 							android.R.style.TextAppearance_Medium);
 					cSLabel.setShadowLayer(8, 0, 0, Color.WHITE);
-					if (idx != 0 && idy > 0) {
+					if (idx > 0 && idy > 0) {
 						cSLabel.setAlpha(0.0f);
-					} else if (idx == 0 && idy > 0) {
-						cSLabel.setAlpha(0.5f);
 					}
 
 					// Add everything to their holder classes and containers
@@ -527,9 +533,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 				}
 				getRootView().addView(cSubCont);
 				xmi.setChildContainer(cSubCont);
+				cSubCont.invalidate();
 			}
 		}
 		getRootView().addView(tlRoot);
+		tlRoot.invalidate();
 	}
 
 	@Override
@@ -575,6 +583,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 		final float initPosX = tlRoot.getX();
 		final int curItem = cMenuItem;
+
+		alItems.get(curItem + 1).getChildContainer().setVisibility(View.VISIBLE);
+
 		ValueAnimator va_mr = ValueAnimator.ofFloat(0.0f, 1.0f);
 		va_mr.setInterpolator(new DecelerateInterpolator());
 		va_mr.addUpdateListener(new AnimatorUpdateListener() {
@@ -584,11 +595,10 @@ public class XPMBMenu extends XPMB_MainMenu {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float pX = initPosX - (pxFromDip(80) * completion);
-				float scaleO = 1.0f - (0.2f * completion);
+				float scaleO = 1.0f - (0.3f * completion);
 				float alphaO = 1.0f - completion;
-				float scaleI = 0.7f + (0.2f * completion);
+				float scaleI = 0.7f + (0.3f * completion);
 				float alphaI = completion;
-
 
 				tlRoot.setX(pX);
 				alItems.get(curItem).getParentView().setScaleX(scaleO);
@@ -599,6 +609,12 @@ public class XPMBMenu extends XPMB_MainMenu {
 				alItems.get(curItem + 1).getParentView().setScaleY(scaleI);
 				alItems.get(curItem + 1).getParentLabel().setAlpha(alphaI);
 				alItems.get(curItem + 1).getChildContainer().setAlpha(alphaI);
+
+				if (completion == 1.0f) {
+					alItems.get(curItem).getChildContainer().setVisibility(View.INVISIBLE);
+					// alItems.get(curItem + 1).getParentView().setScaleX(1.0f);
+					// alItems.get(curItem + 1).getParentView().setScaleY(1.0f);
+				}
 			}
 		});
 
@@ -623,18 +639,21 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 		final float initPosX = tlRoot.getX();
 		final int curItem = cMenuItem;
-		ValueAnimator va_mr = ValueAnimator.ofFloat(0.0f, 1.0f);
-		va_mr.setInterpolator(new DecelerateInterpolator());
-		va_mr.addUpdateListener(new AnimatorUpdateListener() {
+
+		alItems.get(curItem - 1).getChildContainer().setVisibility(View.VISIBLE);
+
+		ValueAnimator va_ml = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_ml.setInterpolator(new DecelerateInterpolator());
+		va_ml.addUpdateListener(new AnimatorUpdateListener() {
 
 			@Override
 			public void onAnimationUpdate(ValueAnimator arg0) {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float pX = initPosX + (pxFromDip(80) * completion);
-				float scaleO = 1.0f - (0.2f * completion);
+				float scaleO = 1.0f - (0.3f * completion);
 				float alphaO = 1.0f - completion;
-				float scaleI = 0.7f + (0.2f * completion);
+				float scaleI = 0.7f + (0.3f * completion);
 				float alphaI = completion;
 
 				tlRoot.setX(pX);
@@ -646,12 +665,18 @@ public class XPMBMenu extends XPMB_MainMenu {
 				alItems.get(curItem - 1).getParentView().setScaleY(scaleI);
 				alItems.get(curItem - 1).getParentLabel().setAlpha(alphaI);
 				alItems.get(curItem - 1).getChildContainer().setAlpha(alphaI);
+
+				if (completion == 1.0f) {
+					alItems.get(curItem).getChildContainer().setVisibility(View.INVISIBLE);
+					// alItems.get(curItem - 1).getParentView().setScaleX(1.0f);
+					// alItems.get(curItem - 1).getParentView().setScaleY(1.0f);
+				}
 			}
 		});
 
-		va_mr.setDuration(550);
+		va_ml.setDuration(550);
 		getRootActivity().lockKeys(true);
-		va_mr.start();
+		va_ml.start();
 		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
@@ -668,50 +693,40 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
 		final int intAnimItem = alItems.get(cMenuItem).getSelectedSubitem();
-		if (cMenuItem > 0) {
-			alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getSubItem(intAnimItem)
-					.getParentLabel(), "Alpha", 0.0f));
-			alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getSubItem(intAnimItem + 1)
-					.getParentLabel(), "Alpha", 1.0f));
-		}
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "Y", alItems
-				.get(cMenuItem).getChildContainer().getY()
-				- pxFromDip(80)));
-		ValueAnimator va_ci_tm = ValueAnimator.ofInt(pxFromDip(80), 0);
-		va_ci_tm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+		final float initPosY = alItems.get(cMenuItem).getChildContainer().getY();
+
+		ValueAnimator va_md = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_md.setInterpolator(new DecelerateInterpolator());
+		va_md.addUpdateListener(new AnimatorUpdateListener() {
 
 			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBMenuSubitem cSub = alItems.get(cMenuItem).getSubItem(intAnimItem);
-				TableLayout.LayoutParams cSubP = (TableLayout.LayoutParams) cSub
-						.getParentContainer().getLayoutParams();
-				cSubP.topMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentContainer().setLayoutParams(cSubP);
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
+
+				float pY = initPosY - (pxFromDip(80) * completion);
+				int topMarginO = (int) (pxFromDip(80) - (pxFromDip(80) * completion));
+				int topMarginI = (int) (pxFromDip(80) * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+
+				alItems.get(cMenuItem).getChildContainer().setY(pY);
+				if (cMenuItem > 0) {
+					alItems.get(cMenuItem).getSubItem(intAnimItem).getParentLabel()
+							.setAlpha(alphaO);
+					alItems.get(cMenuItem).getSubItem(intAnimItem + 1).getParentLabel()
+							.setAlpha(alphaI);
+				}
+				alItems.get(cMenuItem).getSubItem(intAnimItem).getParentContainer()
+						.setTopMargin(topMarginO);
+				alItems.get(cMenuItem).getSubItem(intAnimItem + 1).getParentContainer()
+						.setTopMargin(topMarginI);
 			}
 		});
-		ValueAnimator va_ni_tm = ValueAnimator.ofInt(0, pxFromDip(80));
-		va_ni_tm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBMenuSubitem cSub = alItems.get(cMenuItem).getSubItem(intAnimItem + 1);
-				TableLayout.LayoutParams cSubP = (TableLayout.LayoutParams) cSub
-						.getParentContainer().getLayoutParams();
-				cSubP.topMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentContainer().setLayoutParams(cSubP);
-			}
-		});
-		alAnims.add(va_ci_tm);
-		alAnims.add(va_ni_tm);
-
-		AnimatorSet ag_xmb_mu = new AnimatorSet();
-		ag_xmb_mu.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_mu.setDuration(150);
+		va_md.setDuration(150);
 		getRootActivity().lockKeys(true);
-		ag_xmb_mu.start();
+		va_md.start();
 		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
@@ -729,50 +744,40 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
 		final int intAnimItem = alItems.get(cMenuItem).getSelectedSubitem();
-		if (cMenuItem > 0) {
-			alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getSubItem(intAnimItem)
-					.getParentLabel(), "Alpha", 0.0f));
-			alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getSubItem(intAnimItem - 1)
-					.getParentLabel(), "Alpha", 1.0f));
-		}
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "Y", alItems
-				.get(cMenuItem).getChildContainer().getY()
-				+ pxFromDip(80)));
-		ValueAnimator va_ci_tm = ValueAnimator.ofInt(pxFromDip(80), 0);
-		va_ci_tm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+		final float initPosY = alItems.get(cMenuItem).getChildContainer().getY();
+
+		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mu.setInterpolator(new DecelerateInterpolator());
+		va_mu.addUpdateListener(new AnimatorUpdateListener() {
 
 			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBMenuSubitem cSub = alItems.get(cMenuItem).getSubItem(intAnimItem);
-				TableLayout.LayoutParams cSubP = (TableLayout.LayoutParams) cSub
-						.getParentContainer().getLayoutParams();
-				cSubP.topMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentContainer().setLayoutParams(cSubP);
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
+
+				float pY = initPosY + (pxFromDip(80) * completion);
+				int topMarginO = (int) (pxFromDip(80) - (pxFromDip(80) * completion));
+				int topMarginI = (int) (pxFromDip(80) * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+
+				alItems.get(cMenuItem).getChildContainer().setY(pY);
+				if (cMenuItem > 0) {
+					alItems.get(cMenuItem).getSubItem(intAnimItem).getParentLabel()
+							.setAlpha(alphaO);
+					alItems.get(cMenuItem).getSubItem(intAnimItem - 1).getParentLabel()
+							.setAlpha(alphaI);
+				}
+				alItems.get(cMenuItem).getSubItem(intAnimItem).getParentContainer()
+						.setTopMargin(topMarginO);
+				alItems.get(cMenuItem).getSubItem(intAnimItem - 1).getParentContainer()
+						.setTopMargin(topMarginI);
 			}
 		});
-		ValueAnimator va_pi_tm = ValueAnimator.ofInt(0, pxFromDip(80));
-		va_pi_tm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBMenuSubitem cSub = alItems.get(cMenuItem).getSubItem(intAnimItem - 1);
-				TableLayout.LayoutParams cSubP = (TableLayout.LayoutParams) cSub
-						.getParentContainer().getLayoutParams();
-				cSubP.topMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentContainer().setLayoutParams(cSubP);
-			}
-		});
-		alAnims.add(va_ci_tm);
-		alAnims.add(va_pi_tm);
-
-		AnimatorSet ag_xmb_md = new AnimatorSet();
-		ag_xmb_md.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_md.setDuration(150);
+		va_mu.setDuration(150);
 		getRootActivity().lockKeys(true);
-		ag_xmb_md.start();
+		va_mu.start();
 		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
@@ -809,81 +814,99 @@ public class XPMBMenu extends XPMB_MainMenu {
 	}
 
 	private void doPreExecute() {
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float pX = tlRoot.getX();
+		final float cX = alItems.get(cMenuItem).getChildContainer().getX();
 
-		alAnims.add(ObjectAnimator.ofFloat(getRootActivity().findViewById(R.id.ivSubmenuShown),
-				"Alpha", 1.0f));
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() - pxFromDip(96)));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "X", alItems
-				.get(cMenuItem).getChildContainer().getX()
-				- pxFromDip(96)));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentLabel(), "Alpha", 0.0f));
-		for (XPMBMenuItem xmi : alItems) {
-			int idx = alItems.indexOf(xmi);
+		ValueAnimator va_prex = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_prex.setInterpolator(new DecelerateInterpolator());
+		va_prex.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			if (idx != cMenuItem) {
-				alAnims.add(ObjectAnimator.ofFloat(xmi.getParentView(), "Alpha", 0.0f));
-			}
-		}
-		for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
-			int idy = alItems.get(cMenuItem).getIndexOf(xms);
+				float posX = pX - (pxFromDip(96) * completion);
+				float childX = cX - (pxFromDip(96) * completion);
+				float alphaC = completion;
+				float alphaP = 1.0f - completion;
+				float alphaS = 1.0f - (0.5f * completion);
 
-			if (idy == alItems.get(cMenuItem).getSelectedSubitem()) {
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(), "Alpha", 0.0f));
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(), "Alpha", 0.0f));
+				((XPMB_ImageView) getRootActivity().findViewById(R.id.ivSubmenuShown))
+						.setAlpha(alphaC);
+				tlRoot.setX(posX);
+				alItems.get(cMenuItem).getChildContainer().setX(childX);
+				alItems.get(cMenuItem).getParentLabel().setAlpha(alphaP);
+				for (XPMBMenuItem xmi : alItems) {
+					int idx = alItems.indexOf(xmi);
 
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(), "Alpha", 0.5f));
-				if (cMenuItem == 0) {
-					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(), "Alpha", 0.0f));
+					if (idx != cMenuItem) {
+						xmi.getParentView().setAlpha(alphaP);
+					}
+				}
+				for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
+					int idy = alItems.get(cMenuItem).getIndexOf(xms);
+
+					if (idy == alItems.get(cMenuItem).getSelectedSubitem()) {
+						xms.getParentContainer().setAlpha(alphaP);
+					} else {
+						xms.getParentContainer().setAlpha(alphaS);
+						if (cMenuItem == 0) {
+							xms.getParentLabel().setAlpha(alphaP);
+						}
+					}
 				}
 			}
-		}
-
-		AnimatorSet as_ef_p = new AnimatorSet();
-		as_ef_p.playTogether((Collection<Animator>) alAnims);
-		as_ef_p.setDuration(150);
-		as_ef_p.start();
+		});
+		va_prex.setDuration(150);
+		va_prex.start();
 	}
 
 	@Override
 	public void postExecuteFinished() {
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float pX = tlRoot.getX();
+		final float cX = alItems.get(cMenuItem).getChildContainer().getX();
 
-		alAnims.add(ObjectAnimator.ofFloat(getRootActivity().findViewById(R.id.ivSubmenuShown),
-				"Alpha", 0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "X", tlRoot.getX() + pxFromDip(96)));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getChildContainer(), "X", alItems
-				.get(cMenuItem).getChildContainer().getX()
-				+ pxFromDip(96)));
-		for (XPMBMenuItem xmi : alItems) {
-			int idx = alItems.indexOf(xmi);
+		ValueAnimator va_poex = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_poex.setInterpolator(new DecelerateInterpolator());
+		va_poex.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			if (idx != cMenuItem) {
-				alAnims.add(ObjectAnimator.ofFloat(xmi.getParentView(), "Alpha", 1.0f));
-			}
-		}
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(cMenuItem).getParentLabel(), "Alpha", 1.0f));
-		for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
-			int idy = alItems.get(cMenuItem).getIndexOf(xms);
+				float posX = pX + (pxFromDip(96) * completion);
+				float childX = cX + (pxFromDip(96) * completion);
+				float alphaC = 1.0f - completion;
+				float alphaP = completion;
+				float alphaS = 5.0f + (0.5f * completion);
 
-			if (idy == alItems.get(cMenuItem).getSelectedSubitem()) {
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(), "Alpha", 1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(), "Alpha", 1.0f));
+				((XPMB_ImageView) getRootActivity().findViewById(R.id.ivSubmenuShown))
+						.setAlpha(alphaC);
+				tlRoot.setX(posX);
+				alItems.get(cMenuItem).getChildContainer().setX(childX);
+				alItems.get(cMenuItem).getParentLabel().setAlpha(alphaP);
+				for (XPMBMenuItem xmi : alItems) {
+					int idx = alItems.indexOf(xmi);
 
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(xms.getParentView(), "Alpha", 1.0f));
-				if (cMenuItem == 0) {
-					alAnims.add(ObjectAnimator.ofFloat(xms.getParentLabel(), "Alpha", 0.5f));
+					if (idx != cMenuItem) {
+						xmi.getParentView().setAlpha(alphaP);
+					}
+				}
+				for (XPMBMenuSubitem xms : alItems.get(cMenuItem).getSubitems()) {
+					int idy = alItems.get(cMenuItem).getIndexOf(xms);
+
+					if (idy == alItems.get(cMenuItem).getSelectedSubitem()) {
+						xms.getParentContainer().setAlpha(alphaP);
+					} else {
+						xms.getParentContainer().setAlpha(alphaS);
+						if (cMenuItem == 0) {
+							xms.getParentLabel().setAlpha(alphaP);
+						}
+					}
 				}
 			}
-		}
-
-		AnimatorSet as_ef_p = new AnimatorSet();
-		as_ef_p.playTogether((Collection<Animator>) alAnims);
-		as_ef_p.setDuration(150);
+		});
+		va_poex.setDuration(150);
 		getRootActivity().lockKeys(true);
-		as_ef_p.start();
+		va_poex.start();
 
 		getMessageBus().postDelayed(new Runnable() {
 
