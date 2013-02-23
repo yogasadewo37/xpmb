@@ -27,5 +27,6 @@
     <string name="strNoMusic">No hay pistas.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
     <string name="strNoGames">No hay juegos.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
     <string name="strNoApps">No hay aplicaciones.\r\nPuede instalar aplicaciones desde la tienda Play Store.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
+    <string name="strAppNotInstalled">Aún no ha instalado la aplicación \'%s\'.\r\nPor favor instálela antes de continuar.</string>
 
 </resources>

@@ -8,7 +8,7 @@
     <string name="lbGameName_deftext">GBA Games</string>
     <string name="lbGameName_desc">Game Name</string>
     <string name="strCoverNotFound">Cover not found</string>
-    <string name="lbGameDescription_defText">There are no games in the rom directory for Gameboy Advance games. You can load some games using the desktop application provisioned by the ROM in the directory sdcard/GameManager.</string>
+    <string name="lbGameDescription_defText">There are no games in the rom directory for Game Boy Advance games. You can load some games using the desktop application provisioned by the ROM in the directory sdcard/GameManager.</string>
     <string name="ivNextGame_desc">Next Game</string>
     <string name="ivPrevGame_desc">Previous Game</string>
     <string name="lbGameDescription_desc">Game description.</string>
@@ -27,5 +27,6 @@
     <string name="strNoMusic">There are no tracks.You can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
     <string name="strNoGames">There are no games.\r\nYou can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
     <string name="strNoApps">There are no applications.\r\nYou can install new apps from the Play Store.\r\nFor details, refer to the wiki at (wiki uri here)</string>
+    <string name="strAppNotInstalled">You haven\'t installed the app \'%s\'.\r\nPlease install it first before continuing.</string>
 
 </resources>

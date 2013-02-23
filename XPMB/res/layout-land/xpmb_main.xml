@@ -50,7 +50,7 @@
         android:layout_x="8dp"
         android:layout_y="156dp"
         android:src="@drawable/ui_xmb_back"
-        backports:alpha="1.0"
+        backports:alpha="0.0"
         tools:ignore="ContentDescription" />
 
     <ImageView

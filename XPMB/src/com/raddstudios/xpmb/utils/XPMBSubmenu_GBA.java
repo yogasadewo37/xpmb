@@ -25,16 +25,11 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorSet;
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -45,14 +40,21 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsoluteLayout;
 import android.widget.AbsoluteLayout.LayoutParams;
+import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.Toast;
 
+import com.nineoldandroids.animation.ValueAnimator;
+import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
@@ -171,8 +173,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	private XPMB_TextView tv_no_game = null;
 	private XPMB_TableLayout tlRoot = null;
 
-	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus,ViewGroup rootView, File fROMRoot) {
-		super(root, messageBus,rootView);
+	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView, File fROMRoot) {
+		super(root, messageBus, rootView);
 		mROMRoot = fROMRoot;
 
 		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
@@ -291,17 +293,18 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			if (resStor.exists()) {
 				File fExtRes = new File(resStor, item.getGameName() + "-CV.jpg");
 				if (fExtRes.exists()) {
-					item.setGameCover(new BitmapDrawable(getRootActivity().getResources(), BitmapFactory
-							.decodeStream(new FileInputStream(fExtRes))));
+					item.setGameCover(new BitmapDrawable(getRootActivity().getResources(),
+							BitmapFactory.decodeStream(new FileInputStream(fExtRes))));
 				} else {
 					item.setGameCover(getRootActivity().getResources().getDrawable(
-							getRootActivity().getResources().getIdentifier("drawable/ui_cover_not_found_gba",
-									null, getRootActivity().getPackageName())));
+							getRootActivity().getResources().getIdentifier(
+									"drawable/ui_cover_not_found_gba", null,
+									getRootActivity().getPackageName())));
 				}
 				fExtRes = new File(resStor, item.getGameName() + "-BG.jpg");
 				if (fExtRes.exists()) {
-					item.setGameBackground(new BitmapDrawable(getRootActivity().getResources(), BitmapFactory
-							.decodeStream(new FileInputStream(fExtRes))));
+					item.setGameBackground(new BitmapDrawable(getRootActivity().getResources(),
+							BitmapFactory.decodeStream(new FileInputStream(fExtRes))));
 				}
 				fExtRes = new File(resStor, "META_DESC");
 				if (fExtRes.exists()) {
@@ -332,15 +335,16 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			tv_no_game.setText(getRootActivity().getText(R.string.strNoGames));
 			tv_no_game.setTextColor(Color.WHITE);
 			tv_no_game.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_game.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
+			tv_no_game.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			tv_no_game.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			getRootView().addView(tv_no_game);
 			return;
 		}
 
 		tlRoot = new XPMB_TableLayout(getRootView().getContext());
-		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
-				pxFromDip(160 + (60 * alItems.size())), pxFromDip(48), pxFromDip(94));
+		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(464),
+				pxFromDip(160 + (60 * alItems.size())), pxFromDip(48), pxFromDip(88));
 		tlRoot.setLayoutParams(rootP);
 
 		for (XPMBSubmenuItem_GBA xsi : alItems) {
@@ -354,53 +358,55 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			cLabel.setId(getNextID());
 			cItem.setId(getNextID());
 
-			// Setup Icon
+			// Setup Container
+			TableLayout.LayoutParams cItemP = new TableLayout.LayoutParams(pxFromDip(386),
+					TableLayout.LayoutParams.WRAP_CONTENT);
 			if (idx == 0) {
-				TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(128),
-						(int) pxFromDip(128));
-				cIconParams.column = 0;
-				cIconParams.topMargin = pxFromDip(16);
-				cIconParams.bottomMargin = pxFromDip(16);
-				cIcon.setLayoutParams(cIconParams);
-			} else {
-				TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(50),
-						(int) pxFromDip(50));
-				cIconParams.column = 0;
-				cIcon.setLayoutParams(cIconParams);
+				cItemP.topMargin = pxFromDip(16);
+				cItemP.bottomMargin = pxFromDip(16);
 			}
-			cIcon.setImageDrawable(xsi.getGameCover());
-			// Setup Label
+			cItem.setLayoutParams(cItemP);
+
+			// Setup Icon
+			TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(50),
+					(int) pxFromDip(50));
+			cIconParams.column = 0;
+			cIcon.setLayoutParams(cIconParams);
+			cIcon.resetScaleBase();
 			if (idx == 0) {
-				TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams(
-						(int) pxFromDip(320), (int) pxFromDip(128));
-				cLabelParams.column = 1;
-				cLabelParams.leftMargin = pxFromDip(144);
-				cLabelParams.topMargin = pxFromDip(16);
-				cLabelParams.bottomMargin = pxFromDip(16);
-				cLabel.setLayoutParams(cLabelParams);
-			} else {
-				TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams(
-						(int) pxFromDip(320), (int) pxFromDip(50));
-				cLabelParams.column = 1;
-				cLabelParams.leftMargin = pxFromDip(144);
-				cLabel.setLayoutParams(cLabelParams);
+				cIcon.setScaleX(2.56f);
+				cIcon.setScaleY(2.56f);
+			}
+
+			cIcon.setImageDrawable(xsi.getGameCover());
+
+			// Setup Label
+			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(50));
+			cLabelParams.column = 1;
+			cLabelParams.leftMargin = pxFromDip(16);
+			cLabelParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+			cLabel.setLayoutParams(cLabelParams);
+
+			if (idx != 0) {
 				cLabel.setAlpha(0.0f);
 			}
 			cLabel.setText(xsi.getGameName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+
+			// Add everything to their parent containers and holders
 			cItem.addView(cIcon);
 			cItem.addView(cLabel);
-
 			xsi.setParentView(cIcon);
 			xsi.setParentLabel(cLabel);
 			xsi.setParentContainer(cItem);
-
 			tlRoot.addView(cItem);
 		}
-		// Prevent Image cover size change to distort layout during animations
+		// Prevent Image scale changes to distort layout during animations
 		XPMB_TableRow tlFiller = new XPMB_TableRow(getRootView().getContext());
 		XPMB_ImageView ivFiller = new XPMB_ImageView(getRootView().getContext());
 		XPMB_TextView tvFiller = new XPMB_TextView(getRootView().getContext());
@@ -414,7 +420,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		tlFiller.addView(tvFiller);
 		tlRoot.addView(tlFiller);
 		getRootView().addView(tlRoot);
-		reloadGameBG();
+		reloadGameBG(0);
 	}
 
 	@Override
@@ -442,95 +448,43 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
+		final float pY = tlRoot.getY();
 		final int intAnimItem = intSelItem;
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "Y", tlRoot.getY() - pxFromDip(50)));
-		ValueAnimator va_ci_sc = ValueAnimator.ofInt(pxFromDip(128), pxFromDip(50));
-		va_ci_sc.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
+		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mu.setInterpolator(new DecelerateInterpolator());
+		va_mu.addUpdateListener(new AnimatorUpdateListener() {
 			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.width = (Integer) animation.getAnimatedValue();
-				cIconP.height = (Integer) animation.getAnimatedValue();
-				cLabelP.height = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_ni_sc = ValueAnimator.ofInt(pxFromDip(50), pxFromDip(128));
-		va_ni_sc.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem + 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.width = (Integer) animation.getAnimatedValue();
-				cIconP.height = (Integer) animation.getAnimatedValue();
-				cLabelP.height = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_ci_tbm = ValueAnimator.ofInt(pxFromDip(16), 0);
-		va_ci_tbm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+				float posY = pY - (pxFromDip(50) * completion);
+				float scaleO = 2.56f - (1.56f * completion);
+				float scaleI = 1.0f + (1.56f * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
+				int marginI = (int) (pxFromDip(16) * completion);
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_ni_tbm = ValueAnimator.ofInt(0, pxFromDip(16));
-		va_ni_tbm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem + 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				tlRoot.setY(posY);
+				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
+				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
+				alItems.get(intAnimItem + 1).getParentView().setScaleX(scaleI);
+				alItems.get(intAnimItem + 1).getParentView().setScaleY(scaleI);
+				alItems.get(intAnimItem + 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem + 1).getParentContainer().setTopMargin(marginI);
+				alItems.get(intAnimItem + 1).getParentContainer().setBottomMargin(marginI);
 			}
 		});
 
-		alAnims.add(va_ci_sc);
-		alAnims.add(va_ci_tbm);
-		alAnims.add(va_ni_tbm);
-		alAnims.add(va_ni_sc);
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(intSelItem).getParentLabel(), "Alpha", 0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(intSelItem + 1).getParentLabel(), "Alpha",
-				1.0f));
-
-		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
-		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_sm_mu.setDuration(150);
+		va_mu.setDuration(150);
 		getRootActivity().lockKeys(true);
-		reloadGameBG();
-		ag_xmb_sm_mu.start();
+		reloadGameBG(intSelItem+1);
+		va_mu.start();
+
 		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
@@ -548,95 +502,43 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
-
+		final float pY = tlRoot.getY();
 		final int intAnimItem = intSelItem;
-		alAnims.add(ObjectAnimator.ofFloat(tlRoot, "Y", tlRoot.getY() + pxFromDip(50)));
-		ValueAnimator va_ci_sc = ValueAnimator.ofInt(pxFromDip(128), pxFromDip(50));
-		va_ci_sc.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
+		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mu.setInterpolator(new DecelerateInterpolator());
+		va_mu.addUpdateListener(new AnimatorUpdateListener() {
 			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.width = (Integer) animation.getAnimatedValue();
-				cIconP.height = (Integer) animation.getAnimatedValue();
-				cLabelP.height = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_pi_sc = ValueAnimator.ofInt(pxFromDip(50), pxFromDip(128));
-		va_pi_sc.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem - 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.width = (Integer) animation.getAnimatedValue();
-				cIconP.height = (Integer) animation.getAnimatedValue();
-				cLabelP.height = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_ci_tbm = ValueAnimator.ofInt(pxFromDip(16), 0);
-		va_ci_tbm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+				float posY = pY + (pxFromDip(50) * completion);
+				float scaleO = 2.56f - (1.56f * completion);
+				float scaleI = 1.0f + (1.56f * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
+				int marginI = (int) (pxFromDip(16) * completion);
 
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
-			}
-		});
-		ValueAnimator va_pi_tbm = ValueAnimator.ofInt(0, pxFromDip(16));
-		va_pi_tbm.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-			@Override
-			public void onAnimationUpdate(ValueAnimator animation) {
-				XPMBSubmenuItem_GBA cSub = alItems.get(intAnimItem - 1);
-				TableRow.LayoutParams cIconP = (TableRow.LayoutParams) cSub.getParentView()
-						.getLayoutParams();
-				TableRow.LayoutParams cLabelP = (TableRow.LayoutParams) cSub.getParentLabel()
-						.getLayoutParams();
-				cIconP.topMargin = (Integer) animation.getAnimatedValue();
-				cIconP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.topMargin = (Integer) animation.getAnimatedValue();
-				cLabelP.bottomMargin = (Integer) animation.getAnimatedValue();
-				cSub.getParentView().setLayoutParams(cIconP);
-				cSub.getParentLabel().setLayoutParams(cLabelP);
+				tlRoot.setY(posY);
+				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
+				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
+				alItems.get(intAnimItem - 1).getParentView().setScaleX(scaleI);
+				alItems.get(intAnimItem - 1).getParentView().setScaleY(scaleI);
+				alItems.get(intAnimItem - 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem - 1).getParentContainer().setTopMargin(marginI);
+				alItems.get(intAnimItem - 1).getParentContainer().setBottomMargin(marginI);
 			}
 		});
 
-		alAnims.add(va_ci_sc);
-		alAnims.add(va_ci_tbm);
-		alAnims.add(va_pi_tbm);
-		alAnims.add(va_pi_sc);
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(intSelItem).getParentLabel(), "Alpha", 0.0f));
-		alAnims.add(ObjectAnimator.ofFloat(alItems.get(intSelItem - 1).getParentLabel(), "Alpha",
-				1.0f));
-
-		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
-		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_sm_md.setDuration(150);
+		va_mu.setDuration(150);
 		getRootActivity().lockKeys(true);
-		reloadGameBG();
-		ag_xmb_sm_md.start();
+		reloadGameBG(intSelItem - 1);
+		va_mu.start();
+
 		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
@@ -649,29 +551,56 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		--intSelItem;
 	}
 
-	private void reloadGameBG() {
-		XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
-		if (iv_bg.getDrawable() != null) {
-			ObjectAnimator rbg_a_pre = ObjectAnimator.ofFloat(iv_bg, "Alpha", 1.0f, 0.0f);
-			rbg_a_pre.setDuration(200);
-			rbg_a_pre.start();
+	private void reloadGameBG_Pre() {
+		ValueAnimator va_bgr_pr = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_bgr_pr.setInterpolator(new DecelerateInterpolator());
+		va_bgr_pr.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
+
+				float alphaI = 1.0f - completion;
+				getRootActivity().getCustomBGView().setAlpha(alphaI);
+
+				if (completion == 1.0f) {
+					getRootActivity().getCustomBGView().setVisibility(View.INVISIBLE);
+				}
+			}
+		});
+		va_bgr_pr.setDuration(200);
+		va_bgr_pr.start();
+	}
+
+	private void reloadGameBG_Pos() {
+		getRootActivity().getCustomBGView().setVisibility(View.VISIBLE);
+		ValueAnimator va_bgr_po = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_bgr_po.setInterpolator(new DecelerateInterpolator());
+		va_bgr_po.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
+
+				float alphaI = completion;
+				getRootActivity().getCustomBGView().setAlpha(alphaI);
+			}
+		});
+		va_bgr_po.setDuration(200);
+		va_bgr_po.start();
+	}
+
+	private void reloadGameBG(final int index) {
+		if (getRootActivity().getCustomBGView().getDrawable() != null) {
+			reloadGameBG_Pre();
 		}
 		new Handler().postDelayed(new Runnable() {
-
 			@Override
 			public void run() {
-				XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
-				iv_bg.setAlpha(0.0f);
-				iv_bg.setImageDrawable(alItems.get(intSelItem).getGameBackground());
-				if (iv_bg.getDrawable() == null) {
-					return;
-				}
-				ObjectAnimator rbg_a_pos = ObjectAnimator.ofFloat(iv_bg, "Alpha", 0.0f, 1.0f);
-				rbg_a_pos.setDuration(200);
-				rbg_a_pos.start();
+				getRootActivity().getCustomBGView().setImageDrawable(
+						alItems.get(index).getGameBackground());
+				reloadGameBG_Pos();
 			}
 
-		}, 200);
+		}, 201);
 	}
 
 	public void execSelectedItem() {
@@ -680,7 +609,21 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
 		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
 		intent.setFlags(0x10000000);
-		getRootActivity().startActivity(intent);
+		if (getRootActivity().isActivityAvailable(intent)) {
+			getRootActivity().showLoadingAnim(true);
+			getRootActivity().postIntentStartWait(new IntentFinishedListener() {
+				@Override
+				public void onFinished(Intent intent) {
+					getRootActivity().showLoadingAnim(false);
+				}
+			}, intent);
+		} else {
+			Toast tst = Toast.makeText(
+					getRootActivity().getWindow().getContext(),
+					getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
+							intent.getComponent().getPackageName()), Toast.LENGTH_SHORT);
+			tst.show();
+		}
 	}
 
 	@Override
@@ -693,21 +636,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			tlRoot.removeAllViews();
 			getRootView().removeView(tlRoot);
 		}
-		XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
-		if (iv_bg.getDrawable() != null) {
-			ObjectAnimator rbg_a_pre = ObjectAnimator.ofFloat(iv_bg, "Alpha", 1.0f, 0.0f);
-			rbg_a_pre.setDuration(200);
-			rbg_a_pre.start();
-			getMessageBus().postDelayed(new Runnable() {
-
-				@Override
-				public void run() {
-					XPMB_ImageView iv_bg = getRootActivity().getCustomBGView();
-					iv_bg.setImageDrawable(null);
-					iv_bg.setAlpha(1.0f);
-				}
-
-			}, 200);
+		if (getRootActivity().getCustomBGView().getDrawable() != null) {
+			reloadGameBG_Pre();
 		}
 	}
 }

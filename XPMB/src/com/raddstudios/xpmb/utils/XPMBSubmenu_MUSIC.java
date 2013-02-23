@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -422,7 +423,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 					.getParentContainer().getLayoutParams();
 			cItemP.topMargin = 0;
 			cItemP.bottomMargin = 0;
-			alItems.get(0).getParentView().setLayoutParams(cItemP);
+			alItems.get(0).getParentContainer().setLayoutParams(cItemP);
 			alItems.get(0).getParentLabel().setAlpha(0.5f);
 			intSelItem = (Integer) getRootActivity().getObjectFromStore("selectionIndex");
 			intLastPlayed = intSelItem;
@@ -638,6 +639,20 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		}
 		mpPlayer = MediaPlayer.create(getRootActivity().getWindow().getContext(),
 				Uri.fromFile(alItems.get(index).getTrackPath()));
+		mpPlayer.setOnCompletionListener(new OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer arg0) {
+				if ((intLastPlayed + 1) < alItems.size()) {
+					doCenterOnItemPre();
+					execCustItem(intLastPlayed + 1);
+					centerOnItem(intLastPlayed);
+					doCenterOnItemPos();
+				} else {
+					doShowPlayerControls(false);
+				}
+			}
+		});
+
 		try {
 			mpPlayer.prepare();
 		} catch (Exception e) {

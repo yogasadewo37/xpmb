@@ -110,6 +110,7 @@ containing a value of this type.
         public static final int lbGameDescription_desc=0x7f05000a;
         public static final int lbGameName_deftext=0x7f050004;
         public static final int lbGameName_desc=0x7f050005;
+        public static final int strAppNotInstalled=0x7f05001a;
         public static final int strBackKeyHint=0x7f050014;
         public static final int strCoverNotFound=0x7f050006;
         public static final int strIncorrectDevice=0x7f050001;

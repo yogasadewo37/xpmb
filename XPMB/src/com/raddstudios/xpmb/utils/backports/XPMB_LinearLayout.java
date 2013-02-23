@@ -1,3 +1,22 @@
+//-----------------------------------------------------------------------------
+//    
+//    This file is part of XPMB.
+//
+//    XPMB is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    XPMB is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with XPMB.  If not, see <http://www.gnu.org/licenses/>.
+//
+//-----------------------------------------------------------------------------
+
 package com.raddstudios.xpmb.utils.backports;
 
 import android.content.Context;
@@ -83,26 +102,23 @@ public class XPMB_LinearLayout extends LinearLayout implements XPMB_View {
 	}
 
 	@Override
-	public void setLayoutParams(ViewGroup.LayoutParams params) {
-		super.setLayoutParams(params);
-	}
-
-	@Override
 	public void resetScaleBase() {
 		baseWidth = super.getLayoutParams().width;
 		baseHeight = super.getLayoutParams().height;
 	}
 
 	private void updateScaledLayoutParams(ViewGroup.LayoutParams params) {
-		if (params.width != ViewGroup.LayoutParams.MATCH_PARENT
-				|| params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
-			params.width = (int) (baseWidth * mScaleX);
+		if (params != null) {
+			if (params.width != ViewGroup.LayoutParams.MATCH_PARENT
+					|| params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+				params.width = (int) (baseWidth * mScaleX);
+			}
+			if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
+					|| params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+				params.height = (int) (baseHeight * mScaleY);
+			}
+			super.setLayoutParams(params);
 		}
-		if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
-				|| params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-			params.height = (int) (baseHeight * mScaleY);
-		}
-		super.setLayoutParams(params);
 	}
 
 	@Override

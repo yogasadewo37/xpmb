@@ -150,7 +150,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 		private int intType = TYPE_DUMMY;
 		private String strID = null, strExecString = null, strIcon = null, strSubmenu;
-		private XPMB_ImageView ivParentView = null;
+		//private XPMB_ImageView ivParentView = null;
 		private XPMB_TextView tvParentLabel = null;
 		private XPMB_TableRow trParentContainer = null;
 
@@ -191,13 +191,13 @@ public class XPMBMenu extends XPMB_MainMenu {
 			return strIcon;
 		}
 
-		public void setParentView(XPMB_ImageView parent) {
-			ivParentView = parent;
-		}
+		//public void setParentView(XPMB_ImageView parent) {
+		//	ivParentView = parent;
+		//}
 
-		public XPMB_ImageView getParentView() {
-			return ivParentView;
-		}
+		//public XPMB_ImageView getParentView() {
+		//	return ivParentView;
+		//}
 
 		public void setParentLabel(XPMB_TextView label) {
 			tvParentLabel = label;
@@ -332,14 +332,10 @@ public class XPMBMenu extends XPMB_MainMenu {
 				if (isMoving) {
 					float nX = (motStX + (arg1.getX(pointerId) * arg1.getXPrecision()));
 					tlRoot.setX((tlRoot.getX() + nX) - pxFromDip(90));
-					for (XPMBMenuItem xmi : alItems) {
-						float nIX = xmi.getChildContainer().getX();
-						xmi.getChildContainer().setX((int) ((nIX + nX) - pxFromDip(90)));
-					}
 				}
 				break;
 			case MotionEvent.ACTION_UP:
-				centerOnNearesMenutItem();
+				centerOnNearestMenuItem();
 				doCenterOnMenuItemPos();
 				motStX = 0;
 				isMoving = false;
@@ -355,12 +351,14 @@ public class XPMBMenu extends XPMB_MainMenu {
 		xmi.getParentView().setScaleX(0.7f);
 		xmi.getParentView().setScaleY(0.7f);
 		xmi.getParentLabel().setAlpha(0.0f);
+		xmi.getChildContainer().setVisibility(View.INVISIBLE);
 		xmi.getChildContainer().setAlpha(0.0f);
 	}
 
 	private void doCenterOnMenuItemPos() {
 		final XPMBMenuItem xmi = alItems.get(cMenuItem);
 
+		xmi.getChildContainer().setVisibility(View.VISIBLE);
 		ValueAnimator va_cmip = ValueAnimator.ofFloat(0.0f, 1.0f);
 		va_cmip.setInterpolator(new DecelerateInterpolator());
 		va_cmip.addUpdateListener(new AnimatorUpdateListener() {
@@ -380,9 +378,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 		va_cmip.start();
 	}
 
-	private void centerOnNearesMenutItem() {
+	private void centerOnNearestMenuItem() {
 		float cPosX = tlRoot.getX();
-		int destItem = ((int) (pxFromDip(56) - cPosX) / pxFromDip(90)) + 1;
+		int destItem = ((int) (pxFromDip(56) - cPosX) / pxFromDip(90));
 		if (destItem < 0) {
 			destItem = 0;
 		} else if (destItem > (alItems.size() - 1)) {
@@ -451,8 +449,9 @@ public class XPMBMenu extends XPMB_MainMenu {
 			cLabel.setText(xmi.getID());
 			cLabel.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
 			cLabel.setTextAppearance(getRootView().getContext(),
-					android.R.style.TextAppearance_Medium);
-			cLabel.setShadowLayer(8, 0, 0, Color.WHITE);
+					android.R.style.TextAppearance_Small);
+			cLabel.setTextColor(Color.WHITE);
+			cLabel.setShadowLayer(4, 0, 0, Color.WHITE);
 			if (idx > 0) {
 				cLabel.setAlpha(0.0f);
 			}
@@ -526,7 +525,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 					cSCont.addView(cSIcon);
 					cSCont.addView(cSLabel);
 					cSubCont.addView(cSCont);
-					xsi.setParentView(cSIcon);
+					//xsi.setParentView(cSIcon);
 					xsi.setParentLabel(cSLabel);
 					xsi.setParentContainer(cSCont);
 
@@ -612,13 +611,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 				if (completion == 1.0f) {
 					alItems.get(curItem).getChildContainer().setVisibility(View.INVISIBLE);
-					// alItems.get(curItem + 1).getParentView().setScaleX(1.0f);
-					// alItems.get(curItem + 1).getParentView().setScaleY(1.0f);
 				}
 			}
 		});
 
-		va_mr.setDuration(550);
+		va_mr.setDuration(150);
 		getRootActivity().lockKeys(true);
 		va_mr.start();
 		getMessageBus().postDelayed(new Runnable() {
@@ -629,7 +626,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 				++cMenuItem;
 			}
 
-		}, 560);
+		}, 160);
 	}
 
 	private void moveLeft() {
@@ -668,13 +665,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 
 				if (completion == 1.0f) {
 					alItems.get(curItem).getChildContainer().setVisibility(View.INVISIBLE);
-					// alItems.get(curItem - 1).getParentView().setScaleX(1.0f);
-					// alItems.get(curItem - 1).getParentView().setScaleY(1.0f);
 				}
 			}
 		});
 
-		va_ml.setDuration(550);
+		va_ml.setDuration(150);
 		getRootActivity().lockKeys(true);
 		va_ml.start();
 		getMessageBus().postDelayed(new Runnable() {
@@ -685,7 +680,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 				--cMenuItem;
 			}
 
-		}, 560);
+		}, 160);
 	}
 
 	private void moveDown() {
@@ -876,7 +871,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 				float childX = cX + (pxFromDip(96) * completion);
 				float alphaC = 1.0f - completion;
 				float alphaP = completion;
-				float alphaS = 5.0f + (0.5f * completion);
+				float alphaS = 0.5f + (0.5f * completion);
 
 				((XPMB_ImageView) getRootActivity().findViewById(R.id.ivSubmenuShown))
 						.setAlpha(alphaC);

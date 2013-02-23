@@ -20,12 +20,8 @@
 package com.raddstudios.xpmb.utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorSet;
-import com.nineoldandroids.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -35,11 +31,20 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.AbsoluteLayout;
 import android.widget.AbsoluteLayout.LayoutParams;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 
+import com.nineoldandroids.animation.ValueAnimator;
+import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
+import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
 @SuppressLint("NewApi")
@@ -53,6 +58,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		private Intent intAppIntent = null;
 		private XPMB_ImageView ivParentView = null;
 		private XPMB_TextView tvParentLabel = null;
+		private TableRow vgParentContainer = null;
 
 		public XPMBSubmenuItem_APP(String appName, Drawable appIcon, Intent appIntent) {
 			strAppName = appName;
@@ -87,29 +93,36 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		public XPMB_TextView getParentLabel() {
 			return tvParentLabel;
 		}
+
+		public TableRow getParentContainer() {
+			return vgParentContainer;
+		}
+
+		public void setParentContainer(TableRow parentContainer) {
+			this.vgParentContainer = parentContainer;
+		}
 	}
 
 	private ArrayList<XPMBSubmenuItem_APP> alItems = null;
-	private XPMB_Activity mRoot = null;
-	Handler hMessageBus = null;
 	private int intSelItem = 0;
 	private XPMB_TextView tv_no_app = null;
 
+	private XPMB_TableLayout tlRoot = null;
+
 	public XPMBSubmenu_APP(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
-		mRoot = root;
-		hMessageBus = messageBus;
 
 		alItems = new ArrayList<XPMBSubmenuItem_APP>();
 	}
 
+	@Override
 	public void doInit() {
-		PackageManager pm = mRoot.getPackageManager();
+		PackageManager pm = getRootActivity().getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
 		filter.addCategory(Intent.CATEGORY_LAUNCHER);
 		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
 		for (ResolveInfo r : ri) {
-			if(r.activityInfo.packageName.equals(mRoot.getPackageName())){
+			if (r.activityInfo.packageName.equals(getRootActivity().getPackageName())) {
 				continue;
 			}
 			alItems.add(new XPMBSubmenuItem_APP(r.loadLabel(pm).toString(), r.loadIcon(pm), pm
@@ -119,68 +132,97 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 	@Override
 	public void parseInitLayout() {
-		int cId = 0xC0DE;
-
 		if (alItems.size() == 0) {
 			tv_no_app = new XPMB_TextView(getRootView().getContext());
 			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
 					pxFromDip(48), pxFromDip(128));
 			tv_no_app.setLayoutParams(lp_ng);
-			tv_no_app.setText(mRoot.getText(R.string.strNoApps));
+			tv_no_app.setText(getRootActivity().getText(R.string.strNoApps));
 			tv_no_app.setTextColor(Color.WHITE);
 			tv_no_app.setShadowLayer(16, 0, 0, Color.WHITE);
-			tv_no_app.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
+			tv_no_app.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			tv_no_app.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			getRootView().addView(tv_no_app);
 			return;
 		}
 
+		tlRoot = new XPMB_TableLayout(getRootView().getContext());
+		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
+				pxFromDip(160 + (50 * alItems.size())), pxFromDip(48), pxFromDip(88));
+		tlRoot.setLayoutParams(rootP);
+
 		for (XPMBSubmenuItem_APP xsi : alItems) {
 			int idx = alItems.indexOf(xsi);
-			XPMB_ImageView cItem = new XPMB_ImageView(getRootView().getContext());
+
+			XPMB_TableRow cCont = new XPMB_TableRow(getRootView().getContext());
+			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
 			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
+			cCont.setId(getNextID());
+			cIcon.setId(getNextID());
+			cLabel.setId(getNextID());
+
+			// Setup Container
+			TableLayout.LayoutParams cContP = new TableLayout.LayoutParams(pxFromDip(386),
+					pxFromDip(50));
+			cCont.setLayoutParams(cContP);
 
 			// Setup Icon
-			cItem.setImageDrawable(xsi.getAppIcon());
+			TableRow.LayoutParams cIconP = new TableRow.LayoutParams(pxFromDip(50), pxFromDip(50));
+			cIconP.column = 0;
 			if (idx == 0) {
-				cItem.setScaleX(2.56f);
-				cItem.setScaleY(2.56f);
-				LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
-						(int) pxFromDip(50), pxFromDip(48), pxFromDip(104));
-				cItem.setLayoutParams(cItemParams);
-			} else {
-				LayoutParams cItemParams = new LayoutParams((int) pxFromDip(50),
-						(int) pxFromDip(50), pxFromDip(48), pxFromDip(248 + (50 * (idx - 1))));
-				cItem.setLayoutParams(cItemParams);
+				cIconP.bottomMargin = pxFromDip(16);
+				cIconP.topMargin = pxFromDip(16);
 			}
-			cItem.setId(cId);
-			++cId;
+			cIcon.setLayoutParams(cIconP);
+			cIcon.resetScaleBase();
+
+			if (idx == 0) {
+				cIcon.setScaleX(2.56f);
+				cIcon.setScaleY(2.56f);
+			}
+			cIcon.setImageDrawable(xsi.getAppIcon());
+
 			// Setup Label
+			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(50));
+			cLabelParams.leftMargin = pxFromDip(16);
+			cLabelParams.column = 1;
+			cLabelParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+			cLabel.setLayoutParams(cLabelParams);
+
 			cLabel.setText(xsi.getAppName());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-			cLabel.setTextAppearance(getRootView().getContext(), android.R.style.TextAppearance_Medium);
+			cLabel.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-
-			if (idx == 0) {
-				LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
-						(int) pxFromDip(128), pxFromDip(184), pxFromDip(104));
-				cLabel.setLayoutParams(cLabelParams);
-			} else {
-				LayoutParams cLabelParams = new LayoutParams((int) pxFromDip(320),
-						(int) pxFromDip(128), pxFromDip(184),
-						pxFromDip((248 + (50 * (idx - 1)) - 39)));
-				cLabel.setLayoutParams(cLabelParams);
+			if (idx != 0) {
 				cLabel.setAlpha(0.0f);
 			}
-			cLabel.setId(cId);
-			++cId;
 
-			xsi.setParentView(cItem);
+			// Add everything to their parent containers and holders
+			cCont.addView(cIcon);
+			cCont.addView(cLabel);
+			tlRoot.addView(cCont);
+			xsi.setParentView(cIcon);
 			xsi.setParentLabel(cLabel);
-			getRootView().addView(cItem);
-			getRootView().addView(cLabel);
+			xsi.setParentContainer(cCont);
 		}
+		// Prevent Image scale changes to distort layout during animations
+		XPMB_TableRow tlFiller = new XPMB_TableRow(getRootView().getContext());
+		XPMB_ImageView ivFiller = new XPMB_ImageView(getRootView().getContext());
+		XPMB_TextView tvFiller = new XPMB_TextView(getRootView().getContext());
+		TableRow.LayoutParams iv_f_lp = new TableRow.LayoutParams(pxFromDip(128), pxFromDip(128));
+		TableRow.LayoutParams tv_f_lp = new TableRow.LayoutParams(pxFromDip(320), pxFromDip(128));
+		iv_f_lp.column = 0;
+		tv_f_lp.column = 1;
+		ivFiller.setLayoutParams(iv_f_lp);
+		tvFiller.setLayoutParams(tv_f_lp);
+		tlFiller.addView(ivFiller);
+		tlFiller.addView(tvFiller);
+		tlRoot.addView(tlFiller);
+		getRootView().addView(tlRoot);
 	}
 
 	@Override
@@ -198,7 +240,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			break;
 		case XPMB_Main.KEYCODE_LEFT:
 		case XPMB_Main.KEYCODE_CIRCLE:
-			mRoot.requestUnloadSubmenu();
+			getRootActivity().requestUnloadSubmenu();
 			break;
 		}
 	}
@@ -208,47 +250,46 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float pY = tlRoot.getY();
+		final int intAnimItem = intSelItem;
 
-		for (XPMBSubmenuItem_APP xsi : alItems) {
-			int idx = alItems.indexOf(xsi);
-			XPMB_ImageView iv_c_i = xsi.getParentView();
-			XPMB_TextView tv_c_l = xsi.getParentLabel();
+		ValueAnimator va_md = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_md.setInterpolator(new DecelerateInterpolator());
+		va_md.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			if (idx == intSelItem) {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() - pxFromDip(66))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f, 1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f, 1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() - pxFromDip(105))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 1.0f, 0.0f));
-			} else if (idx == (intSelItem + 1)) {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() - pxFromDip(144))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f, 2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f, 2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() - pxFromDip(105))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 0.0f, 1.0f));
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() - pxFromDip(50))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() - pxFromDip(50))));
+				float posY = pY - (pxFromDip(50) * completion);
+				float scaleO = 2.56f - (1.56f * completion);
+				float scaleI = 1.0f + (1.56f * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
+				int marginI = (int) (pxFromDip(16) * completion);
+
+				tlRoot.setY(posY);
+				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				alItems.get(intAnimItem).getParentView().setTopMargin(marginO);
+				alItems.get(intAnimItem).getParentView().setBottomMargin(marginO);
+				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(intAnimItem + 1).getParentView().setScaleX(scaleI);
+				alItems.get(intAnimItem + 1).getParentView().setScaleY(scaleI);
+				alItems.get(intAnimItem + 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem + 1).getParentView().setTopMargin(marginI);
+				alItems.get(intAnimItem + 1).getParentView().setBottomMargin(marginI);
 			}
-		}
+		});
 
-		AnimatorSet ag_xmb_sm_mu = new AnimatorSet();
-		ag_xmb_sm_mu.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_sm_mu.setDuration(150);
-		mRoot.lockKeys(true);
-		ag_xmb_sm_mu.start();
-		hMessageBus.postDelayed(new Runnable() {
+		va_md.setDuration(150);
+		getRootActivity().lockKeys(true);
+		va_md.start();
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -261,47 +302,46 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			return;
 		}
 
-		ArrayList<Animator> alAnims = new ArrayList<Animator>();
+		final float pY = tlRoot.getY();
+		final int intAnimItem = intSelItem;
 
-		for (XPMBSubmenuItem_APP xsi : alItems) {
-			int idx = alItems.indexOf(xsi);
-			XPMB_ImageView iv_c_i = xsi.getParentView();
-			XPMB_TextView tv_c_l = xsi.getParentLabel();
+		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
+		va_mu.setInterpolator(new DecelerateInterpolator());
+		va_mu.addUpdateListener(new AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator arg0) {
+				float completion = (Float) arg0.getAnimatedValue();
 
-			if (idx == intSelItem) {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() + pxFromDip(144))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 2.56f, 1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 2.56f, 1.0f));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() + pxFromDip(105))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 1.0f, 0.0f));
-			} else if (idx == (intSelItem - 1)) {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() + pxFromDip(66))));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleX", 1.0f, 2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "ScaleY", 1.0f, 2.56f));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() + pxFromDip(105))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Alpha", 0.0f, 1.0f));
-			} else {
-				alAnims.add(ObjectAnimator.ofFloat(iv_c_i, "Y", iv_c_i.getY(),
-						(iv_c_i.getY() + pxFromDip(50))));
-				alAnims.add(ObjectAnimator.ofFloat(tv_c_l, "Y", tv_c_l.getY(),
-						(tv_c_l.getY() + pxFromDip(50))));
+				float posY = pY + (pxFromDip(50) * completion);
+				float scaleO = 2.56f - (1.56f * completion);
+				float scaleI = 1.0f + (1.56f * completion);
+				float alphaO = 1.0f - completion;
+				float alphaI = completion;
+				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
+				int marginI = (int) (pxFromDip(16) * completion);
+
+				tlRoot.setY(posY);
+				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				alItems.get(intAnimItem).getParentView().setTopMargin(marginO);
+				alItems.get(intAnimItem).getParentView().setBottomMargin(marginO);
+				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(intAnimItem - 1).getParentView().setScaleX(scaleI);
+				alItems.get(intAnimItem - 1).getParentView().setScaleY(scaleI);
+				alItems.get(intAnimItem - 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem - 1).getParentView().setTopMargin(marginI);
+				alItems.get(intAnimItem - 1).getParentView().setBottomMargin(marginI);
 			}
-		}
+		});
 
-		AnimatorSet ag_xmb_sm_md = new AnimatorSet();
-		ag_xmb_sm_md.playTogether((Collection<Animator>) alAnims);
-		ag_xmb_sm_md.setDuration(150);
-		mRoot.lockKeys(true);
-		ag_xmb_sm_md.start();
-		hMessageBus.postDelayed(new Runnable() {
+		va_mu.setDuration(150);
+		getRootActivity().lockKeys(true);
+		va_mu.start();
+		getMessageBus().postDelayed(new Runnable() {
 
 			@Override
 			public void run() {
-				mRoot.lockKeys(false);
+				getRootActivity().lockKeys(false);
 			}
 
 		}, 160);
@@ -310,18 +350,25 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 	}
 
 	private void execSelectedItem() {
-		mRoot.showLoadingAnim(true);
-		mRoot.startActivity(alItems.get(intSelItem).getAppIntent());
+		getRootActivity().showLoadingAnim(true);
+		getRootActivity().postIntentStartWait(new IntentFinishedListener() {
+			@Override
+			public void onFinished(Intent intent) {
+				getRootActivity().showLoadingAnim(false);
+			}
+		}, alItems.get(intSelItem).getAppIntent());
 	}
 
-	public void doCleanup(ViewGroup base) {
+	@Override
+	public void doCleanup() {
 		if (alItems.size() == 0 && tv_no_app != null) {
-			base.removeView(tv_no_app);
+			getRootView().removeView(tv_no_app);
 			return;
 		}
-		for (XPMBSubmenuItem_APP xig : alItems) {
-			base.removeView(xig.getParentView());
-			base.removeView(xig.getParentLabel());
+		if (tlRoot != null) {
+			getRootView().removeView(tlRoot);
 		}
 	}
+
+	// TODO implement requestDestroy() to release any resources used
 }
