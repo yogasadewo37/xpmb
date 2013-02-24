@@ -31,6 +31,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -61,7 +62,7 @@ public class XPMB_Main extends XPMB_Activity {
 	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20, KEYCODE_LEFT = 21,
 			KEYCODE_RIGHT = 22, KEYCODE_CROSS = 23, KEYCODE_CIRCLE = 4, KEYCODE_SQUARE = 99,
 			KEYCODE_TRIANGLE = 100, KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
-			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLOUME_DOWN = 25,
+			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLUME_DOWN = 25,
 			KEYCODE_VOLUME_UP = 24;
 
 	private XPMB_MainMenu mMenu = null;
@@ -69,6 +70,7 @@ public class XPMB_Main extends XPMB_Activity {
 	private Handler hMessageBus = null;
 	private boolean showingSubmenu = false, bLockedKeys = false, firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
+	AudioManager amVolControl = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,12 +92,14 @@ public class XPMB_Main extends XPMB_Activity {
 			super.onCreate(savedInstanceState);
 			return;
 		}
-		
+
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.xpmb_main);
+
+		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
 		setupAnimations();
 
@@ -180,6 +184,24 @@ public class XPMB_Main extends XPMB_Activity {
 	}
 
 	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		event.startTracking();
+
+		switch (keyCode) {
+		case KEYCODE_VOLUME_UP:
+			amVolControl.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE,
+					AudioManager.FLAG_SHOW_UI);
+			break;
+		case KEYCODE_VOLUME_DOWN:
+			AudioManager amVolControl = (AudioManager) getBaseContext().getSystemService(
+					AUDIO_SERVICE);
+			amVolControl.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER,
+					AudioManager.FLAG_SHOW_UI);
+		}
+		return true;
+	}
+
+	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		if (bLockedKeys) {
 			return true;
@@ -192,6 +214,23 @@ public class XPMB_Main extends XPMB_Activity {
 		return true;
 	}
 
+	@Override
+	public boolean onKeyLongPress(int keyCode, KeyEvent vent) {
+		if (bLockedKeys) {
+			return true;
+		}
+		if (showingSubmenu) {
+			mSub.sendKeyHold(keyCode);
+		} else {
+			mMenu.sendKeyHold(keyCode);
+		}
+		return true;
+	}
+
+	// Normally, as this is a launcher, we should not call this procedure.
+	// As we aren't finished yet, we can't use this launcher as a day-to-day
+	// replacement one,
+	// that's the reason to be for this procedure.
 	@Override
 	public void requestActivityEnd() {
 		if (mSub != null) {

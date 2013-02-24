@@ -59,6 +59,9 @@ public class XPMB_Layout {
 
 	public void sendKeyUp(int keyCode) {
 	}
+	
+	public void sendKeyHold(int keyCode){
+	}
 
 	protected int pxFromDip(int dip) {
 		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip, mRoot
