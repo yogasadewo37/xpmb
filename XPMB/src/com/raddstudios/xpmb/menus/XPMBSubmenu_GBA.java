@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,11 +26,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -40,11 +41,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.AbsoluteLayout;
-import android.widget.AbsoluteLayout.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
@@ -53,15 +55,16 @@ import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.menus.utils.ROMInfo;
+import com.raddstudios.xpmb.menus.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
-@SuppressLint("NewApi")
-@SuppressWarnings("deprecation")
 public class XPMBSubmenu_GBA extends XPMB_Layout {
 
 	class XPMBSubmenuItem_GBA {
@@ -166,18 +169,163 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
+	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
+			ANIM_CENTER_ON_ITEM = 2;
+
+	private class UIAnimatorWorker implements AnimatorUpdateListener {
+
+		private int intAnimType = -1;
+		private int intAnimItem = -1, intNextItem = -1;
+		private int pY = 0, destY = 0;
+		private ValueAnimator mOwner = null;
+		private float[] mArgs = null;
+
+		public UIAnimatorWorker(ValueAnimator parentAnimator) {
+			super();
+			mOwner = parentAnimator;
+		}
+
+		public void setArguments(float[] arguments) {
+			mArgs = arguments;
+		}
+
+		public void setAnimationType(int type) {
+			if (mOwner.isStarted()) {
+				mOwner.end();
+			}
+			intAnimType = type;
+			intAnimItem = intSelItem;
+
+			switch (type) {
+			case ANIM_MENU_MOVE_UP:
+				mOwner.setDuration(250);
+				pY = tlRoot.getTopMargin();
+				intNextItem = intAnimItem - 1;
+				destY = pxFromDip(88) - (pxFromDip(50) * intNextItem);
+				break;
+			case ANIM_MENU_MOVE_DOWN:
+				mOwner.setDuration(250);
+				pY = tlRoot.getTopMargin();
+				intNextItem = intAnimItem + 1;
+				destY = pxFromDip(88) - (pxFromDip(50) * intNextItem);
+				break;
+			case ANIM_CENTER_ON_ITEM:
+				mOwner.setDuration(250);
+				pY = tlRoot.getTopMargin();
+				intNextItem = (int) mArgs[0];
+				destY = pxFromDip(88) - (pxFromDip(50) * intNextItem);
+				break;
+			}
+		}
+
+		@Override
+		public void onAnimationUpdate(ValueAnimator arg0) {
+			float completion = (Float) arg0.getAnimatedValue();
+
+			float dispY = 0, alphaO = 0, alphaI = 0, scaleO = 0, scaleI = 0;
+			int marginO = 0, marginI = 0;
+
+			switch (intAnimType) {
+			case ANIM_MENU_MOVE_UP:
+			case ANIM_MENU_MOVE_DOWN:
+			case ANIM_CENTER_ON_ITEM:
+				dispY = destY - pY;
+				scaleO = 2.56f - (1.56f * completion);
+				scaleI = 1.0f + (1.56f * completion);
+				alphaO = 1.0f - completion;
+				alphaI = completion;
+				marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
+				marginI = (int) (pxFromDip(16) * completion);
+
+				tlRoot.setTopMargin((int) (pY + (dispY * completion)));
+				alItems.get(intAnimItem).getParentView().setViewScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setViewScaleY(scaleO);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
+				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
+				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
+				alItems.get(intNextItem).getParentView().setViewScaleX(scaleI);
+				alItems.get(intNextItem).getParentView().setViewScaleY(scaleI);
+				alItems.get(intNextItem).getParentLabel().setAlphaLevel(alphaI);
+				alItems.get(intNextItem).getParentContainer().setTopMargin(marginI);
+				alItems.get(intNextItem).getParentContainer().setBottomMargin(marginI);
+				break;
+			case ANIM_NONE:
+			default:
+				break;
+			}
+		}
+	};
+
+	private final int SCROLL_DIR_UP = 0, SCROLL_DIR_DOWN = 1;
+
+	private class RapidScroller extends TimerTask {
+
+		private int mDirection = 0;
+		private boolean bEnabled = false;
+
+		public void setScrollDirection(int direction) {
+			mDirection = direction;
+		}
+
+		public void setEnabled(boolean enabled) {
+			bEnabled = enabled;
+		}
+
+		public boolean isEnabled() {
+			return bEnabled;
+		}
+
+		@Override
+		public void run() {
+			if (bEnabled) {
+				switch (mDirection) {
+				case SCROLL_DIR_UP:
+					getMessageBus().post(new Runnable() {
+						@Override
+						public void run() {
+							moveUp();
+						}
+					});
+					break;
+				case SCROLL_DIR_DOWN:
+					getMessageBus().post(new Runnable() {
+						@Override
+						public void run() {
+							moveDown();
+						}
+					});
+					break;
+				}
+			}
+		}
+	};
+
 	private ArrayList<XPMBSubmenuItem_GBA> alItems = null;
 	private int intSelItem = 0;
+	private boolean isFocused = true;
 	private File mROMRoot = null;
 	private ROMInfo ridROMInfoDat = null;
 	private XPMB_TextView tv_no_game = null;
 	private XPMB_TableLayout tlRoot = null;
+
+	private ValueAnimator aUIAnimator = null;
+	private UIAnimatorWorker aUIAnimatorW = null;
+	private RapidScroller ttFastScroll = null;
 
 	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView, File fROMRoot) {
 		super(root, messageBus, rootView);
 		mROMRoot = fROMRoot;
 
 		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
+
+		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
+		aUIAnimator.setInterpolator(new DecelerateInterpolator());
+		aUIAnimator.setDuration(150);
+		aUIAnimatorW = new UIAnimatorWorker(aUIAnimator);
+		aUIAnimator.addUpdateListener(aUIAnimatorW);
+
+		ttFastScroll = new RapidScroller();
+		new Timer().scheduleAtFixedRate(ttFastScroll, 0, 50);
 	}
 
 	public void doInit() {
@@ -325,12 +473,66 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
+	private OnTouchListener mTouchListener = new OnTouchListener() {
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			if (isFocused){
+			getRootActivity().setTouchedChildView(v);
+			}
+			return false;
+		}
+	};
+
+	@Override
+	public void sendClickEventToView(View v) {
+		if (v.getTag() != null) {
+			int tag = (Integer) v.getTag();
+
+			if (tag != intSelItem) {
+				doCenterOnItemPre();
+				centerOnItem(tag);
+			}
+			execCustItem(tag);
+		}
+	}
+
+	private void doCenterOnItemPre() {
+		alItems.get(intSelItem).getParentContainer().setTopMargin(0);
+		alItems.get(intSelItem).getParentContainer().setBottomMargin(0);
+		alItems.get(intSelItem).getParentView().setViewScaleX(1.0f);
+		alItems.get(intSelItem).getParentView().setViewScaleY(1.0f);
+		alItems.get(intSelItem).getParentLabel().setAlphaLevel(0.0f);
+	}
+
+	private void centerOnNearestItem() {
+		float cPosY = tlRoot.getTopMargin();
+		int destItem = ((int) (pxFromDip(122) - cPosY) / pxFromDip(60)) + 1;
+		if (destItem < 0) {
+			destItem = 0;
+		} else if (destItem > (alItems.size() - 1)) {
+			destItem = (alItems.size() - 1);
+		}
+		centerOnItem(destItem);
+
+	}
+
+	private void centerOnItem(int index) {
+		aUIAnimatorW.setArguments(new float[] { index });
+		aUIAnimatorW.setAnimationType(ANIM_CENTER_ON_ITEM);
+		aUIAnimator.start();
+		intSelItem = index;
+	}
+
 	public void parseInitLayout() {
 
 		if (alItems.size() == 0) {
 			tv_no_game = new XPMB_TextView(getRootView().getContext());
-			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
-					pxFromDip(48), pxFromDip(128));
+			RelativeLayout.LayoutParams lp_ng = new RelativeLayout.LayoutParams(pxFromDip(320),
+					pxFromDip(100));
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			lp_ng.leftMargin = pxFromDip(48);
+			lp_ng.topMargin = pxFromDip(128);
 			tv_no_game.setLayoutParams(lp_ng);
 			tv_no_game.setText(getRootActivity().getText(R.string.strNoGames));
 			tv_no_game.setTextColor(Color.WHITE);
@@ -343,13 +545,15 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 
 		tlRoot = new XPMB_TableLayout(getRootView().getContext());
-		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(464),
-				pxFromDip(160 + (60 * alItems.size())), pxFromDip(48), pxFromDip(88));
+		RelativeLayout.LayoutParams rootP = new RelativeLayout.LayoutParams(pxFromDip(464),
+				pxFromDip(160 + (60 * alItems.size())));
+		rootP.leftMargin = pxFromDip(48);
+		rootP.topMargin = pxFromDip(88);
 		tlRoot.setLayoutParams(rootP);
 
 		for (XPMBSubmenuItem_GBA xsi : alItems) {
 
-			int idx = alItems.indexOf(xsi);
+			int idy = alItems.indexOf(xsi);
 
 			XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
 			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
@@ -361,7 +565,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			// Setup Container
 			TableLayout.LayoutParams cItemP = new TableLayout.LayoutParams(pxFromDip(386),
 					TableLayout.LayoutParams.WRAP_CONTENT);
-			if (idx == 0) {
+			if (idy == 0) {
 				cItemP.topMargin = pxFromDip(16);
 				cItemP.bottomMargin = pxFromDip(16);
 			}
@@ -373,12 +577,14 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			cIconParams.column = 0;
 			cIcon.setLayoutParams(cIconParams);
 			cIcon.resetScaleBase();
-			if (idx == 0) {
-				cIcon.setScaleX(2.56f);
-				cIcon.setScaleY(2.56f);
+			if (idy == 0) {
+				cIcon.setViewScaleX(2.56f);
+				cIcon.setViewScaleY(2.56f);
 			}
 
 			cIcon.setImageDrawable(xsi.getGameCover());
+			cIcon.setTag(idy);
+			cIcon.setOnTouchListener(mTouchListener);
 
 			// Setup Label
 			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
@@ -388,8 +594,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			cLabelParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
 			cLabel.setLayoutParams(cLabelParams);
 
-			if (idx != 0) {
-				cLabel.setAlpha(0.0f);
+			if (idy != 0) {
+				cLabel.setAlphaLevel(0.0f);
 			}
 			cLabel.setText(xsi.getGameName());
 			cLabel.setTextColor(Color.WHITE);
@@ -397,6 +603,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			cLabel.setTextAppearance(getRootView().getContext(),
 					android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+			cLabel.setTag(idy);
+			cLabel.setOnTouchListener(mTouchListener);
 
 			// Add everything to their parent containers and holders
 			cItem.addView(cIcon);
@@ -427,10 +635,18 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	public void sendKeyUp(int keyCode) {
 		switch (keyCode) {
 		case XPMB_Main.KEYCODE_DOWN:
-			moveDown();
+			if (ttFastScroll.isEnabled()) {
+				ttFastScroll.setEnabled(false);
+			} else {
+				moveDown();
+			}
 			break;
 		case XPMB_Main.KEYCODE_UP:
-			moveUp();
+			if (ttFastScroll.isEnabled()) {
+				ttFastScroll.setEnabled(false);
+			} else {
+				moveUp();
+			}
 			break;
 		case XPMB_Main.KEYCODE_START:
 		case XPMB_Main.KEYCODE_CROSS:
@@ -443,56 +659,27 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}
 	}
 
+	@Override
+	public void sendKeyHold(int keyCode) {
+		switch (keyCode) {
+		case XPMB_Main.KEYCODE_UP:
+			ttFastScroll.setScrollDirection(SCROLL_DIR_UP);
+			ttFastScroll.setEnabled(true);
+			break;
+		case XPMB_Main.KEYCODE_DOWN:
+			ttFastScroll.setScrollDirection(SCROLL_DIR_DOWN);
+			ttFastScroll.setEnabled(true);
+			break;
+		}
+	}
+
 	public void moveDown() {
 		if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
-		final int intAnimItem = intSelItem;
-
-		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
-		va_mu.setInterpolator(new DecelerateInterpolator());
-		va_mu.addUpdateListener(new AnimatorUpdateListener() {
-			@Override
-			public void onAnimationUpdate(ValueAnimator arg0) {
-				float completion = (Float) arg0.getAnimatedValue();
-
-				float posY = pY - (pxFromDip(50) * completion);
-				float scaleO = 2.56f - (1.56f * completion);
-				float scaleI = 1.0f + (1.56f * completion);
-				float alphaO = 1.0f - completion;
-				float alphaI = completion;
-				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
-				int marginI = (int) (pxFromDip(16) * completion);
-
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
-				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
-				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem + 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem + 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem + 1).getParentLabel().setAlpha(alphaI);
-				alItems.get(intAnimItem + 1).getParentContainer().setTopMargin(marginI);
-				alItems.get(intAnimItem + 1).getParentContainer().setBottomMargin(marginI);
-			}
-		});
-
-		va_mu.setDuration(150);
-		getRootActivity().lockKeys(true);
-		reloadGameBG(intSelItem+1);
-		va_mu.start();
-
-		getMessageBus().postDelayed(new Runnable() {
-
-			@Override
-			public void run() {
-				getRootActivity().lockKeys(false);
-			}
-
-		}, 160);
+		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_DOWN);
+		aUIAnimator.start();
 
 		++intSelItem;
 	}
@@ -502,51 +689,8 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
-		final int intAnimItem = intSelItem;
-
-		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
-		va_mu.setInterpolator(new DecelerateInterpolator());
-		va_mu.addUpdateListener(new AnimatorUpdateListener() {
-			@Override
-			public void onAnimationUpdate(ValueAnimator arg0) {
-				float completion = (Float) arg0.getAnimatedValue();
-
-				float posY = pY + (pxFromDip(50) * completion);
-				float scaleO = 2.56f - (1.56f * completion);
-				float scaleI = 1.0f + (1.56f * completion);
-				float alphaO = 1.0f - completion;
-				float alphaI = completion;
-				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
-				int marginI = (int) (pxFromDip(16) * completion);
-
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
-				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
-				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem - 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem - 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem - 1).getParentLabel().setAlpha(alphaI);
-				alItems.get(intAnimItem - 1).getParentContainer().setTopMargin(marginI);
-				alItems.get(intAnimItem - 1).getParentContainer().setBottomMargin(marginI);
-			}
-		});
-
-		va_mu.setDuration(150);
-		getRootActivity().lockKeys(true);
-		reloadGameBG(intSelItem - 1);
-		va_mu.start();
-
-		getMessageBus().postDelayed(new Runnable() {
-
-			@Override
-			public void run() {
-				getRootActivity().lockKeys(false);
-			}
-
-		}, 160);
+		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_UP);
+		aUIAnimator.start();
 
 		--intSelItem;
 	}
@@ -560,7 +704,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float alphaI = 1.0f - completion;
-				getRootActivity().getCustomBGView().setAlpha(alphaI);
+				getRootActivity().getCustomBGView().setAlphaLevel(alphaI);
 
 				if (completion == 1.0f) {
 					getRootActivity().getCustomBGView().setVisibility(View.INVISIBLE);
@@ -581,7 +725,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float alphaI = completion;
-				getRootActivity().getCustomBGView().setAlpha(alphaI);
+				getRootActivity().getCustomBGView().setAlphaLevel(alphaI);
 			}
 		});
 		va_bgr_po.setDuration(200);
@@ -603,11 +747,11 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		}, 201);
 	}
 
-	public void execSelectedItem() {
+	public void execCustItem(int index) {
 		Intent intent = new Intent("android.intent.action.VIEW");
 		intent.setComponent(ComponentName
 				.unflattenFromString("com.androidemu.gba/.EmulatorActivity"));
-		intent.setData(Uri.fromFile(alItems.get(intSelItem).getROMPath()));
+		intent.setData(Uri.fromFile(alItems.get(index).getROMPath()));
 		intent.setFlags(0x10000000);
 		if (getRootActivity().isActivityAvailable(intent)) {
 			getRootActivity().showLoadingAnim(true);
@@ -624,6 +768,10 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 							intent.getComponent().getPackageName()), Toast.LENGTH_SHORT);
 			tst.show();
 		}
+	}
+
+	public void execSelectedItem() {
+		execCustItem(intSelItem);
 	}
 
 	@Override

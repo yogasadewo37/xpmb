@@ -38,19 +38,21 @@ import android.os.Environment;
 import android.os.Handler;
 import android.text.format.Time;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.raddstudios.xpmb.utils.XPMBMenu;
-import com.raddstudios.xpmb.utils.XPMBSubmenu_APP;
-import com.raddstudios.xpmb.utils.XPMBSubmenu_GBA;
-import com.raddstudios.xpmb.utils.XPMBSubmenu_MUSIC;
-import com.raddstudios.xpmb.utils.XPMBSubmenu_NES;
+import com.raddstudios.xpmb.menus.XPMBMenu;
+import com.raddstudios.xpmb.menus.XPMBSubmenu_APP;
+import com.raddstudios.xpmb.menus.XPMBSubmenu_GBA;
+import com.raddstudios.xpmb.menus.XPMBSubmenu_MUSIC;
+import com.raddstudios.xpmb.menus.XPMBSubmenu_NES;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.XPMB_MainMenu;
@@ -98,6 +100,7 @@ public class XPMB_Main extends XPMB_Activity {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.xpmb_main);
+		findViewById(R.id.main_l).setOnTouchListener(mTouchListener);
 
 		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
@@ -128,8 +131,107 @@ public class XPMB_Main extends XPMB_Activity {
 		super.onCreate(savedInstanceState);
 	}
 
+	private static final int MOVING_DIR_VERT = 0, MOVING_DIR_HORZ = 1;
+	private float motStX = 0, motStY = 0, dispX = 0, dispY = 0;
+	private int polarity = 1;
+	private boolean isMoving = false;
+	private boolean isTouchEnabled = true;
+	private View mTouchedView = null;
+
+	@Override
+	public void setTouchedChildView(View v) {
+		mTouchedView = v;
+	}
+
+	private OnTouchListener mTouchListener = new OnTouchListener() {
+
+		@Override
+		public boolean onTouch(View arg0, MotionEvent arg1) {
+			if (!isTouchEnabled) {
+				return true;
+			}
+			int action = arg1.getActionMasked();
+			int pointerIndex = arg1.getActionIndex();
+			int pointerId = arg1.getPointerId(pointerIndex);
+			if (pointerId != 0) {
+				return true;
+			}
+
+			switch (action) {
+			case MotionEvent.ACTION_DOWN:
+				if (!isMoving) {
+					motStX = arg1.getX(pointerId);
+					motStY = arg1.getY(pointerId);
+				}
+				break;
+			case MotionEvent.ACTION_MOVE:
+				dispX = arg1.getX(pointerId) - motStX;
+				dispY = arg1.getY(pointerId) - motStY;
+				float absX = Math.abs(dispX),
+				absY = Math.abs(dispY);
+				if (!isMoving && (absX > 50 || absY > 50)) {
+					if (absX > 50) {
+						polarity = MOVING_DIR_HORZ;
+					}
+					if (absY > 50) {
+						polarity = MOVING_DIR_VERT;
+					}
+					isMoving = true;
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				if (arg1.getEventTime() - arg1.getDownTime() > 150) {
+					switch (polarity) {
+					case MOVING_DIR_HORZ:
+						if (dispX < 0) {
+							onKeyDown(KEYCODE_RIGHT, new KeyEvent(KeyEvent.ACTION_DOWN,
+									KEYCODE_RIGHT));
+							onKeyUp(KEYCODE_RIGHT, new KeyEvent(KeyEvent.ACTION_UP, KEYCODE_RIGHT));
+						}
+						if (dispX > 0) {
+							onKeyDown(KEYCODE_LEFT,
+									new KeyEvent(KeyEvent.ACTION_DOWN, KEYCODE_LEFT));
+							onKeyUp(KEYCODE_LEFT, new KeyEvent(KeyEvent.ACTION_UP, KEYCODE_LEFT));
+						}
+						break;
+					case MOVING_DIR_VERT:
+						if (dispY < 0) {
+							onKeyDown(KEYCODE_DOWN,
+									new KeyEvent(KeyEvent.ACTION_DOWN, KEYCODE_DOWN));
+							onKeyUp(KEYCODE_DOWN, new KeyEvent(KeyEvent.ACTION_UP, KEYCODE_DOWN));
+						}
+						if (dispY > 0) {
+							onKeyDown(KEYCODE_UP, new KeyEvent(KeyEvent.ACTION_DOWN, KEYCODE_UP));
+							onKeyUp(KEYCODE_UP, new KeyEvent(KeyEvent.ACTION_UP, KEYCODE_UP));
+						}
+						break;
+					}
+				} else {
+					if (mTouchedView != null) {
+						if (showingSubmenu) {
+							mSub.sendClickEventToView(mTouchedView);
+						} else {
+							mMenu.sendClickEventToView(mTouchedView);
+						}
+						mTouchedView = null;
+					}
+				}
+				motStX = 0;
+				motStY = 0;
+				isMoving = false;
+				break;
+			}
+			return true;
+		}
+	};
+
+	@Override
+	public void enableTouchEvents(boolean enabled) {
+		isTouchEnabled = enabled;
+	}
+
 	private boolean checkForSupportedDevice() {
-		// return true;
+		//return true;
 		return new File("/system/framework/xperiaplaycertified.jar").exists();
 	}
 
@@ -185,6 +287,14 @@ public class XPMB_Main extends XPMB_Activity {
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (bLockedKeys) {
+			return true;
+		}
+		if (showingSubmenu) {
+			mSub.sendKeyDown(keyCode);
+		} else {
+			mMenu.sendKeyDown(keyCode);
+		}
 		event.startTracking();
 
 		switch (keyCode) {
@@ -193,8 +303,6 @@ public class XPMB_Main extends XPMB_Activity {
 					AudioManager.FLAG_SHOW_UI);
 			break;
 		case KEYCODE_VOLUME_DOWN:
-			AudioManager amVolControl = (AudioManager) getBaseContext().getSystemService(
-					AUDIO_SERVICE);
 			amVolControl.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER,
 					AudioManager.FLAG_SHOW_UI);
 		}

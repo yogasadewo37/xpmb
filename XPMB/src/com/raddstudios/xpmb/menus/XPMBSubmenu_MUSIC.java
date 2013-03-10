@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,10 +25,10 @@ import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -45,23 +45,27 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.AbsoluteLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
+import com.raddstudios.xpmb.XPMBServices;
+import com.raddstudios.xpmb.XPMBServices.MediaPlayerControl;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
-@SuppressLint("NewApi")
-@SuppressWarnings("deprecation")
 public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 	class XPMBSubmenuItem_MUSIC_Metadata {
@@ -142,9 +146,10 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
-			ANIM_CENTER_ON_ITEM = 2, ANIM_SHOW_MEDIA_CONTROLS = 3, ANIM_HIDE_MEDIA_CONTROLS = 4;
+			ANIM_CENTER_ON_ITEM = 2, ANIM_SHOW_MEDIA_CONTROLS = 3, ANIM_HIDE_MEDIA_CONTROLS = 4,
+			ANIM_CENTER_ON_ITEM_DELAYED = 5;
 
-	private class UIAnimatorWorker implements AnimatorUpdateListener {
+	private class UIAnimatorWorker implements AnimatorUpdateListener, AnimatorListener {
 
 		private int intAnimType = -1;
 		private int intAnimItem = -1, intNextItem = -1;
@@ -165,25 +170,32 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			if (mOwner.isStarted()) {
 				mOwner.end();
 			}
+			mOwner.setStartDelay(0);
 			intAnimType = type;
 			intAnimItem = intSelItem;
 
 			switch (type) {
 			case ANIM_MENU_MOVE_UP:
-				mOwner.setDuration(250);
-				pY = tlRoot.getY();
+				mOwner.setDuration(100);
+				pY = tlRoot.getTopMargin();
 				intNextItem = intAnimItem - 1;
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
 				break;
 			case ANIM_MENU_MOVE_DOWN:
-				mOwner.setDuration(250);
-				pY = tlRoot.getY();
+				mOwner.setDuration(100);
+				pY = tlRoot.getTopMargin();
 				intNextItem = intAnimItem + 1;
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
 				break;
-			case ANIM_CENTER_ON_ITEM:
+			case ANIM_CENTER_ON_ITEM_DELAYED:
+				mOwner.setStartDelay(3000);
 				mOwner.setDuration(250);
-				pY = tlRoot.getY();
+				pY = tlRoot.getTopMargin();
+				destY = pxFromDip(122) - (pxFromDip(60) * intSelItem);
+				break;
+			case ANIM_CENTER_ON_ITEM:
+				mOwner.setDuration(100);
+				pY = tlRoot.getTopMargin();
 				intNextItem = (int) mArgs[0];
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
 				break;
@@ -201,36 +213,48 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		public void onAnimationUpdate(ValueAnimator arg0) {
 			float completion = (Float) arg0.getAnimatedValue();
 
-			float posY = 0, alphaO = 0, alphaI = 0;
+			float dispY = 0, alphaO = 0, alphaI = 0;
 			int marginO = 0, marginI = 0;
 
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_UP:
 			case ANIM_MENU_MOVE_DOWN:
 			case ANIM_CENTER_ON_ITEM:
-				posY = destY - pY;
+				dispY = destY - pY;
 				alphaO = 1.0f - (0.5f * completion);
 				alphaI = 0.5f + (0.5f * completion);
 				marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
 				marginI = (int) (pxFromDip(16) * completion);
 
-				tlRoot.setY(pY + (posY * completion));
+				tlRoot.setTopMargin((int) (pY + (dispY * completion)));
 				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
 				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
 				alItems.get(intNextItem).getParentContainer().setTopMargin(marginI);
 				alItems.get(intNextItem).getParentContainer().setBottomMargin(marginI);
-				alItems.get(intNextItem).getParentLabel().setAlpha(alphaI);
+				alItems.get(intNextItem).getParentLabel().setAlphaLevel(alphaI);
+				break;
+			case ANIM_CENTER_ON_ITEM_DELAYED:
+				dispY = destY - pY;
+				alphaI = 0.5f + (0.5f * completion);
+				marginI = (int) (pxFromDip(16) * completion);
+
+				tlRoot.setTopMargin((int) (pY + (dispY * completion)));
+				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginI);
+				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginI);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaI);
 				break;
 			case ANIM_SHOW_MEDIA_CONTROLS:
 				alphaI = completion;
 
-				rlPlayerControls.setAlpha(alphaI);
+				rlPlayerControls.setAlphaLevel(alphaI);
+				rlPlayerControls.invalidate();
 				break;
 			case ANIM_HIDE_MEDIA_CONTROLS:
 				alphaO = 1.0f - completion;
 
-				rlPlayerControls.setAlpha(alphaO);
+				rlPlayerControls.setAlphaLevel(alphaO);
+				rlPlayerControls.invalidate();
 				if (completion == 1.0f) {
 					rlPlayerControls.setVisibility(View.INVISIBLE);
 				}
@@ -238,6 +262,27 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			default:
 				break;
 			}
+		}
+
+		@Override
+		public void onAnimationCancel(Animator arg0) {
+			getRootActivity().enableTouchEvents(true);
+
+		}
+
+		@Override
+		public void onAnimationEnd(Animator arg0) {
+			getRootActivity().enableTouchEvents(true);
+
+		}
+
+		@Override
+		public void onAnimationRepeat(Animator arg0) {
+		}
+
+		@Override
+		public void onAnimationStart(Animator arg0) {
+			getRootActivity().enableTouchEvents(false);
 		}
 	};
 
@@ -285,27 +330,30 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		}
 	};
 
-	public final int PLAYER_STATUS_STOPPED = 0, PLAYER_STATUS_PAUSED = 1,
-			PLAYER_STATUS_PLAYING = 2;
+	private final String LIST_ITEMS = "Subitems", COLLECTION_COVERS = "AlbumArtList",
+			COLLECTION_CONFIG = "MusicConfig";
+	private final String CONFIG_SELECTED_ITEM = "intSelItem",
+			CONFIG_CURRENT_TRACK = "intLastPlayed";
 
 	private ArrayList<XPMBSubmenuItem_MUSIC> alItems = null;
-	private int intSelItem = 0, intLastPlayed = -1, intPlayerStatus = PLAYER_STATUS_STOPPED;
+	private Hashtable<String, Bitmap> htCovers = null;
+	private int intSelItem = 0, intLastPlayed = -1;
+	
+	private boolean isFocused = true;
 
 	private XPMB_TextView tv_no_music = null;
-	private MediaPlayer mpPlayer = null;
+	private MediaPlayerControl mpPlayer = null;
 	private View vwPlayerControlsRoot = null;
 	private XPMB_RelativeLayout rlPlayerControls = null;
 	private XPMB_TextView tvCurPos = null, tvTotalLen = null;
 	private XPMB_ImageView ivPlayStatus = null;
 	private ProgressBar pbTrackPos = null;
 	private XPMB_TableLayout tlRoot = null;
-	private Hashtable<Long, Drawable> albumCovers = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
 	private RapidScroller ttFastScroll = null;
 
-	@SuppressWarnings("unchecked")
 	public XPMBSubmenu_MUSIC(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
 
@@ -314,6 +362,21 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		aUIAnimator.setDuration(150);
 		aUIAnimatorW = new UIAnimatorWorker(aUIAnimator);
 		aUIAnimator.addUpdateListener(aUIAnimatorW);
+		aUIAnimator.addListener(aUIAnimatorW);
+
+		mpPlayer = getRootActivity().getPlayerControl();
+		mpPlayer.setOnCompletionListener(new OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer arg0) {
+				if ((intLastPlayed + 1) < alItems.size()) {
+					doCenterOnItemPre();
+					execCustItem(intLastPlayed + 1);
+					centerOnItem(intLastPlayed);
+				} else {
+					doShowPlayerControls(false);
+				}
+			}
+		});
 
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 
@@ -323,15 +386,12 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 					@Override
 					public void run() {
-						if (mpPlayer != null) {
-							try {
-								if (intPlayerStatus == PLAYER_STATUS_PLAYING) {
-									pbTrackPos.setProgress(mpPlayer.getCurrentPosition());
-									tvCurPos.setText(getTimeString(mpPlayer.getCurrentPosition())
-											+ " ");
-								}
-							} catch (Exception e) {
-							}
+						if (rlPlayerControls != null
+								&& mpPlayer.getPlayerStatus() == XPMBServices.MediaPlayerControl.STATE_PLAYING) {
+							pbTrackPos.setMax(mpPlayer.getDuration());
+							tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
+							pbTrackPos.setProgress(mpPlayer.getCurrentPosition());
+							tvCurPos.setText(getTimeString(mpPlayer.getCurrentPosition()));
 						}
 					}
 				});
@@ -339,28 +399,27 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		}, 0, 100);
 		ttFastScroll = new RapidScroller();
 		new Timer().scheduleAtFixedRate(ttFastScroll, 0, 50);
-
-		MediaPlayer mpTemp = (MediaPlayer) getRootActivity().getObjectFromStore("playerObj");
-		if (mpTemp != null) {
-			mpPlayer = mpTemp;
-		}
-		albumCovers = (Hashtable<Long, Drawable>) getRootActivity().getObjectFromStore(
-				"albumCovers");
-		alItems = (ArrayList<XPMBSubmenuItem_MUSIC>) getRootActivity().getObjectFromStore(
-				"submenu_music_alItems");
-		tlRoot = (XPMB_TableLayout) getRootActivity().getObjectFromStore("submenu_music_tlRoot");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void doInit() {
-		if (albumCovers == null) {
-			albumCovers = new Hashtable<Long, Drawable>();
-		}
+		alItems = (ArrayList<XPMBSubmenuItem_MUSIC>) getRootActivity().getStorage().getList(
+				LIST_ITEMS);
+		htCovers = (Hashtable<String, Bitmap>) getRootActivity().getStorage().getCollection(
+				COLLECTION_COVERS);
+
 		if (alItems != null) {
 			return;
 		}
 
-		alItems = new ArrayList<XPMBSubmenuItem_MUSIC>();
+		getRootActivity().getStorage().createList(LIST_ITEMS);
+		getRootActivity().getStorage().createCollection(COLLECTION_COVERS);
+		getRootActivity().getStorage().createCollection(COLLECTION_CONFIG);
+		alItems = (ArrayList<XPMBSubmenuItem_MUSIC>) getRootActivity().getStorage().getList(
+				LIST_ITEMS);
+		htCovers = (Hashtable<String, Bitmap>) getRootActivity().getStorage().getCollection(
+				COLLECTION_COVERS);
 		String[] projection = new String[] { MediaStore.MediaColumns.DATA,
 				MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
 				MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ALBUM_ID };
@@ -376,21 +435,23 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 						new XPMBSubmenuItem_MUSIC_Metadata(mCur.getString(1), mCur.getString(2),
 								mCur.getString(3))));
 
-				try {
-					long albumId = mCur.getLong(4);
+				long albumId = mCur.getLong(4);
+				String strAlbumId = String.valueOf(albumId);
 
-					if (!albumCovers.containsKey(albumId)) {
+				try {
+					if (!htCovers.containsKey(strAlbumId)) {
 						Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
 						Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
-						albumCovers.put(
-								albumId,
-								new BitmapDrawable(MediaStore.Images.Media.getBitmap(getRootView()
-										.getContext().getContentResolver(), albumArtUri)));
+						htCovers.put(strAlbumId, Bitmap.createScaledBitmap(MediaStore.Images.Media
+								.getBitmap(getRootView().getContext().getContentResolver(),
+										albumArtUri), 96, 96, false));
 					}
 					alItems.get(alItems.size() - 1).getTrackMetadata()
-							.setTrackAlbumCover(albumCovers.get(albumId));
+							.setTrackAlbumCover(new BitmapDrawable(htCovers.get(strAlbumId)));
 
-				} catch (Exception exception) {
+				} catch (Exception e) {
+					// Log.d(getClass().getSimpleName(),
+					// e.getLocalizedMessage(), e);
 					alItems.get(alItems.size() - 1)
 							.getTrackMetadata()
 							.setTrackAlbumCover(
@@ -403,59 +464,21 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		mCur.close();
 	}
 
-	private float motStY = 0;
-	private long downTime = 0;
-	private boolean isMoving = false;
-	private OnTouchListener mTouchListener = new OnTouchListener() {
-
-		@Override
-		public boolean onTouch(View arg0, MotionEvent arg1) {
-			int action = arg1.getActionMasked();
-			int pointerIndex = arg1.getActionIndex();
-			int pointerId = arg1.getPointerId(pointerIndex);
-			if (pointerId != 0) {
-				return true;
-			}
-
-			switch (action) {
-			case MotionEvent.ACTION_DOWN:
-				downTime = arg1.getEventTime();
-				doCenterOnItemPre();
-				break;
-			case MotionEvent.ACTION_MOVE:
-				if (!isMoving && (arg1.getEventTime() - downTime) > 100) {
-					motStY = arg1.getY(pointerId);
-					isMoving = true;
-					break;
-				}
-				if (isMoving) {
-					float nY = (motStY + arg1.getY(pointerId));
-					tlRoot.setY((int) (tlRoot.getY() + (nY - pxFromDip(76))));
-				}
-				break;
-			case MotionEvent.ACTION_UP:
-				if ((arg1.getEventTime() - downTime) < 100) {
-					execCustItem((Integer) arg0.getTag());
-					centerOnItem((Integer) arg0.getTag());
-				} else {
-					centerOnNearestItem();
-				}
-				motStY = 0;
-				isMoving = false;
-				break;
-			}
-			return true;
-		}
-	};
-
 	private void doCenterOnItemPre() {
 		alItems.get(intSelItem).getParentContainer().setTopMargin(0);
 		alItems.get(intSelItem).getParentContainer().setBottomMargin(0);
-		alItems.get(intSelItem).getParentLabel().setAlpha(0.5f);
+		alItems.get(intSelItem).getParentLabel().setAlphaLevel(0.5f);
+	}
+
+	private void doCenterOnItemPos() {
+		aUIAnimator.cancel();
+		alItems.get(intSelItem).getParentLabel().setAlphaLevel(1.0f);
+		aUIAnimatorW.setAnimationType(ANIM_CENTER_ON_ITEM_DELAYED);
+		aUIAnimator.start();
 	}
 
 	private void centerOnNearestItem() {
-		float cPosY = tlRoot.getY();
+		float cPosY = tlRoot.getTopMargin();
 		int destItem = ((int) (pxFromDip(122) - cPosY) / pxFromDip(60)) + 1;
 		if (destItem < 0) {
 			destItem = 0;
@@ -473,13 +496,40 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		intSelItem = index;
 	}
 
+	private OnTouchListener mTouchListener = new OnTouchListener() {
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			if (isFocused){
+			getRootActivity().setTouchedChildView(v);
+			}
+			return false;
+		}
+	};
+
+	@Override
+	public void sendClickEventToView(View v) {
+		if (v.getTag() != null) {
+			int tag = (Integer) v.getTag();
+
+			if (tag != intSelItem) {
+				doCenterOnItemPre();
+				centerOnItem(tag);
+			}
+			execCustItem(tag);
+		}
+	}
+
 	@Override
 	public void parseInitLayout() {
 
 		if (alItems.size() == 0) {
 			tv_no_music = new XPMB_TextView(getRootView().getContext());
-			AbsoluteLayout.LayoutParams lp_ng = new AbsoluteLayout.LayoutParams(
-					(int) pxFromDip(320), (int) pxFromDip(100), pxFromDip(48), pxFromDip(128));
+			RelativeLayout.LayoutParams lp_ng = new RelativeLayout.LayoutParams(pxFromDip(320),
+					pxFromDip(100));
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			lp_ng.leftMargin = pxFromDip(108);
+			lp_ng.topMargin = pxFromDip(128);
 			tv_no_music.setLayoutParams(lp_ng);
 			tv_no_music.setText(getRootActivity().getText(R.string.strNoMusic));
 			tv_no_music.setTextColor(Color.WHITE);
@@ -491,6 +541,78 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			return;
 		}
 
+		intSelItem = (Integer) getRootActivity().getStorage().getObject(COLLECTION_CONFIG,
+				CONFIG_SELECTED_ITEM, 0);
+		intLastPlayed = (Integer) getRootActivity().getStorage().getObject(COLLECTION_CONFIG,
+				CONFIG_CURRENT_TRACK, -1);
+
+		tlRoot = new XPMB_TableLayout(getRootView().getContext());
+		RelativeLayout.LayoutParams rootP = new RelativeLayout.LayoutParams(pxFromDip(396),
+				pxFromDip(32 + (60 * alItems.size())));
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+		rootP.leftMargin = pxFromDip(108);
+		rootP.topMargin = pxFromDip(122 - (60 * intSelItem));
+		tlRoot.setLayoutParams(rootP);
+
+		for (XPMBSubmenuItem_MUSIC xsi : alItems) {
+			int idy = alItems.indexOf(xsi);
+			XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
+			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
+			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
+			cItem.setId(getNextID());
+			cIcon.setId(getNextID());
+			cLabel.setId(getNextID());
+
+			// Setup Item Container
+			TableLayout.LayoutParams cItemParams = new TableLayout.LayoutParams(pxFromDip(396),
+					pxFromDip(60));
+			if (idy == intSelItem) {
+				cItemParams.topMargin = pxFromDip(16);
+				cItemParams.bottomMargin = pxFromDip(16);
+			}
+			cItem.setLayoutParams(cItemParams);
+
+			// Setup Icon
+			TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(60),
+					(int) pxFromDip(60));
+			cIconParams.column = 0;
+			cIcon.setLayoutParams(cIconParams);
+			cIcon.setTag(idy);
+			cIcon.setImageDrawable(xsi.getTrackMetadata().getTrackAlbumCover());
+			cIcon.setOnTouchListener(mTouchListener);
+
+			// Setup Label
+			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
+					(int) pxFromDip(60));
+			cLabelParams.leftMargin = pxFromDip(16);
+			cLabelParams.column = 1;
+			cLabel.setLayoutParams(cLabelParams);
+			cLabel.setTag(idy);
+			cLabel.setText(xsi.getTrackMetadata().getTrackName() + "\r\n"
+					+ xsi.getTrackMetadata().getTrackAuthor());
+			cLabel.setTextColor(Color.WHITE);
+			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
+			cLabel.setTextAppearance(getRootView().getContext(),
+					android.R.style.TextAppearance_Medium);
+			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+			if (idy != intSelItem) {
+				cLabel.setAlphaLevel(0.5f);
+			}
+			cLabel.setOnTouchListener(mTouchListener);
+
+			cItem.addView(cIcon);
+			cItem.addView(cLabel);
+
+			xsi.setParentView(cIcon);
+			xsi.setParentLabel(cLabel);
+			xsi.setParentContainer(cItem);
+
+			tlRoot.addView(cItem);
+		}
+
+		getRootView().addView(tlRoot);
+
 		vwPlayerControlsRoot = ((LayoutInflater) getRootView().getContext().getSystemService(
 				Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.mediaplayer_control,
 				getRootView());
@@ -500,106 +622,29 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		pbTrackPos = (ProgressBar) vwPlayerControlsRoot.findViewById(R.id.pbCurPos);
 		ivPlayStatus = (XPMB_ImageView) vwPlayerControlsRoot.findViewById(R.id.ivPlayStatus);
 
-		rlPlayerControls.setAlpha(0.0f);
+		rlPlayerControls.setAlphaLevel(0.0f);
 
-		if (tlRoot == null) {
-			tlRoot = new XPMB_TableLayout(getRootView().getContext());
-			AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
-					pxFromDip(32 + (60 * alItems.size())), pxFromDip(48), pxFromDip(122));
-			tlRoot.setLayoutParams(rootP);
-
-			for (XPMBSubmenuItem_MUSIC xsi : alItems) {
-				int idy = alItems.indexOf(xsi);
-				XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
-				XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
-				XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
-				cItem.setId(getNextID());
-				cIcon.setId(getNextID());
-				cLabel.setId(getNextID());
-
-				// Setup Item Container
-				TableLayout.LayoutParams cItemParams = new TableLayout.LayoutParams(pxFromDip(396),
-						pxFromDip(60));
-				if (idy == 0) {
-					cItemParams.topMargin = pxFromDip(16);
-					cItemParams.bottomMargin = pxFromDip(16);
-				}
-				cItem.setLayoutParams(cItemParams);
-
-				// Setup Icon
-				TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(60),
-						(int) pxFromDip(60));
-				cIconParams.column = 0;
-				cIcon.setLayoutParams(cIconParams);
-				cIcon.setTag(idy);
-				cIcon.setImageDrawable(xsi.getTrackMetadata().getTrackAlbumCover());
-				cIcon.setOnTouchListener(mTouchListener);
-
-				// Setup Label
-				TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams(
-						(int) pxFromDip(320), (int) pxFromDip(60));
-				cLabelParams.leftMargin = pxFromDip(16);
-				cLabelParams.column = 1;
-				cLabel.setLayoutParams(cLabelParams);
-				cLabel.setTag(idy);
-				cLabel.setText(xsi.getTrackMetadata().getTrackName() + "\r\n"
-						+ xsi.getTrackMetadata().getTrackAuthor());
-				cLabel.setTextColor(Color.WHITE);
-				cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
-				cLabel.setTextAppearance(getRootView().getContext(),
-						android.R.style.TextAppearance_Medium);
-				cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-				if (idy != 0) {
-					cLabel.setAlpha(0.5f);
-				}
-				cLabel.setOnTouchListener(mTouchListener);
-
-				cItem.addView(cIcon);
-				cItem.addView(cLabel);
-
-				xsi.setParentView(cIcon);
-				xsi.setParentLabel(cLabel);
-				xsi.setParentContainer(cItem);
-
-				tlRoot.addView(cItem);
-			}
-		}
-
-		getRootView().addView(tlRoot);
-
-		if (getRootActivity().getObjectFromStore("playerStatus") != null) {
-			intPlayerStatus = (Integer) getRootActivity().getObjectFromStore("playerStatus");
-			switch (intPlayerStatus) {
-			case PLAYER_STATUS_PLAYING:
-				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
-						R.drawable.ui_status_media_play));
-				pbTrackPos.setMax(mpPlayer.getDuration());
-				tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
-				doShowPlayerControls(true);
-				break;
-			case PLAYER_STATUS_PAUSED:
-				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
-						R.drawable.ui_status_media_pause));
-				pbTrackPos.setMax(mpPlayer.getDuration());
-				tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
-				rlPlayerControls.setAlpha(1.0f);
-				doShowPlayerControls(false);
-				break;
-			}
-		}
-		if (getRootActivity().getObjectFromStore("selectionIndex") != null) {
-			// alItems.get(0).getParentContainer().setTopMargin(0);
-			// alItems.get(0).getParentContainer().setBottomMargin(0);
-			// alItems.get(0).getParentLabel().setAlpha(0.5f);
-			intSelItem = (Integer) getRootActivity().getObjectFromStore("selectionIndex");
-			intLastPlayed = (Integer) getRootActivity().getObjectFromStore("lastIndex");
-			// centerOnItem(intSelItem);
-			// doCenterOnItemPos();
+		switch (mpPlayer.getPlayerStatus()) {
+		case XPMBServices.MediaPlayerControl.STATE_PLAYING:
+			ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
+					R.drawable.ui_status_media_play));
+			pbTrackPos.setMax(mpPlayer.getDuration());
+			tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
+			doShowPlayerControls(true);
+			break;
+		case XPMBServices.MediaPlayerControl.STATE_PAUSED:
+			ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
+					R.drawable.ui_status_media_pause));
+			pbTrackPos.setMax(mpPlayer.getDuration());
+			tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
+			rlPlayerControls.setAlphaLevel(1.0f);
+			doShowPlayerControls(false);
+			break;
 		}
 	}
 
 	@Override
-	public void sendKeyUp(int keyCode) {
+	public void sendKeyDown(int keyCode) {
 		switch (keyCode) {
 		case XPMB_Main.KEYCODE_LEFT:
 			moveLeft();
@@ -631,7 +676,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			if (intSelItem == 0 || alItems.size() == 0) {
 				break;
 			} else {
-				execCustItem(intSelItem - 1);
+				execCustItem(intLastPlayed - 1);
 				centerOnItem(intLastPlayed);
 			}
 			break;
@@ -639,7 +684,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
 				break;
 			} else {
-				execCustItem(intSelItem + 1);
+				execCustItem(intLastPlayed + 1);
 				centerOnItem(intLastPlayed);
 			}
 			break;
@@ -661,7 +706,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	private void moveLeft() {
-		if (mpPlayer != null && mpPlayer.isPlaying()) {
+		if (mpPlayer.getPlayerStatus() != XPMBServices.MediaPlayerControl.STATE_NOT_INITIALIZED) {
 			if (mpPlayer.getCurrentPosition() - 2500 > 0) {
 				mpPlayer.seekTo(mpPlayer.getCurrentPosition() - 2500);
 			}
@@ -671,7 +716,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	private void moveRight() {
-		if (mpPlayer != null && mpPlayer.isPlaying()) {
+		if (mpPlayer.getPlayerStatus() != XPMBServices.MediaPlayerControl.STATE_NOT_INITIALIZED) {
 			if (mpPlayer.getCurrentPosition() + 2500 < mpPlayer.getDuration()) {
 				mpPlayer.seekTo(mpPlayer.getCurrentPosition() + 2500);
 			}
@@ -683,18 +728,9 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			return;
 		}
 
-		// getRootActivity().lockKeys(true);
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_DOWN);
 		aUIAnimator.start();
 
-		// getMessageBus().postDelayed(new Runnable() {
-
-		// @Override
-		// public void run() {
-		// getRootActivity().lockKeys(false);
-		// }
-
-		// }, 160);
 		++intSelItem;
 	}
 
@@ -703,18 +739,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			return;
 		}
 
-		// getRootActivity().lockKeys(true);
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_UP);
 		aUIAnimator.start();
-
-		// getMessageBus().postDelayed(new Runnable() {
-
-		// @Override
-		// public void run() {
-		// getRootActivity().lockKeys(false);
-		// }
-
-		// }, 160);
 
 		--intSelItem;
 	}
@@ -729,53 +755,29 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	private void execCustItem(int index) {
-		if (mpPlayer != null) {
-			if (index == intLastPlayed) {
-				if (intPlayerStatus == PLAYER_STATUS_PLAYING) {
-					intPlayerStatus = PLAYER_STATUS_PAUSED;
-					ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
-							R.drawable.ui_status_media_pause));
-					mpPlayer.pause();
-					doShowPlayerControls(false);
-				} else {
-					intPlayerStatus = PLAYER_STATUS_PLAYING;
-					ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
-							R.drawable.ui_status_media_play));
-					mpPlayer.start();
-					doShowPlayerControls(true);
-				}
-				return;
+		if (index == intLastPlayed) {
+			if (mpPlayer.getPlayerStatus() == XPMBServices.MediaPlayerControl.STATE_PLAYING) {
+				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
+						R.drawable.ui_status_media_pause));
+				mpPlayer.pause();
+				doShowPlayerControls(false);
 			} else {
-				intPlayerStatus = PLAYER_STATUS_STOPPED;
-				if (mpPlayer.isPlaying()) {
-					mpPlayer.stop();
-				}
-				mpPlayer.release();
-
+				ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
+						R.drawable.ui_status_media_play));
+				mpPlayer.play();
+				doShowPlayerControls(true);
+			}
+			return;
+		} else {
+			if (mpPlayer.getPlayerStatus() == XPMBServices.MediaPlayerControl.STATE_PLAYING) {
+				mpPlayer.stop();
 			}
 		}
-		mpPlayer = MediaPlayer.create(getRootActivity().getWindow().getContext(),
-				Uri.fromFile(alItems.get(index).getTrackPath()));
-		mpPlayer.setOnCompletionListener(new OnCompletionListener() {
-			@Override
-			public void onCompletion(MediaPlayer arg0) {
-				if ((intLastPlayed + 1) < alItems.size()) {
-					doCenterOnItemPre();
-					execCustItem(intLastPlayed + 1);
-					centerOnItem(intLastPlayed);
-				} else {
-					doShowPlayerControls(false);
-				}
-			}
-		});
 
+		mpPlayer.setMediaSource(alItems.get(index).getTrackPath().getAbsolutePath());
 		ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 				R.drawable.ui_status_media_play));
-		pbTrackPos.setMax(mpPlayer.getDuration());
-		tvTotalLen.setText("/ " + getTimeString(mpPlayer.getDuration()));
-		mpPlayer.start();
 		doShowPlayerControls(true);
-		intPlayerStatus = PLAYER_STATUS_PLAYING;
 		intLastPlayed = index;
 
 	}
@@ -802,60 +804,41 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			getRootView().removeView(tv_no_music);
 			return;
 		}
-		if (alItems != null && alItems.size() > 0) {
-			getRootActivity().putObjectInStore("submenu_music_alItems", alItems);
-		}
-		if (tlRoot != null) {
-			getRootActivity().putObjectInStore("submenu_music_tlRoot", tlRoot);
-			getRootView().removeView(tlRoot);
-		}
 		if (ivPlayStatus != null) {
 			getRootView().removeView(ivPlayStatus);
+		}
+		if (tlRoot != null) {
+			getRootView().removeView(tlRoot);
 		}
 		if (rlPlayerControls != null) {
 			getRootView().removeView(rlPlayerControls);
 		}
-		if (mpPlayer != null) {
-			getRootActivity().putObjectInStore("playerStatus", intPlayerStatus);
-			getRootActivity().putObjectInStore("selectionIndex", intSelItem);
-			getRootActivity().putObjectInStore("lastIndex", intLastPlayed);
-			getRootActivity().putObjectInStore("playerObj", mpPlayer);
-		}
-		if (albumCovers != null && albumCovers.size() > 0) {
-			getRootActivity().putObjectInStore("albumCovers", albumCovers);
-		}
+		getRootActivity().getStorage().putObject(COLLECTION_CONFIG, CONFIG_SELECTED_ITEM,
+				intSelItem);
+		getRootActivity().getStorage().putObject(COLLECTION_CONFIG, CONFIG_CURRENT_TRACK,
+				intLastPlayed);
 	}
 
 	@Override
 	public void requestDestroy() {
-		intPlayerStatus = PLAYER_STATUS_STOPPED;
 		if (mpPlayer != null) {
-			if (mpPlayer.isPlaying()) {
+			if (mpPlayer.getPlayerStatus() != XPMBServices.MediaPlayerControl.STATE_NOT_INITIALIZED) {
 				mpPlayer.stop();
 			}
 			mpPlayer.release();
 		}
-		if (albumCovers != null) {
-			albumCovers.clear();
-		}
 		if (tlRoot != null) {
 			tlRoot.removeAllViews();
+			getRootView().removeView(tlRoot);
 		}
 		if (alItems != null) {
 			alItems.clear();
 		}
-		getRootActivity().removeObjectFromStore("submemu_music_tlRoot");
-		getRootActivity().removeObjectFromStore("submemu_music_alItems");
-		getRootActivity().removeObjectFromStore("playerStatus");
-		getRootActivity().removeObjectFromStore("selectionIndex");
-		getRootActivity().removeObjectFromStore("lastIndex");
-		getRootActivity().removeObjectFromStore("playerObj");
-		getRootActivity().removeObjectFromStore("albumCovers");
+		getRootActivity().getStorage().removeCollection(COLLECTION_CONFIG);
+		getRootActivity().getStorage().removeCollection(COLLECTION_COVERS);
 
 		tlRoot = null;
 		rlPlayerControls = null;
 		alItems = null;
-		mpPlayer = null;
-		albumCovers = null;
 	}
 }

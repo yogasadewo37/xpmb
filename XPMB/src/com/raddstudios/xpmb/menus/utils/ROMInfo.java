@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus.utils;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -28,7 +28,7 @@ import android.content.res.XmlResourceParser;
 
 public class ROMInfo {
 
-	class ROMInfoNode_ROM {
+	public class ROMInfoNode_ROM {
 		private String strROMName = null, strROMCRC = null, strROMMD5 = null,
 				strROMSHA1 = null, strROMStatus = null;
 		private int intROMSize = 0;
@@ -68,7 +68,7 @@ public class ROMInfo {
 		}
 	}
 
-	class ROMInfoNode_Release {
+	public class ROMInfoNode_Release {
 		private String strReleaseName = null, strReleaseRegion = null;
 
 		public ROMInfoNode_Release(String name, String region) {
@@ -85,7 +85,7 @@ public class ROMInfo {
 		}
 	}
 
-	class ROMInfoNode {
+	public class ROMInfoNode {
 		String strGameName = null, strGameCloneOf = null,
 				strGameDescription = null;
 		ROMInfoNode_ROM rinROMData = null;
@@ -122,7 +122,7 @@ public class ROMInfo {
 
 	}
 
-	class ROMInfoHeader {
+	public class ROMInfoHeader {
 		private String strHeaderName = null, strHeaderDescription = null,
 				strHeaderVersion = null, strHeaderDate = null,
 				strHeaderAuthor = null, strHeaderUrl = null;

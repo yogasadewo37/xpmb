@@ -21,6 +21,7 @@ package com.raddstudios.xpmb.utils;
 
 import android.os.Handler;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 
 public class XPMB_Layout {
@@ -61,6 +62,9 @@ public class XPMB_Layout {
 	}
 	
 	public void sendKeyHold(int keyCode){
+	}
+	
+	public void sendClickEventToView(View v){
 	}
 
 	protected int pxFromDip(int dip) {

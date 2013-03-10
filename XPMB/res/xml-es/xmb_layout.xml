@@ -29,7 +29,7 @@
             id="Memoria externa"
             icon="ui_xmb_external_memory"
             submenu="XPMB_Submenu_MUSIC"
-            type="submenu" />
+            type="submenu.highlight" />
     </item>
     <item
         id="Video"
@@ -45,7 +45,7 @@
             id="Nintendo Entertainment System"
             icon="ui_xmb_game_folder"
             submenu="XPMB_Submenu_NES"
-            type="submenu" />
+            type="submenu.half" />
         <subitem
             id="Super Nintendo"
             icon="ui_xmb_game_folder" />
@@ -53,7 +53,7 @@
             id="Gameboy Advance"
             icon="ui_xmb_game_folder"
             submenu="XPMB_Submenu_GBA"
-            type="submenu" />
+            type="submenu.half" />
         <subitem
             id="NeoGeo Arcade"
             icon="ui_xmb_game_folder" />
@@ -79,7 +79,7 @@
             id="Aplicaciones instaladas"
             icon="ui_xmb_apps_installed"
             submenu="XPMB_Submenu_APP"
-            type="submenu" >
+            type="submenu.half" >
         </subitem>
     </item>
 

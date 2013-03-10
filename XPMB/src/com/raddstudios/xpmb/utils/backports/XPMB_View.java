@@ -20,13 +20,6 @@
 package com.raddstudios.xpmb.utils.backports;
 
 public interface XPMB_View {
-	public void setX(float x);
-
-	public void setY(float y);
-
-	public float getX();
-
-	public float getY();
 
 	public void setTopMargin(int top);
 
@@ -44,18 +37,18 @@ public interface XPMB_View {
 
 	public int getRightMargin();
 
-	public void setAlpha(float value);
+	public void setAlphaLevel(float value);
 
-	public float getAlpha();
+	public float getAlphaLevel();
 
 	//TODO Fix for incorrect scaling behavior (temporal workaround)
 	public void resetScaleBase();
 	
-	public void setScaleX(float scale);
+	public void setViewScaleX(float scale);
 
-	public float getScaleX();
+	public float getViewScaleX();
 
-	public void setScaleY(float scale);
+	public void setViewScaleY(float scale);
 
-	public float getScaleY();
+	public float getViewScaleY();
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:backports="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_l"
@@ -13,8 +13,8 @@
         android:id="@+id/ivCustomBG"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_x="0dp"
-        android:layout_y="0dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
         android:scaleType="fitXY"
         backports:alpha="0.0"
         tools:ignore="ContentDescription" />
@@ -23,18 +23,20 @@
         android:id="@+id/ivBattStatus"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        android:layout_x="538dp"
-        android:layout_y="4dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="4dp"
         android:src="@drawable/ui_batt_100"
         tools:ignore="ContentDescription" />
 
     <TextView
         android:id="@+id/lbCurTime"
-        android:layout_width="176dp"
+        android:layout_width="wrap_content"
         android:layout_height="28dp"
-        android:layout_x="358dp"
-        android:layout_y="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_toLeftOf="@id/ivBattStatus"
         android:gravity="right|center_vertical"
+        android:paddingRight="6dp"
         android:shadowColor="#000000"
         android:shadowDx="4"
         android:shadowDy="4"
@@ -45,11 +47,14 @@
 
     <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
         android:id="@+id/ivSubmenuShown"
-        android:layout_width="24dp"
+        android:layout_width="12dp"
         android:layout_height="24dp"
-        android:layout_x="8dp"
-        android:layout_y="156dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="156dp"
+        android:scaleType="centerCrop"
         android:src="@drawable/ui_xmb_back"
+        android:visibility="visible"
         backports:alpha="0.0"
         tools:ignore="ContentDescription" />
 
@@ -57,10 +62,12 @@
         android:id="@+id/ivLoadAnim"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_x="534dp"
-        android:layout_y="286dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="4dp"
+        android:layout_marginRight="4dp"
         android:scaleType="fitXY"
         android:visibility="visible"
         tools:ignore="ContentDescription" />
 
-</AbsoluteLayout>
+</RelativeLayout>

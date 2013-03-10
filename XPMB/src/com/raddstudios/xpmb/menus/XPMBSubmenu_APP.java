@@ -17,12 +17,11 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -32,8 +31,7 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.AbsoluteLayout;
-import android.widget.AbsoluteLayout.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 
@@ -41,14 +39,14 @@ import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
-@SuppressLint("NewApi")
-@SuppressWarnings("deprecation")
 public class XPMBSubmenu_APP extends XPMB_Layout {
 
 	class XPMBSubmenuItem_APP {
@@ -105,6 +103,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 	private ArrayList<XPMBSubmenuItem_APP> alItems = null;
 	private int intSelItem = 0;
+	//private boolean isFocused = true;
 	private XPMB_TextView tv_no_app = null;
 
 	private XPMB_TableLayout tlRoot = null;
@@ -129,13 +128,17 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 					.getLaunchIntentForPackage(r.activityInfo.packageName)));
 		}
 	}
-
+	
 	@Override
 	public void parseInitLayout() {
 		if (alItems.size() == 0) {
 			tv_no_app = new XPMB_TextView(getRootView().getContext());
-			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
-					pxFromDip(48), pxFromDip(128));
+			RelativeLayout.LayoutParams lp_ng = new RelativeLayout.LayoutParams(pxFromDip(320),
+					pxFromDip(100));
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			lp_ng.leftMargin = pxFromDip(48);
+			lp_ng.topMargin = pxFromDip(128);
 			tv_no_app.setLayoutParams(lp_ng);
 			tv_no_app.setText(getRootActivity().getText(R.string.strNoApps));
 			tv_no_app.setTextColor(Color.WHITE);
@@ -148,8 +151,12 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 		}
 
 		tlRoot = new XPMB_TableLayout(getRootView().getContext());
-		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
-				pxFromDip(160 + (50 * alItems.size())), pxFromDip(48), pxFromDip(88));
+		RelativeLayout.LayoutParams rootP = new RelativeLayout.LayoutParams(pxFromDip(396),
+				pxFromDip(160 + (50 * alItems.size())));
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+		rootP.leftMargin = pxFromDip(48);
+		rootP.topMargin = pxFromDip(88);
 		tlRoot.setLayoutParams(rootP);
 
 		for (XPMBSubmenuItem_APP xsi : alItems) {
@@ -178,8 +185,8 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			cIcon.resetScaleBase();
 
 			if (idx == 0) {
-				cIcon.setScaleX(2.56f);
-				cIcon.setScaleY(2.56f);
+				cIcon.setViewScaleX(2.56f);
+				cIcon.setViewScaleY(2.56f);
 			}
 			cIcon.setImageDrawable(xsi.getAppIcon());
 
@@ -198,7 +205,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 					android.R.style.TextAppearance_Medium);
 			cLabel.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 			if (idx != 0) {
-				cLabel.setAlpha(0.0f);
+				cLabel.setAlphaLevel(0.0f);
 			}
 
 			// Add everything to their parent containers and holders
@@ -250,7 +257,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
+		final float pY = tlRoot.getTopMargin();
 		final int intAnimItem = intSelItem;
 
 		ValueAnimator va_md = ValueAnimator.ofFloat(0.0f, 1.0f);
@@ -260,7 +267,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			public void onAnimationUpdate(ValueAnimator arg0) {
 				float completion = (Float) arg0.getAnimatedValue();
 
-				float posY = pY - (pxFromDip(50) * completion);
+				int posY = (int) (pY - (pxFromDip(50) * completion));
 				float scaleO = 2.56f - (1.56f * completion);
 				float scaleI = 1.0f + (1.56f * completion);
 				float alphaO = 1.0f - completion;
@@ -268,15 +275,15 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
 				int marginI = (int) (pxFromDip(16) * completion);
 
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				tlRoot.setTopMargin(posY);
+				alItems.get(intAnimItem).getParentView().setViewScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setViewScaleY(scaleO);
 				alItems.get(intAnimItem).getParentView().setTopMargin(marginO);
 				alItems.get(intAnimItem).getParentView().setBottomMargin(marginO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
-				alItems.get(intAnimItem + 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem + 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem + 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
+				alItems.get(intAnimItem + 1).getParentView().setViewScaleX(scaleI);
+				alItems.get(intAnimItem + 1).getParentView().setViewScaleY(scaleI);
+				alItems.get(intAnimItem + 1).getParentLabel().setAlphaLevel(alphaI);
 				alItems.get(intAnimItem + 1).getParentView().setTopMargin(marginI);
 				alItems.get(intAnimItem + 1).getParentView().setBottomMargin(marginI);
 			}
@@ -302,7 +309,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
+		final int pY = tlRoot.getTopMargin();
 		final int intAnimItem = intSelItem;
 
 		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
@@ -312,7 +319,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 			public void onAnimationUpdate(ValueAnimator arg0) {
 				float completion = (Float) arg0.getAnimatedValue();
 
-				float posY = pY + (pxFromDip(50) * completion);
+				int posY = (int) (pY + (pxFromDip(50) * completion));
 				float scaleO = 2.56f - (1.56f * completion);
 				float scaleI = 1.0f + (1.56f * completion);
 				float alphaO = 1.0f - completion;
@@ -320,15 +327,15 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
 				int marginI = (int) (pxFromDip(16) * completion);
 
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
+				tlRoot.setTopMargin(posY);
+				alItems.get(intAnimItem).getParentView().setViewScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setViewScaleY(scaleO);
 				alItems.get(intAnimItem).getParentView().setTopMargin(marginO);
 				alItems.get(intAnimItem).getParentView().setBottomMargin(marginO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
-				alItems.get(intAnimItem - 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem - 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem - 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
+				alItems.get(intAnimItem - 1).getParentView().setViewScaleX(scaleI);
+				alItems.get(intAnimItem - 1).getParentView().setViewScaleY(scaleI);
+				alItems.get(intAnimItem - 1).getParentLabel().setAlphaLevel(alphaI);
 				alItems.get(intAnimItem - 1).getParentView().setTopMargin(marginI);
 				alItems.get(intAnimItem - 1).getParentView().setBottomMargin(marginI);
 			}

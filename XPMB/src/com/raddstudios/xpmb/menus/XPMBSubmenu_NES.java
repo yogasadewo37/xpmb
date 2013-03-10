@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,7 +30,6 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -43,8 +42,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.AbsoluteLayout;
-import android.widget.AbsoluteLayout.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
@@ -53,15 +51,16 @@ import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.menus.utils.ROMInfo;
+import com.raddstudios.xpmb.menus.utils.ROMInfo.ROMInfoNode;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
-@SuppressLint("NewApi")
-@SuppressWarnings("deprecation")
 public class XPMBSubmenu_NES extends XPMB_Layout {
 
 	class XPMBSubmenuItem_NES {
@@ -163,6 +162,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 
 	private ArrayList<XPMBSubmenuItem_NES> alItems = null;
 	private int intSelItem = 0;
+	//private boolean isFocused = false;
 	private File mROMRoot = null;
 	private ROMInfo ridROMInfoDat = null;
 	private XPMB_TextView tv_no_game = null;
@@ -308,8 +308,12 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 
 		if (alItems.size() == 0) {
 			tv_no_game = new XPMB_TextView(getRootView().getContext());
-			LayoutParams lp_ng = new LayoutParams((int) pxFromDip(320), (int) pxFromDip(100),
-					pxFromDip(48), pxFromDip(128));
+			RelativeLayout.LayoutParams lp_ng = new RelativeLayout.LayoutParams(pxFromDip(320),
+					pxFromDip(100));
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			lp_ng.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			lp_ng.leftMargin = pxFromDip(48);
+			lp_ng.topMargin = pxFromDip(128);
 			tv_no_game.setLayoutParams(lp_ng);
 			tv_no_game.setText(getRootActivity().getText(R.string.strNoGames));
 			tv_no_game.setTextColor(Color.WHITE);
@@ -322,8 +326,12 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 		}
 
 		tlRoot = new XPMB_TableLayout(getRootView().getContext());
-		AbsoluteLayout.LayoutParams rootP = new AbsoluteLayout.LayoutParams(pxFromDip(396),
-				pxFromDip(160 + (60 * alItems.size())), pxFromDip(48), pxFromDip(88));
+		RelativeLayout.LayoutParams rootP = new RelativeLayout.LayoutParams(pxFromDip(396),
+				pxFromDip(160 + (60 * alItems.size())));
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+		rootP.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+		rootP.leftMargin = pxFromDip(48);
+		rootP.topMargin = pxFromDip(88);
 		tlRoot.setLayoutParams(rootP);
 
 		for (XPMBSubmenuItem_NES xsi : alItems) {
@@ -362,7 +370,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 			cLabel.setLayoutParams(cLabelParams);
 
 			if (idx != 0) {
-				cLabel.setAlpha(0.0f);
+				cLabel.setAlphaLevel(0.0f);
 			}
 			cLabel.setText(xsi.getGameName());
 			cLabel.setTextColor(Color.WHITE);
@@ -421,7 +429,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
+		final int pY = tlRoot.getTopMargin();
 		final int intAnimItem = intSelItem;
 
 		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
@@ -431,7 +439,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 			public void onAnimationUpdate(ValueAnimator arg0) {
 				float completion = (Float) arg0.getAnimatedValue();
 
-				float posY = pY - (pxFromDip(50) * completion);
+				int posY = (int) (pY - (pxFromDip(50) * completion));
 				float scaleO = 2.56f - (1.56f * completion);
 				float scaleI = 1.0f + (1.56f * completion);
 				float alphaO = 1.0f - completion;
@@ -439,15 +447,15 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
 				int marginI = (int) (pxFromDip(16) * completion);
 
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				tlRoot.setTopMargin(posY);
+				alItems.get(intAnimItem).getParentView().setViewScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setViewScaleY(scaleO);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
 				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
 				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem + 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem + 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem + 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem + 1).getParentView().setViewScaleX(scaleI);
+				alItems.get(intAnimItem + 1).getParentView().setViewScaleY(scaleI);
+				alItems.get(intAnimItem + 1).getParentLabel().setAlphaLevel(alphaI);
 				alItems.get(intAnimItem + 1).getParentContainer().setTopMargin(marginI);
 				alItems.get(intAnimItem + 1).getParentContainer().setBottomMargin(marginI);
 			}
@@ -475,7 +483,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 			return;
 		}
 
-		final float pY = tlRoot.getY();
+		final int pY = tlRoot.getTopMargin();
 		final int intAnimItem = intSelItem;
 
 		ValueAnimator va_mu = ValueAnimator.ofFloat(0.0f, 1.0f);
@@ -485,7 +493,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 			public void onAnimationUpdate(ValueAnimator arg0) {
 				float completion = (Float) arg0.getAnimatedValue();
 
-				float posY = pY + (pxFromDip(50) * completion);
+				int posY = (int) (pY + (pxFromDip(50) * completion));
 				float scaleO = 2.56f - (1.56f * completion);
 				float scaleI = 1.0f + (1.56f * completion);
 				float alphaO = 1.0f - completion;
@@ -493,15 +501,15 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 				int marginO = (int) (pxFromDip(16) - (pxFromDip(16) * completion));
 				int marginI = (int) (pxFromDip(16) * completion);
 
-				tlRoot.setY(posY);
-				alItems.get(intAnimItem).getParentView().setScaleX(scaleO);
-				alItems.get(intAnimItem).getParentView().setScaleY(scaleO);
-				alItems.get(intAnimItem).getParentLabel().setAlpha(alphaO);
+				tlRoot.setTopMargin(posY);
+				alItems.get(intAnimItem).getParentView().setViewScaleX(scaleO);
+				alItems.get(intAnimItem).getParentView().setViewScaleY(scaleO);
+				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
 				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
 				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem - 1).getParentView().setScaleX(scaleI);
-				alItems.get(intAnimItem - 1).getParentView().setScaleY(scaleI);
-				alItems.get(intAnimItem - 1).getParentLabel().setAlpha(alphaI);
+				alItems.get(intAnimItem - 1).getParentView().setViewScaleX(scaleI);
+				alItems.get(intAnimItem - 1).getParentView().setViewScaleY(scaleI);
+				alItems.get(intAnimItem - 1).getParentLabel().setAlphaLevel(alphaI);
 				alItems.get(intAnimItem - 1).getParentContainer().setTopMargin(marginI);
 				alItems.get(intAnimItem - 1).getParentContainer().setBottomMargin(marginI);
 			}
@@ -533,7 +541,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float alphaI = 1.0f - completion;
-				getRootActivity().getCustomBGView().setAlpha(alphaI);
+				getRootActivity().getCustomBGView().setAlphaLevel(alphaI);
 
 				if (completion == 1.0f) {
 					getRootActivity().getCustomBGView().setVisibility(View.INVISIBLE);
@@ -554,7 +562,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 				float completion = (Float) arg0.getAnimatedValue();
 
 				float alphaI = completion;
-				getRootActivity().getCustomBGView().setAlpha(alphaI);
+				getRootActivity().getCustomBGView().setAlphaLevel(alphaI);
 			}
 		});
 		va_bgr_po.setDuration(200);

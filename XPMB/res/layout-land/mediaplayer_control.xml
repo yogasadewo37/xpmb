@@ -26,7 +26,7 @@
         android:shadowDx="4"
         android:shadowDy="4"
         android:shadowRadius="8"
-        android:text=" / 00:00"
+        android:text="/ 00:00"
         android:textAppearance="?android:attr/textAppearanceMedium"
         tools:ignore="HardcodedText" />
 
@@ -35,6 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@id/tvTotalLen"
+        android:layout_marginRight="6dp"
         android:layout_toLeftOf="@id/tvTotalLen"
         android:shadowColor="#0077AA"
         android:shadowDx="4"

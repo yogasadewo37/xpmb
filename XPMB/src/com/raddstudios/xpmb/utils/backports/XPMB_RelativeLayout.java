@@ -19,17 +19,15 @@
 
 package com.raddstudios.xpmb.utils.backports;
 
-import com.raddstudios.xpmb.R;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
-import android.widget.AbsoluteLayout;
 import android.widget.RelativeLayout;
 
-@SuppressWarnings("deprecation")
+import com.raddstudios.xpmb.R;
+
 public class XPMB_RelativeLayout extends RelativeLayout implements XPMB_View {
 
 	private float mAlpha = 1.0f, mScaleX = 1.0f, mScaleY = 1.0f;
@@ -64,61 +62,12 @@ public class XPMB_RelativeLayout extends RelativeLayout implements XPMB_View {
 	}
 
 	@Override
-	public void setX(float x) {
-		if (super.getLayoutParams() != null) {
-			if (super.getLayoutParams() instanceof AbsoluteLayout.LayoutParams) {
-				AbsoluteLayout.LayoutParams allp = (AbsoluteLayout.LayoutParams) super
-						.getLayoutParams();
-				allp.x = (int) x;
-				super.setLayoutParams(allp);
-			}
-		}
-	}
-
-	@Override
-	public float getX() {
-		if (super.getLayoutParams() != null) {
-			if (super.getLayoutParams() instanceof AbsoluteLayout.LayoutParams) {
-				AbsoluteLayout.LayoutParams allp = (AbsoluteLayout.LayoutParams) super
-						.getLayoutParams();
-				return allp.x;
-			}
-		}
-		return 0;
-	}
-
-	@Override
-	public void setY(float y) {
-		if (super.getLayoutParams() != null) {
-			if (super.getLayoutParams() instanceof AbsoluteLayout.LayoutParams) {
-				AbsoluteLayout.LayoutParams allp = (AbsoluteLayout.LayoutParams) super
-						.getLayoutParams();
-				allp.y = (int) y;
-				super.setLayoutParams(allp);
-			}
-		}
-	}
-
-	@Override
-	public float getY() {
-		if (super.getLayoutParams() != null) {
-			if (super.getLayoutParams() instanceof AbsoluteLayout.LayoutParams) {
-				AbsoluteLayout.LayoutParams allp = (AbsoluteLayout.LayoutParams) super
-						.getLayoutParams();
-				return allp.y;
-			}
-		}
-		return 0;
-	}
-
-	@Override
-	public void setAlpha(float value) {
+	public void setAlphaLevel(float value) {
 		mAlpha = value;
-		super.invalidate();
 	}
 
 	@Override
-	public float getAlpha() {
+	public float getAlphaLevel() {
 		return mAlpha;
 	}
 
@@ -143,24 +92,24 @@ public class XPMB_RelativeLayout extends RelativeLayout implements XPMB_View {
 	}
 
 	@Override
-	public void setScaleX(float scale) {
+	public void setViewScaleX(float scale) {
 		mScaleX = scale;
 		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
-	public float getScaleX() {
+	public float getViewScaleX() {
 		return mScaleX;
 	}
 
 	@Override
-	public void setScaleY(float scale) {
+	public void setViewScaleY(float scale) {
 		mScaleY = scale;
 		updateScaledLayoutParams(super.getLayoutParams());
 	}
 
 	@Override
-	public float getScaleY() {
+	public float getViewScaleY() {
 		return mScaleY;
 	}
 
