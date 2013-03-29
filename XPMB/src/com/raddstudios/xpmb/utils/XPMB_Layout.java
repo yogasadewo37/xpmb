@@ -19,6 +19,8 @@
 
 package com.raddstudios.xpmb.utils;
 
+import com.raddstudios.xpmb.utils.backports.XPMB_View;
+
 import android.os.Handler;
 import android.util.TypedValue;
 import android.view.View;
@@ -31,10 +33,11 @@ public class XPMB_Layout {
 	private Handler hMessageBus = null;
 	private int cID = 0xC0DD;
 
-	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView, int idOffset) {
 		mRoot = root;
 		hMessageBus = messageBus;
 		mRootView = rootView;
+		cID += idOffset;
 	}
 
 	protected Handler getMessageBus() {
@@ -43,6 +46,10 @@ public class XPMB_Layout {
 
 	protected ViewGroup getRootView() {
 		return mRootView;
+	}
+	
+	protected XPMB_View getView(int id){
+		return (XPMB_View) mRootView.findViewById(id);
 	}
 
 	protected XPMB_Activity getRootActivity() {

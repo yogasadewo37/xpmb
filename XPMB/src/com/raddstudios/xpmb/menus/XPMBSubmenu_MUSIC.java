@@ -29,9 +29,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
@@ -47,8 +46,6 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
@@ -58,21 +55,22 @@ import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMBServices;
 import com.raddstudios.xpmb.XPMBServices.MediaPlayerControl;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.utils.XPMBSubmenuItem;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout;
-import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
-import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
 import com.raddstudios.xpmb.utils.backports.XPMB_TextView;
 
 public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 	class XPMBSubmenuItem_MUSIC_Metadata {
+		private File fTrackPath = null;
 		private String strName = null, strAuthor = null, strAlbum = null;
-		private Drawable drwAlbumCover = null;
+		private Bitmap drwAlbumCover = null;
 
-		public XPMBSubmenuItem_MUSIC_Metadata(String name, String author, String album) {
+		public XPMBSubmenuItem_MUSIC_Metadata(String path, String name, String author, String album) {
+			fTrackPath = new File(path);
 			strName = name;
 			strAuthor = author;
 			strAlbum = album;
@@ -90,58 +88,34 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			return strAlbum;
 		}
 
-		public void setTrackAlbumCover(Drawable cover) {
+		public void setTrackAlbumCover(Bitmap cover) {
 			drwAlbumCover = cover;
 		}
 
-		public Drawable getTrackAlbumCover() {
+		public Bitmap getTrackAlbumCover() {
 			return drwAlbumCover;
 		}
-	}
 
-	class XPMBSubmenuItem_MUSIC {
-
-		private File fTrackPath = null;
-		private XPMBSubmenuItem_MUSIC_Metadata xsimmMetadata = null;
-		private XPMB_ImageView ivParentView = null;
-		private XPMB_TextView tvParentLabel = null;
-		private XPMB_TableRow trParentContainer = null;
-
-		public XPMBSubmenuItem_MUSIC(File trackPath, XPMBSubmenuItem_MUSIC_Metadata trackInfo) {
-			fTrackPath = trackPath;
-			xsimmMetadata = trackInfo;
+		public void setTrackPath(String path) {
+			fTrackPath = new File(path);
 		}
 
 		public File getTrackPath() {
 			return fTrackPath;
 		}
+	}
+
+	class XPMBSubmenuItem_MUSIC extends XPMBSubmenuItem {
+		private XPMBSubmenuItem_MUSIC_Metadata xsimmMetadata = null;
+
+		public XPMBSubmenuItem_MUSIC(XPMBSubmenuItem_MUSIC_Metadata trackInfo) {
+			super(trackInfo.getTrackName() + "\r\n" + trackInfo.getTrackAuthor(), trackInfo
+					.getTrackAlbumCover());
+			xsimmMetadata = trackInfo;
+		}
 
 		public XPMBSubmenuItem_MUSIC_Metadata getTrackMetadata() {
 			return xsimmMetadata;
-		}
-
-		public void setParentView(XPMB_ImageView parent) {
-			ivParentView = parent;
-		}
-
-		public XPMB_ImageView getParentView() {
-			return ivParentView;
-		}
-
-		public void setParentLabel(XPMB_TextView label) {
-			tvParentLabel = label;
-		}
-
-		public XPMB_TextView getParentLabel() {
-			return tvParentLabel;
-		}
-
-		public void setParentContainer(XPMB_TableRow container) {
-			trParentContainer = container;
-		}
-
-		public XPMB_TableRow getParentContainer() {
-			return trParentContainer;
 		}
 	}
 
@@ -176,13 +150,13 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 			switch (type) {
 			case ANIM_MENU_MOVE_UP:
-				mOwner.setDuration(100);
+				mOwner.setDuration(150);
 				pY = tlRoot.getTopMargin();
 				intNextItem = intAnimItem - 1;
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
 				break;
 			case ANIM_MENU_MOVE_DOWN:
-				mOwner.setDuration(100);
+				mOwner.setDuration(150);
 				pY = tlRoot.getTopMargin();
 				intNextItem = intAnimItem + 1;
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
@@ -194,7 +168,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 				destY = pxFromDip(122) - (pxFromDip(60) * intSelItem);
 				break;
 			case ANIM_CENTER_ON_ITEM:
-				mOwner.setDuration(100);
+				mOwner.setDuration(150);
 				pY = tlRoot.getTopMargin();
 				intNextItem = (int) mArgs[0];
 				destY = pxFromDip(122) - (pxFromDip(60) * intNextItem);
@@ -227,12 +201,12 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 				marginI = (int) (pxFromDip(16) * completion);
 
 				tlRoot.setTopMargin((int) (pY + (dispY * completion)));
-				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginO);
-				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginO);
-				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaO);
-				alItems.get(intNextItem).getParentContainer().setTopMargin(marginI);
-				alItems.get(intNextItem).getParentContainer().setBottomMargin(marginI);
-				alItems.get(intNextItem).getParentLabel().setAlphaLevel(alphaI);
+				getView(alItems.get(intAnimItem).getParentView()).setTopMargin(marginO);
+				getView(alItems.get(intAnimItem).getParentView()).setBottomMargin(marginO);
+				getView(alItems.get(intAnimItem).getParentLabel()).setAlphaLevel(alphaO);
+				getView(alItems.get(intNextItem).getParentView()).setTopMargin(marginI);
+				getView(alItems.get(intNextItem).getParentView()).setBottomMargin(marginI);
+				getView(alItems.get(intNextItem).getParentLabel()).setAlphaLevel(alphaI);
 				break;
 			case ANIM_CENTER_ON_ITEM_DELAYED:
 				dispY = destY - pY;
@@ -240,9 +214,9 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 				marginI = (int) (pxFromDip(16) * completion);
 
 				tlRoot.setTopMargin((int) (pY + (dispY * completion)));
-				alItems.get(intAnimItem).getParentContainer().setTopMargin(marginI);
-				alItems.get(intAnimItem).getParentContainer().setBottomMargin(marginI);
-				alItems.get(intAnimItem).getParentLabel().setAlphaLevel(alphaI);
+				getView(alItems.get(intAnimItem).getParentView()).setTopMargin(marginI);
+				getView(alItems.get(intAnimItem).getParentView()).setBottomMargin(marginI);
+				getView(alItems.get(intAnimItem).getParentLabel()).setAlphaLevel(alphaI);
 				break;
 			case ANIM_SHOW_MEDIA_CONTROLS:
 				alphaI = completion;
@@ -338,24 +312,23 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	private ArrayList<XPMBSubmenuItem_MUSIC> alItems = null;
 	private Hashtable<String, Bitmap> htCovers = null;
 	private int intSelItem = 0, intLastPlayed = -1;
-	
+
 	private boolean isFocused = true;
 
 	private XPMB_TextView tv_no_music = null;
 	private MediaPlayerControl mpPlayer = null;
 	private View vwPlayerControlsRoot = null;
-	private XPMB_RelativeLayout rlPlayerControls = null;
+	private XPMB_RelativeLayout rlPlayerControls = null, tlRoot = null;
 	private XPMB_TextView tvCurPos = null, tvTotalLen = null;
 	private XPMB_ImageView ivPlayStatus = null;
 	private ProgressBar pbTrackPos = null;
-	private XPMB_TableLayout tlRoot = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
 	private RapidScroller ttFastScroll = null;
 
 	public XPMBSubmenu_MUSIC(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
-		super(root, messageBus, rootView);
+		super(root, messageBus, rootView, 0x1000);
 
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
 		aUIAnimator.setInterpolator(new DecelerateInterpolator());
@@ -431,9 +404,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			if (mCur.getString(0).startsWith(
 					Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 							.getAbsolutePath())) {
-				alItems.add(new XPMBSubmenuItem_MUSIC(new File(mCur.getString(0)),
-						new XPMBSubmenuItem_MUSIC_Metadata(mCur.getString(1), mCur.getString(2),
-								mCur.getString(3))));
+				alItems.add(new XPMBSubmenuItem_MUSIC(new XPMBSubmenuItem_MUSIC_Metadata(mCur
+						.getString(0), mCur.getString(1), mCur.getString(2), mCur.getString(3))));
 
 				long albumId = mCur.getLong(4);
 				String strAlbumId = String.valueOf(albumId);
@@ -447,7 +419,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 										albumArtUri), 96, 96, false));
 					}
 					alItems.get(alItems.size() - 1).getTrackMetadata()
-							.setTrackAlbumCover(new BitmapDrawable(htCovers.get(strAlbumId)));
+							.setTrackAlbumCover(htCovers.get(strAlbumId));
 
 				} catch (Exception e) {
 					// Log.d(getClass().getSimpleName(),
@@ -455,7 +427,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 					alItems.get(alItems.size() - 1)
 							.getTrackMetadata()
 							.setTrackAlbumCover(
-									getRootView().getResources().getDrawable(
+									BitmapFactory.decodeResource(getRootView().getResources(),
 											R.drawable.ui_xmb_default_music_icon));
 				}
 			}
@@ -465,14 +437,14 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	}
 
 	private void doCenterOnItemPre() {
-		alItems.get(intSelItem).getParentContainer().setTopMargin(0);
-		alItems.get(intSelItem).getParentContainer().setBottomMargin(0);
-		alItems.get(intSelItem).getParentLabel().setAlphaLevel(0.5f);
+		getView(alItems.get(intSelItem).getParentView()).setTopMargin(0);
+		getView(alItems.get(intSelItem).getParentView()).setBottomMargin(0);
+		getView(alItems.get(intSelItem).getParentLabel()).setAlphaLevel(0.5f);
 	}
 
 	private void doCenterOnItemPos() {
 		aUIAnimator.cancel();
-		alItems.get(intSelItem).getParentLabel().setAlphaLevel(1.0f);
+		getView(alItems.get(intSelItem).getParentLabel()).setAlphaLevel(1.0f);
 		aUIAnimatorW.setAnimationType(ANIM_CENTER_ON_ITEM_DELAYED);
 		aUIAnimator.start();
 	}
@@ -499,8 +471,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 	private OnTouchListener mTouchListener = new OnTouchListener() {
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			if (isFocused){
-			getRootActivity().setTouchedChildView(v);
+			if (isFocused) {
+				getRootActivity().setTouchedChildView(v);
 			}
 			return false;
 		}
@@ -546,7 +518,7 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 		intLastPlayed = (Integer) getRootActivity().getStorage().getObject(COLLECTION_CONFIG,
 				CONFIG_CURRENT_TRACK, -1);
 
-		tlRoot = new XPMB_TableLayout(getRootView().getContext());
+		tlRoot = new XPMB_RelativeLayout(getRootView().getContext());
 		RelativeLayout.LayoutParams rootP = new RelativeLayout.LayoutParams(pxFromDip(396),
 				pxFromDip(32 + (60 * alItems.size())));
 		rootP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -557,40 +529,38 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 
 		for (XPMBSubmenuItem_MUSIC xsi : alItems) {
 			int idy = alItems.indexOf(xsi);
-			XPMB_TableRow cItem = new XPMB_TableRow(getRootView().getContext());
 			XPMB_ImageView cIcon = new XPMB_ImageView(getRootView().getContext());
 			XPMB_TextView cLabel = new XPMB_TextView(getRootView().getContext());
-			cItem.setId(getNextID());
 			cIcon.setId(getNextID());
 			cLabel.setId(getNextID());
 
-			// Setup Item Container
-			TableLayout.LayoutParams cItemParams = new TableLayout.LayoutParams(pxFromDip(396),
-					pxFromDip(60));
-			if (idy == intSelItem) {
-				cItemParams.topMargin = pxFromDip(16);
-				cItemParams.bottomMargin = pxFromDip(16);
-			}
-			cItem.setLayoutParams(cItemParams);
-
 			// Setup Icon
-			TableRow.LayoutParams cIconParams = new TableRow.LayoutParams((int) pxFromDip(60),
-					(int) pxFromDip(60));
-			cIconParams.column = 0;
+			RelativeLayout.LayoutParams cIconParams = new RelativeLayout.LayoutParams(
+					pxFromDip(60), pxFromDip(60));
+			if (idy == 0) {
+				cIconParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+				cIconParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			} else {
+				cIconParams.addRule(RelativeLayout.BELOW, cIcon.getId() - 2);
+			}
+			if (idy == intSelItem) {
+				cIconParams.topMargin = pxFromDip(16);
+				cIconParams.bottomMargin = pxFromDip(16);
+			}
 			cIcon.setLayoutParams(cIconParams);
 			cIcon.setTag(idy);
-			cIcon.setImageDrawable(xsi.getTrackMetadata().getTrackAlbumCover());
+			cIcon.setImageBitmap(xsi.getTrackMetadata().getTrackAlbumCover());
 			cIcon.setOnTouchListener(mTouchListener);
 
 			// Setup Label
-			TableRow.LayoutParams cLabelParams = new TableRow.LayoutParams((int) pxFromDip(320),
-					(int) pxFromDip(60));
+			RelativeLayout.LayoutParams cLabelParams = new RelativeLayout.LayoutParams(
+					pxFromDip(320), pxFromDip(60));
 			cLabelParams.leftMargin = pxFromDip(16);
-			cLabelParams.column = 1;
+			cLabelParams.addRule(RelativeLayout.RIGHT_OF,cIcon.getId());
+			cLabelParams.addRule(RelativeLayout.ALIGN_TOP,cIcon.getId());
 			cLabel.setLayoutParams(cLabelParams);
 			cLabel.setTag(idy);
-			cLabel.setText(xsi.getTrackMetadata().getTrackName() + "\r\n"
-					+ xsi.getTrackMetadata().getTrackAuthor());
+			cLabel.setText(xsi.getLabel());
 			cLabel.setTextColor(Color.WHITE);
 			cLabel.setShadowLayer(16, 0, 0, Color.WHITE);
 			cLabel.setTextAppearance(getRootView().getContext(),
@@ -601,14 +571,11 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			}
 			cLabel.setOnTouchListener(mTouchListener);
 
-			cItem.addView(cIcon);
-			cItem.addView(cLabel);
+			xsi.setParentView(cIcon.getId());
+			xsi.setParentLabel(cLabel.getId());
 
-			xsi.setParentView(cIcon);
-			xsi.setParentLabel(cLabel);
-			xsi.setParentContainer(cItem);
-
-			tlRoot.addView(cItem);
+			tlRoot.addView(cIcon);
+			tlRoot.addView(cLabel);
 		}
 
 		getRootView().addView(tlRoot);
@@ -774,7 +741,8 @@ public class XPMBSubmenu_MUSIC extends XPMB_Layout {
 			}
 		}
 
-		mpPlayer.setMediaSource(alItems.get(index).getTrackPath().getAbsolutePath());
+		mpPlayer.setMediaSource(alItems.get(index).getTrackMetadata().getTrackPath()
+				.getAbsolutePath());
 		ivPlayStatus.setImageDrawable(getRootActivity().getResources().getDrawable(
 				R.drawable.ui_status_media_play));
 		doShowPlayerControls(true);

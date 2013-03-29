@@ -109,7 +109,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 	private XPMB_TableLayout tlRoot = null;
 
 	public XPMBSubmenu_APP(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
-		super(root, messageBus, rootView);
+		super(root, messageBus, rootView, 0x1000);
 
 		alItems = new ArrayList<XPMBSubmenuItem_APP>();
 	}

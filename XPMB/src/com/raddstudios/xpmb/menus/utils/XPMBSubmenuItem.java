@@ -17,19 +17,43 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.menus.utils;
 
-import android.os.Handler;
-import android.view.ViewGroup;
+import android.graphics.Bitmap;
 
-public class XPMB_MainMenu extends XPMB_Layout {
+public class XPMBSubmenuItem {
 
-	public XPMB_MainMenu(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
-		super(root, messageBus, rootView, 0x0000);
+	private String strLabel = null;
+	private Bitmap bmImage = null;
+	private int intParentLabel = -1, intParentView = -1;
+
+	public XPMBSubmenuItem(String label, Bitmap image) {
+		strLabel = label;
+		bmImage = image;
 	}
-	
-	public void postExecuteFinished(){
-		
+
+	public String getLabel() {
+		return strLabel;
+	}
+
+	public Bitmap getImage() {
+		return bmImage;
+	}
+
+	public void setParentView(int id) {
+		intParentView = id;
+	}
+
+	public int getParentView() {
+		return intParentView;
+	}
+
+	public void setParentLabel(int id) {
+		intParentLabel = id;
+	}
+
+	public int getParentLabel() {
+		return intParentLabel;
 	}
 
 }

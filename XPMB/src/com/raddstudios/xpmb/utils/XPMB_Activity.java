@@ -19,6 +19,7 @@
 
 package com.raddstudios.xpmb.utils;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -35,6 +36,7 @@ import com.raddstudios.xpmb.XPMBServices.MediaPlayerControl;
 import com.raddstudios.xpmb.XPMBServices.ObjectCollections;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
+@SuppressLint("Registered")
 public class XPMB_Activity extends Activity {
 
 	public interface IntentFinishedListener {
@@ -79,7 +81,8 @@ public class XPMB_Activity extends Activity {
 		// class name because we want a specific service implementation that
 		// we know will be running in our own process (and thus won't be
 		// supporting component replacement by other applications).
-		mIsBound = bindService(new Intent(this, XPMBServices.class), mConnection, Context.BIND_AUTO_CREATE);
+		mIsBound = bindService(new Intent(this, XPMBServices.class), mConnection,
+				Context.BIND_AUTO_CREATE);
 		mIsBound = true;
 	}
 
@@ -115,11 +118,11 @@ public class XPMB_Activity extends Activity {
 
 	public void requestActivityEnd() {
 	}
-	
-	public void enableTouchEvents(boolean enabled){
+
+	public void enableTouchEvents(boolean enabled) {
 	}
-	
-	public void setTouchedChildView(View v){
+
+	public void setTouchedChildView(View v) {
 	}
 
 	public boolean isActivityAvailable(Intent intent) {

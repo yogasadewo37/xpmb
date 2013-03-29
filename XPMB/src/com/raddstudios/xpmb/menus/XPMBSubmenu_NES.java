@@ -169,7 +169,7 @@ public class XPMBSubmenu_NES extends XPMB_Layout {
 	private XPMB_TableLayout tlRoot = null;
 
 	public XPMBSubmenu_NES(XPMB_Activity root, Handler messageBus, ViewGroup rootView, File fROMRoot) {
-		super(root, messageBus, rootView);
+		super(root, messageBus, rootView, 0x1000);
 		mROMRoot = fROMRoot;
 
 		alItems = new ArrayList<XPMBSubmenuItem_NES>();

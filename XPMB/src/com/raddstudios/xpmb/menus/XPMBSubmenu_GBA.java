@@ -313,7 +313,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 	private RapidScroller ttFastScroll = null;
 
 	public XPMBSubmenu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView, File fROMRoot) {
-		super(root, messageBus, rootView);
+		super(root, messageBus, rootView, 0x1000);
 		mROMRoot = fROMRoot;
 
 		alItems = new ArrayList<XPMBSubmenuItem_GBA>();
