@@ -40,7 +40,7 @@ import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
+import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
@@ -358,7 +358,7 @@ public class XPMBSubmenu_APP extends XPMB_Layout {
 
 	private void execSelectedItem() {
 		getRootActivity().showLoadingAnim(true);
-		getRootActivity().postIntentStartWait(new IntentFinishedListener() {
+		getRootActivity().postIntentStartWait(new FinishedListener() {
 			@Override
 			public void onFinished(Intent intent) {
 				getRootActivity().showLoadingAnim(false);

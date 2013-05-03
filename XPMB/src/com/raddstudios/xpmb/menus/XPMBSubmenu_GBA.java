@@ -59,7 +59,7 @@ import com.raddstudios.xpmb.menus.utils.ROMInfo;
 import com.raddstudios.xpmb.menus.utils.ROMInfo.ROMInfoNode;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.XPMB_Activity.IntentFinishedListener;
+import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableLayout;
 import com.raddstudios.xpmb.utils.backports.XPMB_TableRow;
@@ -755,7 +755,7 @@ public class XPMBSubmenu_GBA extends XPMB_Layout {
 		intent.setFlags(0x10000000);
 		if (getRootActivity().isActivityAvailable(intent)) {
 			getRootActivity().showLoadingAnim(true);
-			getRootActivity().postIntentStartWait(new IntentFinishedListener() {
+			getRootActivity().postIntentStartWait(new FinishedListener() {
 				@Override
 				public void onFinished(Intent intent) {
 					getRootActivity().showLoadingAnim(false);

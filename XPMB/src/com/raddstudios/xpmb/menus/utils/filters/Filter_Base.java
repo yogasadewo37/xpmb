@@ -17,43 +17,31 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.utils;
+package com.raddstudios.xpmb.menus.utils.filters;
 
-import android.graphics.Bitmap;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class XPMBSubmenuItem {
+public interface Filter_Base {
+	public void initialize(XPMBMenu_View owner, XPMBMenuCategory dest, XPMB_Activity resources,
+			FinishedListener finishedL);
 
-	private String strLabel = null;
-	private Bitmap bmImage = null;
-	private int intParentLabel = -1, intParentView = -1;
+	public void deInitialize();
 
-	public XPMBSubmenuItem(String label, Bitmap image) {
-		strLabel = label;
-		bmImage = image;
-	}
+	public void loadIn();
 
-	public String getLabel() {
-		return strLabel;
-	}
+	public void processItem(XPMBMenuItem item);
 
-	public Bitmap getImage() {
-		return bmImage;
-	}
+	public void processkeyUp(int keyCode);
 
-	public void setParentView(int id) {
-		intParentView = id;
-	}
+	public void processkeyDown(int keyCode);
+	
+	public void setListAnimator(int animator);
+	
+	public int getListAnimator();
 
-	public int getParentView() {
-		return intParentView;
-	}
-
-	public void setParentLabel(int id) {
-		intParentLabel = id;
-	}
-
-	public int getParentLabel() {
-		return intParentLabel;
-	}
-
+	public boolean isInitialized();
 }

@@ -1,85 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xmbroot>
+<xpmbroot>
 
-    <item
-        id="Settings"
-        icon="ui_xmb_settings">
+    <category
+        icon="theme.icon|icon_setting"
+        label="Settings" >
         <subitem
-            id="System settings"
             exec="com.android.settings/.Settings"
-            icon="ui_xmb_settings_system"
+            icon="theme.icon|icon_system_setting"
+            label="System settings" />
+    </category>
+    <category
+        icon="theme.icon|icon_photo"
+        label="Photo" >
+        <subitem
+            action="android.media.action.IMAGE_CAPTURE"
+            icon="theme.icon|icon_usbcamera"
+            label="Camera"
             type="exec" />
-    </item>
-    <item
-        id="Photos"
-        icon="ui_xmb_photo">
+    </category>
+    <category
+        icon="theme.icon|icon_music"
+        label="Music" >
+        <subcategory
+            anim="highlight"
+            filter="com.xpmb.media.music"
+            icon="theme.icon|icon_sd"
+            label="External memory" />
+    </category>
+    <category
+        icon="theme.icon|icon_video"
+        label="Video" >
+        <subcategory
+            icon="theme.icon|icon_sd"
+            label="External Memory" />
+    </category>
+    <category
+        icon="theme.icon|icon_game"
+        label="Games" >
+        <subcategory
+            anim="half"
+            filter="com.xpmb.roms.nes"
+            icon="theme.icon|icon_savedata"
+            label="Nintendo Entertainment System" />
+        <subcategory
+            anim="half"
+            filter="com.xpmb.roms.gba"
+            icon="theme.icon|icon_savedata"
+            label="Gameboy Advance" />
+    </category>
+    <category
+        icon="theme.icon|icon_network"
+        label="Network" >
         <subitem
-            id="Camera"
-            exec="com.android.gallery3d/com.android.camera.CameraLauncher"
-            icon="ui_xmb_photo_camera"
-            type="exec" />
-        <subitem
-            id="External memory"
-            icon="ui_xmb_external_memory" />
-    </item>
-    <item
-        id="Music"
-        icon="ui_xmb_music">
-        <subitem
-            id="External memory"
-            icon="ui_xmb_external_memory"
-            submenu="XPMB_Submenu_MUSIC"
-            type="submenu.highlight" />
-    </item>
-    <item
-        id="Video"
-        icon="ui_xmb_video">
-        <subitem
-            id="External memory"
-            icon="ui_xmb_external_memory" />
-    </item>
-    <item
-        id="Games"
-        icon="ui_xmb_games">
-        <subitem
-            id="Nintendo Entertainment System"
-            icon="ui_xmb_game_folder"
-            submenu="XPMB_Submenu_NES"
-            type="submenu.half" />
-        <subitem
-            id="Super Nintendo"
-            icon="ui_xmb_game_folder" />
-        <subitem
-            id="Gameboy Advance"
-            icon="ui_xmb_game_folder"
-            submenu="XPMB_Submenu_GBA"
-            type="submenu.half" />
-        <subitem
-            id="NeoGeo Arcade"
-            icon="ui_xmb_game_folder" />
-    </item>
-    <item
-        id="Net"
-        icon="ui_xmb_web">
-        <subitem
-            id="Web browser"
             exec="com.android.browser/.BrowserActivity"
-            icon="ui_xmb_web_browser"
-            type="exec" />
+            icon="theme.icon|icon_browser"
+            label="Web browser" />
         <subitem
-            id="Internet search"
             exec="com.google.android.googlequicksearchbox/.SearchActivity"
-            icon="ui_xmb_web_search"
-            type="exec" />
-    </item>
-    <item
-        id="Applications"
-        icon="ui_xmb_apps">
-        <subitem
-            id="Installed applications"
-            icon="ui_xmb_apps_installed"
-            submenu="XPMB_Submenu_APP"
-            type="submenu.half" />
-    </item>
+            icon="theme.icon|icon_inet_search"
+            label="Internet search" />
+    </category>
+    <category
+        icon="theme.icon|icon_user"
+        label="Apps" >
+        <subcategory
+            anim="half"
+            filter="com.xpmb.system.apps"
+            icon="theme.icon|icon_download"
+            label="Installed apps" />
+    </category>
 
-</xmbroot>
+</xpmbroot>

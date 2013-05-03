@@ -56,50 +56,24 @@ containing a value of this type.
         public static final int ui_side_menu=0x7f020012;
         public static final int ui_status_media_pause=0x7f020013;
         public static final int ui_status_media_play=0x7f020014;
-        public static final int ui_xmb_apps=0x7f020015;
-        public static final int ui_xmb_apps_installed=0x7f020016;
-        public static final int ui_xmb_back=0x7f020017;
-        public static final int ui_xmb_default_icon=0x7f020018;
-        public static final int ui_xmb_default_music_icon=0x7f020019;
-        public static final int ui_xmb_external_memory=0x7f02001a;
-        public static final int ui_xmb_game_folder=0x7f02001b;
-        public static final int ui_xmb_games=0x7f02001c;
-        public static final int ui_xmb_music=0x7f02001d;
-        public static final int ui_xmb_photo=0x7f02001e;
-        public static final int ui_xmb_photo_camera=0x7f02001f;
-        public static final int ui_xmb_settings=0x7f020020;
-        public static final int ui_xmb_settings_system=0x7f020021;
-        public static final int ui_xmb_video=0x7f020022;
-        public static final int ui_xmb_web=0x7f020023;
-        public static final int ui_xmb_web_browser=0x7f020024;
-        public static final int ui_xmb_web_search=0x7f020025;
+        public static final int ui_xmb_back=0x7f020015;
     }
     public static final class id {
-        public static final int imageView1=0x7f070007;
-        public static final int imageView2=0x7f07000a;
-        public static final int ivBattStatus=0x7f070010;
-        public static final int ivCustomBG=0x7f07000f;
-        public static final int ivLoadAnim=0x7f070013;
+        public static final int ivBattStatus=0x7f070007;
+        public static final int ivCustomBG=0x7f070006;
+        public static final int ivLoadAnim=0x7f07000a;
         public static final int ivPlayStatus=0x7f070004;
-        public static final int ivSubmenuShown=0x7f070012;
-        public static final int lbCurTime=0x7f070011;
-        public static final int main_l=0x7f07000e;
+        public static final int ivSubmenuShown=0x7f070009;
+        public static final int lbCurTime=0x7f070008;
+        public static final int main_l=0x7f070005;
         public static final int pbCurPos=0x7f070001;
         public static final int playerc_l=0x7f070000;
-        public static final int tableLayout1=0x7f070005;
-        public static final int tableRow1=0x7f070006;
-        public static final int tableRow2=0x7f070009;
-        public static final int tableRow3=0x7f07000c;
-        public static final int tableRow4=0x7f07000d;
-        public static final int textView1=0x7f070008;
-        public static final int textView2=0x7f07000b;
         public static final int tvCurPos=0x7f070003;
         public static final int tvTotalLen=0x7f070002;
     }
     public static final class layout {
         public static final int mediaplayer_control=0x7f030000;
-        public static final int menueditor=0x7f030001;
-        public static final int xpmb_main=0x7f030002;
+        public static final int xpmb_main=0x7f030001;
     }
     public static final class string {
         public static final int app_name=0x7f050000;
@@ -135,9 +109,7 @@ containing a value of this type.
     }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;
-        public static final int rominfo_nes=0x7f040001;
-        public static final int rominfo_snes=0x7f040002;
-        public static final int xmb_layout=0x7f040003;
+        public static final int xmb_layout=0x7f040001;
     }
     public static final class styleable {
         /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_ImageView.

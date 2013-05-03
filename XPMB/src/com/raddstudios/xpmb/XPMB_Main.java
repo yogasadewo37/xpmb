@@ -20,8 +20,10 @@
 package com.raddstudios.xpmb;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.zip.ZipFile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -51,8 +53,7 @@ import android.widget.Toast;
 import com.raddstudios.xpmb.menus.XPMBMenu;
 import com.raddstudios.xpmb.menus.XPMBSubmenu_APP;
 import com.raddstudios.xpmb.menus.XPMBSubmenu_GBA;
-import com.raddstudios.xpmb.menus.XPMBSubmenu_MUSIC;
-import com.raddstudios.xpmb.menus.XPMBSubmenu_NES;
+import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.XPMB_MainMenu;
@@ -66,6 +67,7 @@ public class XPMB_Main extends XPMB_Activity {
 			KEYCODE_TRIANGLE = 100, KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
 			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLUME_DOWN = 25,
 			KEYCODE_VOLUME_UP = 24;
+	public static final String GRAPH_ASSETS_COL_KEY = "com.raddstudios.assets.graphics";
 
 	private XPMB_MainMenu mMenu = null;
 	private XPMB_Layout mSub = null;
@@ -76,6 +78,7 @@ public class XPMB_Main extends XPMB_Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);	
 
 		hMessageBus = new Handler();
 		if (!checkForSupportedDevice()) {
@@ -91,7 +94,6 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 			}, 2500);
-			super.onCreate(savedInstanceState);
 			return;
 		}
 
@@ -125,10 +127,10 @@ public class XPMB_Main extends XPMB_Activity {
 		if (firstInitDone && mMenu != null) {
 			return;
 		}
+
+		getStorage().createCollection(GRAPH_ASSETS_COL_KEY);
 		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus,
 				(ViewGroup) findViewById(R.id.main_l), this);
-
-		super.onCreate(savedInstanceState);
 	}
 
 	private static final int MOVING_DIR_VERT = 0, MOVING_DIR_HORZ = 1;
@@ -231,8 +233,8 @@ public class XPMB_Main extends XPMB_Activity {
 	}
 
 	private boolean checkForSupportedDevice() {
-		//return true;
-		return new File("/system/framework/xperiaplaycertified.jar").exists();
+		return true;
+		//return new File("/system/framework/xperiaplaycertified.jar").exists();
 	}
 
 	private void setupAnimations() {
@@ -433,9 +435,9 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_NES(this, hMessageBus,
-							(ViewGroup) findViewById(R.id.main_l), new File(
-									Environment.getExternalStorageDirectory(), "NES"));
+					//mSub = new XPMBSubmenu_NES(this, hMessageBus,
+					//		(ViewGroup) findViewById(R.id.main_l), new File(
+					//				Environment.getExternalStorageDirectory(), "NES"));
 				}
 
 			} else if (submenu.equals("XPMB_Submenu_MUSIC")) {
@@ -453,8 +455,8 @@ public class XPMB_Main extends XPMB_Activity {
 				}
 
 				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_MUSIC(this, hMessageBus,
-							(ViewGroup) findViewById(R.id.main_l));
+					//mSub = new XPMBSubmenu_MUSIC(this, hMessageBus,
+					//		(ViewGroup) findViewById(R.id.main_l));
 				}
 
 			}

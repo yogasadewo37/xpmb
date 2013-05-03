@@ -19,33 +19,213 @@
 
 package com.raddstudios.xpmb.utils;
 
+import java.util.ArrayList;
+import java.util.Hashtable;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.util.Log;
 import android.view.View;
 
-import com.raddstudios.xpmb.XPMBServices;
-import com.raddstudios.xpmb.XPMBServices.MediaPlayerControl;
-import com.raddstudios.xpmb.XPMBServices.ObjectCollections;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 @SuppressLint("Registered")
 public class XPMB_Activity extends Activity {
 
-	public interface IntentFinishedListener {
+	public interface FinishedListener {
 		public void onFinished(Intent intent);
 	}
 
-	private XPMBServices bgHolder = null;
-	private IntentFinishedListener cIntentWaitListener = null;
-	private boolean mIsBound = false;
+	public final class MediaPlayerControl implements MediaPlayer.OnPreparedListener,
+			MediaPlayer.OnErrorListener {
+		private MediaPlayer mMediaPlayer = null;
+		public static final int STATE_NOT_INITIALIZED = -1, STATE_PLAYING = 0, STATE_STOPPED = 1,
+				STATE_PAUSED = 2;
+
+		private int intPlayerStatus = STATE_NOT_INITIALIZED;
+
+		public MediaPlayerControl() {
+			mMediaPlayer = new MediaPlayer();
+		}
+
+		public void initialize() {
+			mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+			mMediaPlayer.setOnPreparedListener(this);
+		}
+
+		public void setOnCompletionListener(OnCompletionListener listener) {
+			mMediaPlayer.setOnCompletionListener(listener);
+		}
+
+		public void play() {
+			if (intPlayerStatus == STATE_PAUSED || intPlayerStatus == STATE_STOPPED) {
+				mMediaPlayer.start();
+				intPlayerStatus = STATE_PLAYING;
+			}
+		}
+
+		public void pause() {
+			if (intPlayerStatus == STATE_PLAYING) {
+				mMediaPlayer.pause();
+				intPlayerStatus = STATE_PAUSED;
+			}
+		}
+
+		public void stop() {
+			if (intPlayerStatus != STATE_NOT_INITIALIZED) {
+				pause();
+				mMediaPlayer.seekTo(0);
+				intPlayerStatus = STATE_STOPPED;
+			}
+		}
+
+		public void seekTo(int msec) {
+			if (intPlayerStatus != STATE_NOT_INITIALIZED) {
+				mMediaPlayer.seekTo(msec);
+			}
+		}
+
+		public int getCurrentPosition() {
+			if (intPlayerStatus != STATE_NOT_INITIALIZED) {
+				return mMediaPlayer.getCurrentPosition();
+			}
+			return 0;
+		}
+
+		public int getDuration() {
+			if (intPlayerStatus != STATE_NOT_INITIALIZED) {
+				return mMediaPlayer.getDuration();
+			}
+			return 0;
+		}
+
+		public int getPlayerStatus() {
+			return intPlayerStatus;
+		}
+
+		public void setMediaSource(String url) {
+			intPlayerStatus = STATE_NOT_INITIALIZED;
+			try {
+				if (mMediaPlayer.isPlaying()) {
+					mMediaPlayer.stop();
+				}
+				mMediaPlayer.reset();
+				mMediaPlayer.setDataSource(url);
+				mMediaPlayer.prepareAsync();
+			} catch (Exception e) {
+				Log.d(getClass().getSimpleName(), e.getLocalizedMessage());
+				e.printStackTrace();
+			}
+		}
+
+		public void release() {
+			mMediaPlayer.release();
+		}
+
+		@Override
+		public boolean onError(MediaPlayer mp, int what, int extra) {
+			mp.reset();
+			intPlayerStatus = STATE_NOT_INITIALIZED;
+			return false;
+		}
+
+		@Override
+		public void onPrepared(MediaPlayer player) {
+			player.start();
+			intPlayerStatus = STATE_PLAYING;
+		}
+	}
+
+	public final class ObjectCollections {
+		private Hashtable<String, Hashtable<String, Object>> mCollection = null;
+		private Hashtable<String, ArrayList<Object>> mList = null;
+
+		public ObjectCollections() {
+			mCollection = new Hashtable<String, Hashtable<String, Object>>();
+			mList = new Hashtable<String, ArrayList<Object>>();
+		}
+
+		public void createList(String name) {
+			mList.put(name, new ArrayList<Object>());
+		}
+
+		public void createCollection(String name) {
+			mCollection.put(name, new Hashtable<String, Object>());
+		}
+
+		public void removeList(String name) {
+			ArrayList<Object> cArray = mList.get(name);
+			if (cArray != null) {
+				cArray.clear();
+			}
+			mList.remove(name);
+		}
+
+		public void removeCollection(String name) {
+			Hashtable<String, Object> cHash = mCollection.get(name);
+			if (cHash != null) {
+				cHash.clear();
+			}
+			mCollection.remove(name);
+		}
+
+		public ArrayList<?> getList(String name) {
+			return mList.get(name);
+		}
+
+		public Hashtable<String, ?> getCollection(String name) {
+			return mCollection.get(name);
+		}
+
+		public void putObject(String collection, String key, Object value) {
+			Hashtable<String, Object> cHash = mCollection.get(collection);
+			if (cHash != null) {
+				cHash.put(key, value);
+			}
+		}
+
+		public Object getObject(String collection, String key) {
+			return getObject(collection, key, null);
+		}
+
+		public Object getObject(String collection, String key, Object defValue) {
+			Hashtable<String, Object> cHash = mCollection.get(collection);
+			if (cHash != null) {
+				if (cHash.get(key) != null) {
+					return cHash.get(key);
+				} else {
+					return defValue;
+				}
+			}
+			return defValue;
+		}
+
+		public Object removeObject(String collection, String key) {
+			Hashtable<String, Object> cHash = mCollection.get(collection);
+			if (cHash != null) {
+				return cHash.remove(key);
+			}
+			return null;
+		}
+
+		public void release() {
+			mCollection.clear();
+			mList.clear();
+		}
+	}
+
+	private MediaPlayerControl mpMedia = null;
+	private ObjectCollections ocCollections = null;
+
+	private FinishedListener cIntentWaitListener = null;
 
 	public XPMB_Activity() {
 		super();
@@ -54,50 +234,15 @@ public class XPMB_Activity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		doBindService();
-	}
-
-	private ServiceConnection mConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			// This is called when the connection with the service has been
-			// established, giving us the service object we can use to
-			// interact with the service. Because we have bound to a explicit
-			// service that we know is running in our own process, we can
-			// cast its IBinder to a concrete class and directly access it.
-			bgHolder = ((XPMBServices.LocalBinder) service).getService();
-		}
-
-		public void onServiceDisconnected(ComponentName className) {
-			// This is called when the connection with the service has been
-			// unexpectedly disconnected -- that is, its process crashed.
-			// Because it is running in our same process, we should never
-			// see this happen.
-			bgHolder = null;
-		}
-	};
-
-	private void doBindService() {
-		// Establish a connection with the service. We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		mIsBound = bindService(new Intent(this, XPMBServices.class), mConnection,
-				Context.BIND_AUTO_CREATE);
-		mIsBound = true;
-	}
-
-	private void doUnbindService() {
-		if (mIsBound) {
-			// Detach our existing connection.
-			unbindService(mConnection);
-			mIsBound = false;
-		}
+		mpMedia = new MediaPlayerControl();
+		ocCollections = new ObjectCollections();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		doUnbindService();
+		mpMedia.release();
+		ocCollections.release();
 	}
 
 	public XPMB_ImageView getCustomBGView() {
@@ -132,10 +277,13 @@ public class XPMB_Activity extends Activity {
 		if (resolveInfo != null) {
 			return true;
 		}
+		if (intent.getAction() != Intent.ACTION_MAIN) {
+			return true;
+		}
 		return false;
 	}
 
-	public void postIntentStartWait(IntentFinishedListener listener, Intent intent) {
+	public void postIntentStartWait(FinishedListener listener, Intent intent) {
 		cIntentWaitListener = listener;
 		startActivityForResult(intent, 0);
 	}
@@ -147,10 +295,10 @@ public class XPMB_Activity extends Activity {
 	}
 
 	public ObjectCollections getStorage() {
-		return bgHolder.getObjectCollectionsService();
+		return ocCollections;
 	}
 
 	public MediaPlayerControl getPlayerControl() {
-		return bgHolder.getMediaPlayerService();
+		return mpMedia;
 	}
 }

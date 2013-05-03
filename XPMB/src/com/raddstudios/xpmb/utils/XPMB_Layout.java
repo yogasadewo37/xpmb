@@ -47,9 +47,13 @@ public class XPMB_Layout {
 	protected ViewGroup getRootView() {
 		return mRootView;
 	}
-	
-	protected XPMB_View getView(int id){
+
+	protected XPMB_View getView_l(int id) {
 		return (XPMB_View) mRootView.findViewById(id);
+	}
+
+	protected View getView(int id) {
+		return mRootView.findViewById(id);
 	}
 
 	protected XPMB_Activity getRootActivity() {
@@ -67,11 +71,11 @@ public class XPMB_Layout {
 
 	public void sendKeyUp(int keyCode) {
 	}
-	
-	public void sendKeyHold(int keyCode){
+
+	public void sendKeyHold(int keyCode) {
 	}
-	
-	public void sendClickEventToView(View v){
+
+	public void sendClickEventToView(View v) {
 	}
 
 	protected int pxFromDip(int dip) {
