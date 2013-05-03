@@ -28,7 +28,7 @@ import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 public interface Filter_Base {
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory dest, XPMB_Activity resources,
 			FinishedListener finishedL);
-
+	
 	public void deInitialize();
 
 	public void loadIn();

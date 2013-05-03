@@ -19,11 +19,8 @@
 
 package com.raddstudios.xpmb.utils.backports;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.zip.ZipFile;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -41,7 +38,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
-import android.os.Environment;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -53,7 +49,6 @@ import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 
 public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback {
@@ -96,7 +91,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 			switch (type) {
 			case ANIM_MENU_MOVE_LEFT:
 				mOwner.setDuration(250);
-				pX = alItems.get(0).getPositionX();
+				pX = alItems.get(0).getPosition().x;
 				intAnimItem = intSelItem;
 				intNextItem = intAnimItem - 1;
 				alItems.get(intNextItem).setSubitemsVisibility(true);
@@ -104,7 +99,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				break;
 			case ANIM_MENU_MOVE_RIGHT:
 				mOwner.setDuration(250);
-				pX = alItems.get(0).getPositionX();
+				pX = alItems.get(0).getPosition().x;
 				intAnimItem = intSelItem;
 				intNextItem = intAnimItem + 1;
 				alItems.get(intNextItem).setSubitemsVisibility(true);
@@ -112,7 +107,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				break;
 			case ANIM_MENU_MOVE_UP:
 				mOwner.setDuration(250);
-				pY = alItems.get(intSelItem).getSubitem(0).getPositionY();
+				pY = alItems.get(intSelItem).getSubitem(0).getPosition().y;
 				intAnimItem = alItems.get(intSelItem).getSelectedSubitem();
 				intNextItem = intAnimItem - 1;
 				if (pY < 192) {
@@ -122,7 +117,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				break;
 			case ANIM_MENU_MOVE_DOWN:
 				mOwner.setDuration(250);
-				pY = alItems.get(intSelItem).getSubitem(0).getPositionY();
+				pY = alItems.get(intSelItem).getSubitem(0).getPosition().y;
 				intAnimItem = alItems.get(intSelItem).getSelectedSubitem();
 				intNextItem = intAnimItem + 1;
 				if (pY < 192) {
@@ -133,25 +128,25 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 			case ANIM_HIDE_MENU_HALF:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
-				pX = alItems.get(intAnimItem).getPositionX();
+				pX = alItems.get(intAnimItem).getPosition().x;
 				destX = -176;
 				break;
 			case ANIM_SHOW_MENU_HALF:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
-				pX = alItems.get(intAnimItem).getPositionX();
+				pX = alItems.get(intAnimItem).getPosition().x;
 				destX = 176;
 				break;
 			case ANIM_HIGHLIGHT_MENU_PRE:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
-				pX = alItems.get(intAnimItem).getPositionX();
+				pX = alItems.get(intAnimItem).getPosition().x;
 				destX = -112;
 				break;
 			case ANIM_HIGHLIGHT_MENU_POS:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
-				pX = alItems.get(intAnimItem).getPositionX();
+				pX = alItems.get(intAnimItem).getPosition().x;
 				destX = 112;
 				break;
 			}
@@ -161,13 +156,13 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		public void onAnimationUpdate(ValueAnimator arg0) {
 			float completion = (Float) arg0.getAnimatedValue();
 
-			int dispX = 0, dispY = 0;
+			int dispA = 0, dispB = 0;
 			float alphaA = 0.0f, alphaB = 0.0f, alphaC = 0.0f, alphaD = 0.0f, scaleA = 0.0f, scaleB = 0.0f;
 
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_RIGHT:
 			case ANIM_MENU_MOVE_LEFT:
-				dispX = (int) (destX * completion);
+				dispA = (int) (destX * completion);
 				scaleA = 1.0f - (0.27f * completion);
 				scaleB = 0.7f + (0.27f * completion);
 				alphaA = 1.0f - (0.5f * completion);
@@ -176,25 +171,23 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				alphaD = completion;
 
 				for (int x = 0; x < alItems.size(); x++) {
-					alItems.get(x).setPositionX(pX + (128 * x) + dispX);
+					alItems.get(x).setPositionX(pX + (128 * x) + dispA);
 					if (x == intAnimItem || x == intNextItem) {
 						if (x == intAnimItem) {
-							alItems.get(x).setIconScaleX(scaleA);
-							alItems.get(x).setIconScaleY(scaleA);
+							alItems.get(x).setIconScale(new PointF(scaleA, scaleA));
 							alItems.get(x).setIconAlpha(alphaA);
 							alItems.get(x).setLabelAlpha(alphaC);
 							alItems.get(x).setSubitemsAlpha(alphaC);
 						}
 						if (x == intNextItem) {
-							alItems.get(x).setIconScaleX(scaleB);
-							alItems.get(x).setIconScaleY(scaleB);
+							alItems.get(x).setIconScale(new PointF(scaleB, scaleB));
 							alItems.get(x).setIconAlpha(alphaB);
 							alItems.get(x).setLabelAlpha(alphaD);
 							alItems.get(x).setSubitemsAlpha(alphaD);
 						}
 						for (int y = 0; y < alItems.get(x).getNumSubItems(); y++) {
 							alItems.get(x).getSubitem(y)
-									.setPositionX(alItems.get(x).getPositionX());
+									.setPositionX(alItems.get(x).getPosition().x);
 						}
 					}
 				}
@@ -204,49 +197,49 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				break;
 			case ANIM_MENU_MOVE_UP:
 			case ANIM_MENU_MOVE_DOWN:
-				dispY = (int) (destY * completion);
+				dispB = (int) (destY * completion);
 				if (intAnimType == ANIM_MENU_MOVE_UP) {
 					alphaA = 1.0f - completion;
 					alphaB = completion;
-					dispX = (int) (224 * completion);
+					dispA = (int) (224 * completion);
 				} else {
 					alphaA = completion;
 					alphaB = 1.0f - completion;
-					dispX = (int) (-224 * completion);
+					dispA = (int) (-224 * completion);
 				}
 
 				for (int y = 0; y < alItems.get(intSelItem).getNumSubItems(); y++) {
 					XPMBMenuItemDef xmid = alItems.get(intSelItem).getSubitem(y);
 					if (intAnimType == ANIM_MENU_MOVE_UP) {
 						if (y < intNextItem) {
-							xmid.setPositionY((pY - 128) + (96 * y) + dispY);
+							xmid.setPositionY((pY - 128) + (96 * y) + dispB);
 						} else if (y == intNextItem) {
-							xmid.setPositionY((pY - 128) + (96 * y) + dispX);
+							xmid.setPositionY((pY - 128) + (96 * y) + dispA);
 							xmid.setLabelAlpha(alphaB);
 						} else {
 							if (y == intAnimItem) {
 								xmid.setLabelAlpha(alphaA);
 							}
-							xmid.setPositionY(pY + (96 * y) + dispY);
+							xmid.setPositionY(pY + (96 * y) + dispB);
 						}
 					} else {
 						if (y < intAnimItem) {
-							xmid.setPositionY((pY - 128) + (96 * y) + dispY);
+							xmid.setPositionY((pY - 128) + (96 * y) + dispB);
 						} else if (y == intAnimItem) {
-							xmid.setPositionY(pY + (96 * y) + dispX);
+							xmid.setPositionY(pY + (96 * y) + dispA);
 							xmid.setLabelAlpha(alphaB);
 						} else {
 							if (y == intNextItem) {
 								xmid.setLabelAlpha(alphaA);
 							}
-							xmid.setPositionY(pY + (96 * y) + dispY);
+							xmid.setPositionY(pY + (96 * y) + dispB);
 						}
 					}
 				}
 				break;
 			case ANIM_HIGHLIGHT_MENU_PRE:
 			case ANIM_HIGHLIGHT_MENU_POS:
-				dispX = (int) (destX * completion);
+				dispA = (int) (destX * completion);
 				if (intAnimType == ANIM_HIGHLIGHT_MENU_PRE) {
 					alphaA = 1.0f - completion;
 					alphaB = 1.0f - (0.5f * completion);
@@ -259,10 +252,10 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 
 				for (int x = 0; x < alItems.size(); x++) {
 					if (x == intAnimItem) {
-						alItems.get(intAnimItem).setPositionX(pX + dispX);
+						alItems.get(intAnimItem).setPositionX(pX + dispA);
 						for (int y = 0; y < alItems.get(x).getNumSubItems(); y++) {
 							if (y == alItems.get(x).getSelectedSubitem()) {
-								alItems.get(x).getSubitem(y).setPositionX(pX + dispX);
+								alItems.get(x).getSubitem(y).setPositionX(pX + dispA);
 								alItems.get(x).getSubitem(y).setLabelAlpha(alphaA);
 							} else {
 								alItems.get(x).getSubitem(y).setIconAlpha(alphaB);
@@ -285,7 +278,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				break;
 			case ANIM_HIDE_MENU_HALF:
 			case ANIM_SHOW_MENU_HALF:
-				dispX = (int) (destX * completion);
+				dispA = (int) (destX * completion);
 				if (intAnimType == ANIM_HIDE_MENU_HALF) {
 					alphaA = 1.0f - completion;
 				} else {
@@ -295,10 +288,10 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				for (int x = 0; x < alItems.size(); x++) {
 					if (x == intAnimItem) {
 						alItems.get(intAnimItem).setPosition(
-								new Point(pX + dispX, alItems.get(intAnimItem).getPosition().y));
+								new Point(pX + dispA, alItems.get(intAnimItem).getPosition().y));
 						for (int y = 0; y < alItems.get(x).getNumSubItems(); y++) {
 							if (y == alItems.get(x).getSelectedSubitem()) {
-								alItems.get(x).getSubitem(y).setPositionX(pX + dispX);
+								alItems.get(x).getSubitem(y).setPositionX(pX + dispA);
 							} else {
 								alItems.get(x).getSubitem(y).setIconAlpha(alphaA);
 								alItems.get(x).getSubitem(y).setLabelAlpha(alphaA);

@@ -32,6 +32,8 @@ public interface XPMBMenuItemDef {
 	void setIcon(String icon);
 	String getIcon();
 	void setIconScale(PointF scale);
+	void setIconScaleX(float scx);
+	void setIconScaleY(float scy);
 	PointF getIconScale();
 	void setIconAlpha(float alpha);
 	float getIconAlpha();
@@ -40,9 +42,13 @@ public interface XPMBMenuItemDef {
 	void setSubitemsVisibility(boolean visible);
 	boolean getSubitemsVisibility();
 	void setSize(Point size);
+	void setWidth(int width);
+	void setHeight(int height);
 	Point getSize();
 	void setPosition(Point position);
 	Point getPosition();
+	void setPositionX(int x);
+	void setPositionY(int y);
 	Rect getComputedLocation();
 	void setMargins(Rect margins);
 	Rect getMargins();

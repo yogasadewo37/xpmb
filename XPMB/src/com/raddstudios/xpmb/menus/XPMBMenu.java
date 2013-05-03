@@ -40,6 +40,7 @@ import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.menus.utils.filters.Filter_Base;
 import com.raddstudios.xpmb.menus.utils.filters.Filter_Media_Music;
 import com.raddstudios.xpmb.utils.ThemeLoader;
@@ -53,7 +54,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 	private XPMBMenu_View xmvRoot = null;
 	private Filter_Base curFilter = null;
 	private ThemeLoader thm = null;
-	private XmlResourceParser src = null; 
+	private XmlResourceParser src = null;
 	private boolean firstBackPress = false, isFocusedOnSubcategory = false, bLockedKeyPad = false;
 
 	public XPMBMenu(XmlResourceParser source, Handler messageBus, ViewGroup rootView,
@@ -85,7 +86,6 @@ public class XPMBMenu extends XPMB_MainMenu {
 		xmvRoot.setLayoutParams(rp);
 		xmvRoot.setVisibility(View.VISIBLE);
 		getRootView().addView(xmvRoot);
-		xmvRoot.requestRedraw();
 	}
 
 	@Override
@@ -161,9 +161,10 @@ public class XPMBMenu extends XPMB_MainMenu {
 	};
 
 	private void execCustItem(int index) {
-		if (xmvRoot.getItems().get(xmvRoot.getSelectedCategory()).getSubitem(index) instanceof XPMBMenuItem) {
-			XPMBMenuItem xmi = (XPMBMenuItem) xmvRoot.getItems().get(xmvRoot.getSelectedCategory())
-					.getSubitem(index);
+		XPMBMenuItemDef xmid = xmvRoot.getItems().get(xmvRoot.getSelectedCategory())
+				.getSubitem(index);
+		if (xmid instanceof XPMBMenuItem) {
+			XPMBMenuItem xmi = (XPMBMenuItem) xmid;
 			Intent cExInt = (Intent) xmi.getData();
 			if (getRootActivity().isActivityAvailable(cExInt)) {
 				getRootActivity().showLoadingAnim(true);
@@ -181,12 +182,11 @@ public class XPMBMenu extends XPMB_MainMenu {
 				tst.show();
 			}
 		}
-		if (xmvRoot.getItems().get(xmvRoot.getSelectedCategory()).getSubitem(index) instanceof XPMBMenuCategory) {
-			final XPMBMenuCategory xms = (XPMBMenuCategory) xmvRoot.getItems()
-					.get(xmvRoot.getSelectedCategory()).getSubitem(index);
+		if (xmid instanceof XPMBMenuCategory) {
+			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
 			bLockedKeyPad = true;
 			getRootActivity().showLoadingAnim(true);
-			switch (xms.getListAnimator()) {
+			switch (xmc.getListAnimator()) {
 			case XPMBMenuCategory.LIST_ANIM_FULL:
 				xmvRoot.startAnim(XPMBMenu_View.ANIM_HIDE_MENU_FULL);
 				break;
@@ -200,12 +200,12 @@ public class XPMBMenu extends XPMB_MainMenu {
 			getMessageBus().postDelayed(new Runnable() {
 				@Override
 				public void run() {
-					if (xms.getItemFilter() == XPMBMenuCategory.FILTER_MEDIA_MUSIC) {
+					if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_MEDIA_MUSIC) {
 						curFilter = new Filter_Media_Music(getRootActivity().getBaseContext());
 					}
 					if (curFilter != null) {
-						curFilter.initialize(xmvRoot, xms, getRootActivity(), flListener);
-						curFilter.setListAnimator(xms.getListAnimator());
+						curFilter.initialize(xmvRoot, xmc, getRootActivity(), flListener);
+						curFilter.setListAnimator(xmc.getListAnimator());
 						curFilter.loadIn();
 						RelativeLayout.LayoutParams rp = new RelativeLayout.LayoutParams(
 								LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);

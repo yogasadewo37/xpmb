@@ -137,8 +137,8 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 
 	@Override
 	public void setSize(Point size) {
-		rLoc.right = rLoc.left + size.x;
-		rLoc.bottom = rLoc.top + size.y;
+		setWidth(size.x);
+		setHeight(size.y);
 	}
 
 	@Override
@@ -149,5 +149,47 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	@Override
 	public Rect getComputedLocation() {
 		return rLoc;
+	}
+
+	@Override
+	public void setIconScaleX(float scx) {
+		pfScale.x = scx;
+	}
+
+	@Override
+	public void setIconScaleY(float scy) {
+		pfScale.y = scy;
+	}
+
+	@Override
+	public void setWidth(int width) {
+		if (rLoc.left != 0) {
+			rLoc.right = rLoc.left + width;
+		} else {
+			rLoc.right = width;
+		}
+	}
+
+	@Override
+	public void setHeight(int height) {
+		if (rLoc.top != 0) {
+			rLoc.bottom = rLoc.top + height;
+		} else {
+			rLoc.bottom = height;
+		}
+	}
+
+	@Override
+	public void setPositionX(int x) {
+		int w = rLoc.right - rLoc.left;
+		rLoc.left = x;
+		rLoc.right = x + w;
+	}
+
+	@Override
+	public void setPositionY(int y) {
+		int h = rLoc.bottom - rLoc.top;
+		rLoc.top = y;
+		rLoc.bottom = y + h;
 	}
 }

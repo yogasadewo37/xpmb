@@ -32,6 +32,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Paint.Align;
 import android.graphics.PorterDuff.Mode;
@@ -94,26 +95,18 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 			switch (type) {
 			case ANIM_MENU_MOVE_UP:
 				mOwner.setDuration(250);
-				pY = dest.getSubitem(0).getPositionY();
+				pY = dest.getSubitem(0).getPosition().y;
 				intAnimItem = dest.getSelectedSubitem();
 				intNextItem = intAnimItem - 1;
-				if (pY < 192) {
-					pY += 128;
-				}
 				destY = 96;
 				break;
 			case ANIM_MENU_MOVE_DOWN:
 				mOwner.setDuration(250);
-				pY = dest.getSubitem(0).getPositionY();
+				pY = dest.getSubitem(0).getPosition().y;
 				intAnimItem = dest.getSelectedSubitem();
 				intNextItem = intAnimItem + 1;
-				if (intAnimItem > 0){
-					pY += 16;
-				}
-				if (pY < 192) {
-					pY += 128;
-				}
-				destY = -96;
+				if (intAnimItem > 0)
+					destY = -96;
 				break;
 			}
 		}
@@ -122,49 +115,29 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 		public void onAnimationUpdate(ValueAnimator arg0) {
 			float completion = (Float) arg0.getAnimatedValue();
 
-			int dispX = 0, dispY = 0;
+			int dispA = 0, dispB = 0, marginA = 0, marginB = 0;
 			float alphaA = 0.0f, alphaB = 0.0f, scaleA = 0.0f, scaleB = 0.0f;
 
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_UP:
 			case ANIM_MENU_MOVE_DOWN:
-				dispY = (int) (destY * completion);
+				dispA = (int) (destY * completion);
 				if (intAnimType == ANIM_MENU_MOVE_UP) {
-					alphaA = 1.0f - completion;
-					alphaB = completion;
-					dispX = (int) (224 * completion);
+					marginA = (int) (16 - (16 * completion));
+					marginB = (int) (16 * completion);
 				} else {
-					alphaA = completion;
-					alphaB = 1.0f - completion;
-					dispX = (int) (-224 * completion);
+					marginA = (int) (16 * completion);
+					marginB = (int) (16 - 16 * completion);
 				}
 
 				for (int y = 0; y < dest.getNumSubItems(); y++) {
 					XPMBMenuItemDef xmid = dest.getSubitem(y);
-					if (intAnimType == ANIM_MENU_MOVE_UP) {
-						if (y < intNextItem) {
-							xmid.setPositionY((pY - 128) + (96 * y) + dispY);
-						} else if (y == intNextItem) {
-							xmid.setPositionY((pY - 128) + (96 * y) + dispX);
-							xmid.setLabelAlpha(alphaB);
-						} else {
-							if (y == intAnimItem) {
-								xmid.setLabelAlpha(alphaA);
-							}
-							xmid.setPositionY(pY + (96 * y) + dispY);
-						}
-					} else {
-						if (y < intAnimItem) {
-							xmid.setPositionY((pY - 112) + (96 * y) + dispY);
-						} else if (y == intAnimItem) {
-							xmid.setPositionY(pY + (96 * y) + dispX);
-							xmid.setLabelAlpha(alphaB);
-						} else {
-							if (y == intNextItem) {
-								xmid.setLabelAlpha(alphaA);
-							}
-							xmid.setPositionY(pY + (96 * y) + dispY);
-						}
+
+					xmid.setPositionY(pY + (96 * y) + dispA);
+					if (y == intAnimItem) {
+						xmid.setMargins(new Rect(0, marginA, 0, marginA));
+					} else if (y == intNextItem) {
+						xmid.setMargins(new Rect(0, marginB, 0, marginB));
 					}
 				}
 				break;
@@ -219,6 +192,9 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 		act = resources;
 		flListener = finishedL;
 		mpc = resources.getPlayerControl();
+		if (!mpc.isInitialized()) {
+			mpc.initialize();
+		}
 		bmlStorage = (Hashtable<String, Bitmap>) resources.getStorage().getCollection(
 				XPMB_Main.GRAPH_ASSETS_COL_KEY);
 		container = owner;
@@ -252,26 +228,29 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 				String strAlbumId = "media.cover|" + String.valueOf(albumId);
 
 				XPMBMenuItem xmi = new XPMBMenuItem(mCur.getString(1) + "\r\n" + mCur.getString(2));
-				xmi.setIcon(strAlbumId);
+				// xmi.setIcon(strAlbumId);
+				xmi.setIcon("theme.icon|icon_music_album_default");
 				xmi.setData(new File(mCur.getString(0)));
-				xmi.setPositionX(184);
-				xmi.setPositionY(176 + (144 * dest.getNumSubItems()));
-				dest.addSubitem(xmi);
+				xmi.setPosition(new Point(184, 176 + (96 * dest.getNumSubItems())));
+				if (dest.getNumSubItems() == 0) {
+					xmi.setMargins(new Rect(0, 16, 0, 16));
+				}
 
 				try {
-					if (!bmlStorage.containsKey(strAlbumId)) {
-						Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
-						Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
-						bmlStorage.put(strAlbumId,
-								Bitmap.createScaledBitmap(
-										MediaStore.Images.Media.getBitmap(cr, albumArtUri), 128,
-										128, false));
-						alCoverKeys.add(strAlbumId);
-					}
+					/*
+					 * if (!bmlStorage.containsKey(strAlbumId)) { Uri
+					 * sArtworkUri =
+					 * Uri.parse("content://media/external/audio/albumart"); Uri
+					 * albumArtUri = ContentUris.withAppendedId(sArtworkUri,
+					 * albumId); bmlStorage.put(strAlbumId,
+					 * MediaStore.Images.Media.getBitmap(cr, albumArtUri));
+					 * alCoverKeys.add(strAlbumId); }
+					 */
 				} catch (Exception e) {
-					dest.getSubitem(dest.getNumSubItems() - 1).setIcon(
-							"theme.icon|icon_music_album_default");
+					xmi.setIcon("theme.icon|icon_music_album_default");
 				}
+
+				dest.addSubitem(xmi);
 			}
 			mCur.moveToNext();
 		}
@@ -326,6 +305,9 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 		case XPMB_Main.KEYCODE_CIRCLE:
 			flListener.onFinished(null);
 			break;
+		case XPMB_Main.KEYCODE_CROSS:
+			processItem((XPMBMenuItem) dest.getSubitem(dest.getSelectedSubitem()));
+			break;
 		}
 	}
 
@@ -333,8 +315,7 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	// private long lastFrameTime = 0, maxFrameTime = 0, avgTime = 0;
-	private int px_c_i = 0, py_c_i = 0, px_c_l = 0, py_c_l = 0, px_i_i = 0, py_i_i = 0, px_i_l = 0,
-			py_i_l = 0, textH = 0, textW = 0;
+	private int px_i_i = 0, py_i_i = 0, px_i_l = 0, py_i_l = 0, textH = 0;
 
 	public void requestRedraw() {
 		if (drawing) {
@@ -364,7 +345,6 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 		// TODO: Take in account the actual orientation of the device
 
 		drawing = true;
-		// lastFrameTime = SystemClock.elapsedRealtime();
 		canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
 
 		// Process subitems
@@ -372,18 +352,19 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 			XPMBMenuItemDef xmi_y = dest.getSubitem(y);
 
 			// Setup Icon
-			// String strIcon_i =
-			// xmi_y.getIcon().substring(xmi_y.getIcon().indexOf('.') + 1);
 			String strIcon_i = xmi_y.getIcon();
 			float alpha_i_i = (255 * xmi_y.getIconAlpha()) * dest.getSubitemsAlpha(), scale_x_i = xmi_y
-					.getIconScaleX(), scale_y_i = xmi_y.getIconScaleY();
+					.getIconScale().x, scale_y_i = xmi_y.getIconScale().y;
 			int size_x_i = bmlStorage.get(strIcon_i).getWidth(), size_y_i = bmlStorage.get(
 					strIcon_i).getHeight();
 			pParams.setAlpha((int) (alpha_i_i * container.getOpacity()));
 			pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 			// Draw Icon
-			px_i_i = xmi_y.getPositionX();
-			py_i_i = xmi_y.getPositionY();
+			px_i_i = xmi_y.getPosition().x + xmi_y.getMargins().left;
+			py_i_i = xmi_y.getPosition().y + xmi_y.getMargins().top;
+			if (y > 0) {
+				py_i_i += (dest.getSubitem(y - 1).getMargins().bottom);
+			}
 			canvas.drawBitmap(
 					bmlStorage.get(strIcon_i),
 					null,
@@ -401,7 +382,7 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 			pParams.setTextAlign(Align.LEFT);
 			pParams.setShadowLayer(4, 0, 0, Color.WHITE);
 			pParams.getTextBounds(strLabel_i, 0, strLabel_i.length(), rTextBounds);
-			textW = rTextBounds.right - rTextBounds.left;
+			// textW = rTextBounds.right - rTextBounds.left;
 			textH = (int) (Math.abs(pParams.getFontMetrics().ascent) + Math.abs(pParams
 					.getFontMetrics().bottom));
 			// Draw Label

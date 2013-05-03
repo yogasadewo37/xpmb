@@ -51,6 +51,7 @@ public class XPMB_Activity extends Activity {
 				STATE_PAUSED = 2;
 
 		private int intPlayerStatus = STATE_NOT_INITIALIZED;
+		private boolean bInit = false;
 
 		public MediaPlayerControl() {
 			mMediaPlayer = new MediaPlayer();
@@ -59,6 +60,7 @@ public class XPMB_Activity extends Activity {
 		public void initialize() {
 			mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 			mMediaPlayer.setOnPreparedListener(this);
+			bInit = true;
 		}
 
 		public void setOnCompletionListener(OnCompletionListener listener) {
@@ -128,6 +130,10 @@ public class XPMB_Activity extends Activity {
 
 		public void release() {
 			mMediaPlayer.release();
+		}
+		
+		public boolean isInitialized(){
+			return bInit;
 		}
 
 		@Override
