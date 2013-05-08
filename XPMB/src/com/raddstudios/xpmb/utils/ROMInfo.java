@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.utils;
+package com.raddstudios.xpmb.utils;
 
 import java.util.ArrayList;
 import java.util.Hashtable;

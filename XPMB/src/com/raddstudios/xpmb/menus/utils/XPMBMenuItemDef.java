@@ -26,17 +26,23 @@ import android.graphics.Rect;
 
 public interface XPMBMenuItemDef {
 	void setLabel(String label);
+	void setLabelB(String label);
 	String getLabel();
+	String getLabelB();
 	void setLabelAlpha(float alpha);
 	float getLabelAlpha();
 	void setIcon(String icon);
 	String getIcon();
+	void enableTwoLine(boolean enabled);
+	boolean isTwoLines();
 	void setIconScale(PointF scale);
 	void setIconScaleX(float scx);
 	void setIconScaleY(float scy);
 	PointF getIconScale();
 	void setIconAlpha(float alpha);
 	float getIconAlpha();
+	void setSeparatorAlpha(float alpha);
+	float getSeparatorAlpha();
 	void setSubitemsAlpha(float alpha);
 	float getSubitemsAlpha();
 	void setSubitemsVisibility(boolean visible);
@@ -50,6 +56,4 @@ public interface XPMBMenuItemDef {
 	void setPositionX(int x);
 	void setPositionY(int y);
 	Rect getComputedLocation();
-	void setMargins(Rect margins);
-	Rect getMargins();
 }

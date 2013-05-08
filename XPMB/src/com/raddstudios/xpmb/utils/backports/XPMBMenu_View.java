@@ -55,7 +55,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 
 	private XmlResourceParser xrpRes = null;
 	private ArrayList<XPMBMenuCategory> alItems = null;
-	private XPMB_Activity rAct = null;
 	private Hashtable<String, Bitmap> hGraphAssets = null;
 	private int intSelItem = 0;
 	private float fOpacity = 1.0f;
@@ -313,7 +312,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 	};
 
 	private class DrawThread extends Thread {
-		boolean mRun = true, mEn = true;
+		boolean mRun = true;
 		XPMBMenu_View mMenuView;
 
 		public DrawThread(Context ctx, XPMBMenu_View sMenuView) {
@@ -342,7 +341,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		this.setZOrderOnTop(true);
 		xrpRes = source;
-		rAct = root;
 		hGraphAssets = (Hashtable<String, Bitmap>) root.getStorage().getCollection(
 				XPMB_Main.GRAPH_ASSETS_COL_KEY);
 

@@ -34,19 +34,18 @@ public class XPMBMenuCategory implements XPMBMenuItemDef {
 			FILTER_EMU_GBA = 5, FILTER_EMU_NES = 6, FILTER_EMU_SNES = 7;
 
 	private ArrayList<XPMBMenuItemDef> alSubitems = null;
-	private String strLabel = null, strIcon = null;
+	private String strLabel = null, strLabelB = null, strIcon = null;
 	private int intCurSubitem = 0, intListAnimator = LIST_ANIM_NONE,
 			intListFilter = FILTER_SYSTEM_DUMMY;
 	private PointF pfScale = null;
-	private Rect rMargins = null, rLoc = null;
-	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha = 1.0f;
-	private boolean bSubitemsVisible = false;
+	private Rect rLoc = null;
+	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha = 1.0f, fAlpha_s = 1.0f;
+	private boolean bSubitemsVisible = false, bTwoLines = false;
 
 	public XPMBMenuCategory(String label) {
 		strLabel = label;
 		alSubitems = new ArrayList<XPMBMenuItemDef>();
 		pfScale = new PointF(1.0f, 1.0f);
-		rMargins = new Rect(0, 0, 0, 0);
 		rLoc = new Rect(0, 0, 0, 0);
 	}
 
@@ -202,16 +201,6 @@ public class XPMBMenuCategory implements XPMBMenuItemDef {
 	}
 
 	@Override
-	public void setMargins(Rect margins) {
-		rMargins = margins;
-	}
-
-	@Override
-	public Rect getMargins() {
-		return rMargins;
-	}
-
-	@Override
 	public void setIconScale(PointF scale) {
 		pfScale = scale;
 	}
@@ -277,5 +266,35 @@ public class XPMBMenuCategory implements XPMBMenuItemDef {
 		int h = rLoc.bottom - rLoc.top;
 		rLoc.top = y;
 		rLoc.bottom = y + h;
+	}
+
+	@Override
+	public void setLabelB(String label) {
+		strLabelB = label;
+	}
+
+	@Override
+	public void enableTwoLine(boolean enabled) {
+		bTwoLines = enabled;
+	}
+
+	@Override
+	public String getLabelB() {
+		return strLabelB;
+	}
+
+	@Override
+	public boolean isTwoLines() {
+		return bTwoLines;
+	}
+
+	@Override
+	public void setSeparatorAlpha(float alpha) {
+		fAlpha_s = alpha;
+	}
+
+	@Override
+	public float getSeparatorAlpha() {
+		return fAlpha_s;
 	}
 }

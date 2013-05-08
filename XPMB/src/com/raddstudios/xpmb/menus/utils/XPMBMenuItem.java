@@ -25,16 +25,16 @@ import android.graphics.Rect;
 
 public class XPMBMenuItem implements XPMBMenuItemDef {
 
-	private String strLabel = null, strIcon = null;
+	private String strLabelA = null, strLabelB = null, strIcon = null;
 	private Object oData = null;
 	private PointF pfScale = null;
-	private Rect rMargins = null, rLoc = null;
-	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f;
+	private Rect rLoc = null;
+	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha_s = 1.0f;
+	private boolean bTwoLines = false;
 
 	public XPMBMenuItem(String label) {
-		strLabel = label;
+		strLabelA = label;
 		pfScale = new PointF(1.0f, 1.0f);
-		rMargins = new Rect(0, 0, 0, 0);
 		rLoc = new Rect(0, 0, 0, 0);
 	}
 
@@ -48,12 +48,12 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 
 	@Override
 	public void setLabel(String label) {
-		strLabel = label;
+		strLabelA = label;
 	}
 
 	@Override
 	public String getLabel() {
-		return strLabel;
+		return strLabelA;
 	}
 
 	@Override
@@ -113,16 +113,6 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	@Override
 	public Point getPosition() {
 		return new Point(rLoc.left, rLoc.top);
-	}
-
-	@Override
-	public void setMargins(Rect margins) {
-		rMargins = margins;
-	}
-
-	@Override
-	public Rect getMargins() {
-		return rMargins;
 	}
 
 	@Override
@@ -191,5 +181,35 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 		int h = rLoc.bottom - rLoc.top;
 		rLoc.top = y;
 		rLoc.bottom = y + h;
+	}
+
+	@Override
+	public void setLabelB(String label) {
+		strLabelB = label;
+	}
+
+	@Override
+	public void enableTwoLine(boolean enabled) {
+		bTwoLines = enabled;
+	}
+
+	@Override
+	public String getLabelB() {
+		return strLabelB;
+	}
+
+	@Override
+	public boolean isTwoLines() {
+		return bTwoLines;
+	}
+
+	@Override
+	public void setSeparatorAlpha(float alpha) {
+		fAlpha_s = alpha;
+	}
+
+	@Override
+	public float getSeparatorAlpha() {
+		return fAlpha_s;
 	}
 }
