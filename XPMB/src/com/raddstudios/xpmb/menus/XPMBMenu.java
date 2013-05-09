@@ -38,11 +38,12 @@ import android.widget.Toast;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.modules.Module_Emu_GBA;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.Module_Media_Music;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.menus.utils.filters.Filter_Base;
-import com.raddstudios.xpmb.menus.utils.filters.Filter_Media_Music;
 import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
@@ -52,7 +53,7 @@ import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 public class XPMBMenu extends XPMB_MainMenu {
 
 	private XPMBMenu_View xmvRoot = null;
-	private Filter_Base curFilter = null;
+	private Modules_Base curFilter = null;
 	private ThemeLoader thm = null;
 	private XmlResourceParser src = null;
 	private boolean firstBackPress = false, isFocusedOnSubcategory = false, bLockedKeyPad = false;
@@ -184,40 +185,47 @@ public class XPMBMenu extends XPMB_MainMenu {
 		}
 		if (xmid instanceof XPMBMenuCategory) {
 			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
-			bLockedKeyPad = true;
-			getRootActivity().showLoadingAnim(true);
-			switch (xmc.getListAnimator()) {
-			case XPMBMenuCategory.LIST_ANIM_FULL:
-				xmvRoot.startAnim(XPMBMenu_View.ANIM_HIDE_MENU_FULL);
-				break;
-			case XPMBMenuCategory.LIST_ANIM_HALF:
-				xmvRoot.startAnim(XPMBMenu_View.ANIM_HIDE_MENU_HALF);
-				break;
-			case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
-				xmvRoot.startAnim(XPMBMenu_View.ANIM_HIGHLIGHT_MENU_PRE);
-				break;
+			
+			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_MEDIA_MUSIC) {
+				curFilter = new Module_Media_Music(getRootActivity().getBaseContext());
 			}
-			getMessageBus().postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_MEDIA_MUSIC) {
-						curFilter = new Filter_Media_Music(getRootActivity().getBaseContext());
-					}
-					if (curFilter != null) {
-						curFilter.initialize(xmvRoot, xmc, getRootActivity(), flListener);
-						curFilter.setListAnimator(xmc.getListAnimator());
-						curFilter.loadIn();
-						RelativeLayout.LayoutParams rp = new RelativeLayout.LayoutParams(
-								LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-						((View) curFilter).setLayoutParams(rp);
-					}
-					getRootView().addView((View) curFilter);
-					getRootActivity().showLoadingAnim(false);
-					xmvRoot.setFocus(false);
-					isFocusedOnSubcategory = true;
-					bLockedKeyPad = false;
+			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_EMU_GBA) {
+				curFilter = new Module_Emu_GBA(getRootActivity().getBaseContext());
+			}			
+			
+			if (curFilter != null) {
+				bLockedKeyPad = true;
+				getRootActivity().showLoadingAnim(true);
+				switch (xmc.getListAnimator()) {
+				case XPMBMenuCategory.LIST_ANIM_FULL:
+					xmvRoot.startAnim(XPMBMenu_View.ANIM_HIDE_MENU_FULL);
+					break;
+				case XPMBMenuCategory.LIST_ANIM_HALF:
+					xmvRoot.startAnim(XPMBMenu_View.ANIM_HIDE_MENU_HALF);
+					break;
+				case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
+					xmvRoot.startAnim(XPMBMenu_View.ANIM_HIGHLIGHT_MENU_PRE);
+					break;
 				}
-			}, 250);
+				getMessageBus().postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						if (curFilter != null) {
+							curFilter.initialize(xmvRoot, xmc, getRootActivity(), flListener);
+							curFilter.setListAnimator(xmc.getListAnimator());
+							curFilter.loadIn();
+							RelativeLayout.LayoutParams rp = new RelativeLayout.LayoutParams(
+									LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+							((View) curFilter).setLayoutParams(rp);
+						}
+						getRootView().addView((View) curFilter);
+						getRootActivity().showLoadingAnim(false);
+						xmvRoot.setFocus(false);
+						isFocusedOnSubcategory = true;
+						bLockedKeyPad = false;
+					}
+				}, 251);
+			}
 		}
 	}
 

@@ -39,12 +39,12 @@
         label="Games" >
         <subcategory
             anim="half"
-            filter="com.xpmb.roms.nes"
+            filter="com.xpmb.emu.nes"
             icon="theme.icon|icon_savedata"
             label="Nintendo Entertainment System" />
         <subcategory
             anim="half"
-            filter="com.xpmb.roms.gba"
+            filter="com.xpmb.emu.gba"
             icon="theme.icon|icon_savedata"
             label="Gameboy Advance" />
     </category>

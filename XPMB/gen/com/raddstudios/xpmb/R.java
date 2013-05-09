@@ -88,6 +88,8 @@ containing a value of this type.
         public static final int strAppNotInstalled=0x7f05001a;
         public static final int strBackKeyHint=0x7f050014;
         public static final int strCoverNotFound=0x7f050006;
+        public static final int strEmuGBARom=0x7f05001b;
+        public static final int strEmuNESRom=0x7f05001c;
         public static final int strIncorrectDevice=0x7f050001;
         public static final int strLangCh=0x7f050010;
         public static final int strLangDe=0x7f05000f;

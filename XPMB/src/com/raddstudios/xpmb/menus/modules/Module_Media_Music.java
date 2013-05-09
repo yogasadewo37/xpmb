@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.utils.filters;
+package com.raddstudios.xpmb.menus.modules;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ import com.raddstudios.xpmb.utils.XPMB_Activity.MediaPlayerControl;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class Filter_Media_Music extends SurfaceView implements Filter_Base, SurfaceHolder.Callback {
+public class Module_Media_Music extends SurfaceView implements Modules_Base, SurfaceHolder.Callback {
 
 	private ContentResolver cr = null;
 	private ObjectCollections mStor = null;
@@ -198,9 +198,9 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 
 	private class DrawThread extends Thread {
 		boolean mRun;
-		Filter_Media_Music mMenuView;
+		Module_Media_Music mMenuView;
 
-		public DrawThread(Context ctx, Filter_Media_Music sView) {
+		public DrawThread(Context ctx, Module_Media_Music sView) {
 			mRun = false;
 			mMenuView = sView;
 		}
@@ -219,7 +219,7 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 		}
 	}
 
-	public Filter_Media_Music(Context context) {
+	public Module_Media_Music(Context context) {
 		super(context);
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
@@ -302,6 +302,7 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 				XPMBMenuItem xmi = new XPMBMenuItem(mCur.getString(1));
 				xmi.setLabelB(mCur.getString(2));
 				xmi.enableTwoLine(true);
+				//TODO: post-load cover images
 				// xmi.setIcon(strAlbumId);
 				if (!alCoverKeys.contains(strAlbumId)) {
 					alCoverKeys.add(strAlbumId);
@@ -592,7 +593,6 @@ public class Filter_Media_Music extends SurfaceView implements Filter_Base, Surf
 
 	@Override
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override

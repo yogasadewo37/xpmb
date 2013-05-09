@@ -28,5 +28,7 @@
     <string name="strNoGames">There are no games.\r\nYou can import content from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
     <string name="strNoApps">There are no applications.\r\nYou can install new apps from the Play Store.\r\nFor details, refer to the wiki at (wiki uri here)</string>
     <string name="strAppNotInstalled">You haven\'t installed the app \'%s\'.\r\nPlease install it first before continuing.</string>
+    <string name="strEmuGBARom">Gameboy Advance ROM</string>
+    <string name="strEmuNESRom">Nintendo Entertainment System ROM</string>
 
 </resources>

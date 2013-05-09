@@ -19,7 +19,6 @@
 
 package com.raddstudios.xpmb;
 
-import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,7 +33,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.text.format.Time;
 import android.view.KeyEvent;
@@ -49,8 +47,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.raddstudios.xpmb.menus.XPMBMenu;
-import com.raddstudios.xpmb.menus.XPMBSubmenu_APP;
-import com.raddstudios.xpmb.menus.XPMBSubmenu_GBA;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.XPMB_MainMenu;
@@ -394,100 +390,6 @@ public class XPMB_Main extends XPMB_Activity {
 				bmAnim.stop();
 				iv_la.setVisibility(View.INVISIBLE);
 			}
-		}
-	}
-
-	@Override
-	public void preloadSubmenu(String submenu) {
-		if (!showingSubmenu) {
-			if (submenu.equals("XPMB_Submenu_APP")) {
-				mSub = new XPMBSubmenu_APP(this, hMessageBus, (ViewGroup) findViewById(R.id.main_l));
-			} else if (submenu.equals("XPMB_Submenu_GBA")) {
-				boolean mExternalStorageAvailable = false;
-				boolean mExternalStorageWriteable = false;
-				String state = Environment.getExternalStorageState();
-
-				if (Environment.MEDIA_MOUNTED.equals(state)) {
-					mExternalStorageAvailable = mExternalStorageWriteable = true;
-				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-					mExternalStorageAvailable = true;
-					mExternalStorageWriteable = false;
-				} else {
-					mExternalStorageAvailable = mExternalStorageWriteable = false;
-				}
-
-				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					mSub = new XPMBSubmenu_GBA(this, hMessageBus,
-							(ViewGroup) findViewById(R.id.main_l), new File(
-									Environment.getExternalStorageDirectory(), "GBA"));
-				}
-			} else if (submenu.equals("XPMB_Submenu_NES")) {
-				boolean mExternalStorageAvailable = false;
-				boolean mExternalStorageWriteable = false;
-				String state = Environment.getExternalStorageState();
-
-				if (Environment.MEDIA_MOUNTED.equals(state)) {
-					mExternalStorageAvailable = mExternalStorageWriteable = true;
-				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-					mExternalStorageAvailable = true;
-					mExternalStorageWriteable = false;
-				} else {
-					mExternalStorageAvailable = mExternalStorageWriteable = false;
-				}
-
-				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					// mSub = new XPMBSubmenu_NES(this, hMessageBus,
-					// (ViewGroup) findViewById(R.id.main_l), new File(
-					// Environment.getExternalStorageDirectory(), "NES"));
-				}
-
-			} else if (submenu.equals("XPMB_Submenu_MUSIC")) {
-				boolean mExternalStorageAvailable = false;
-				boolean mExternalStorageWriteable = false;
-				String state = Environment.getExternalStorageState();
-
-				if (Environment.MEDIA_MOUNTED.equals(state)) {
-					mExternalStorageAvailable = mExternalStorageWriteable = true;
-				} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-					mExternalStorageAvailable = true;
-					mExternalStorageWriteable = false;
-				} else {
-					mExternalStorageAvailable = mExternalStorageWriteable = false;
-				}
-
-				if (mExternalStorageAvailable && mExternalStorageWriteable) {
-					// mSub = new XPMBSubmenu_MUSIC(this, hMessageBus,
-					// (ViewGroup) findViewById(R.id.main_l));
-				}
-
-			}
-			if (mSub == null) {
-				System.err.println("XPMB_Main::preloadSubmenu() : can't load submenu '" + submenu
-						+ "'");
-				return;
-			}
-			showLoadingAnim(true);
-			lockKeys(true);
-			new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					mSub.doInit();
-
-					hMessageBus.post(new Runnable() {
-
-						@Override
-						public void run() {
-							mSub.parseInitLayout();
-							showLoadingAnim(false);
-							showingSubmenu = true;
-							lockKeys(false);
-						}
-
-					});
-				}
-
-			}).start();
 		}
 	}
 
