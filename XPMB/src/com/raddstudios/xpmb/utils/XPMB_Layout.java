@@ -23,28 +23,28 @@ import com.raddstudios.xpmb.utils.backports.XPMB_View;
 
 import android.os.Handler;
 import android.util.TypedValue;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class XPMB_Layout {
+public class XPMB_Layout extends SurfaceView {
 
 	private XPMB_Activity mRoot = null;
 	private ViewGroup mRootView = null;
 	private Handler hMessageBus = null;
-	private int cID = 0xC0DD;
 
-	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView, int idOffset) {
+	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+		super(rootView.getContext());
 		mRoot = root;
 		hMessageBus = messageBus;
 		mRootView = rootView;
-		cID += idOffset;
 	}
 
 	protected Handler getMessageBus() {
 		return hMessageBus;
 	}
 
-	protected ViewGroup getRootView() {
+	public ViewGroup getRootView() {
 		return mRootView;
 	}
 
@@ -87,10 +87,5 @@ public class XPMB_Layout {
 	}
 
 	public void requestDestroy() {
-	}
-
-	protected int getNextID() {
-		cID++;
-		return cID;
 	}
 }

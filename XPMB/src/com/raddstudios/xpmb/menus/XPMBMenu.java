@@ -39,18 +39,20 @@ import android.widget.Toast;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.menus.modules.Module_Emu_GBA;
-import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.Module_Emu_NES;
 import com.raddstudios.xpmb.menus.modules.Module_Media_Music;
+import com.raddstudios.xpmb.menus.modules.Module_System_Apps;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
-import com.raddstudios.xpmb.utils.XPMB_MainMenu;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class XPMBMenu extends XPMB_MainMenu {
+public class XPMBMenu extends XPMB_Layout {
 
 	private XPMBMenu_View xmvRoot = null;
 	private Modules_Base curFilter = null;
@@ -185,14 +187,22 @@ public class XPMBMenu extends XPMB_MainMenu {
 		}
 		if (xmid instanceof XPMBMenuCategory) {
 			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
-			
+
 			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_MEDIA_MUSIC) {
-				curFilter = new Module_Media_Music(getRootActivity().getBaseContext());
+				curFilter = new Module_Media_Music(getRootActivity(), getMessageBus(),
+						getRootView());
 			}
 			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_EMU_GBA) {
-				curFilter = new Module_Emu_GBA(getRootActivity().getBaseContext());
-			}			
-			
+				curFilter = new Module_Emu_GBA(getRootActivity(), getMessageBus(), getRootView());
+			}
+			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_EMU_NES) {
+				curFilter = new Module_Emu_NES(getRootActivity(), getMessageBus(), getRootView());
+			}
+			if (xmc.getItemFilter() == XPMBMenuCategory.FILTER_SYSTEM_APPS) {
+				curFilter = new Module_System_Apps(getRootActivity(), getMessageBus(),
+						getRootView());
+			}
+
 			if (curFilter != null) {
 				bLockedKeyPad = true;
 				getRootActivity().showLoadingAnim(true);
@@ -211,7 +221,7 @@ public class XPMBMenu extends XPMB_MainMenu {
 					@Override
 					public void run() {
 						if (curFilter != null) {
-							curFilter.initialize(xmvRoot, xmc, getRootActivity(), flListener);
+							curFilter.initialize(xmvRoot, xmc, flListener);
 							curFilter.setListAnimator(xmc.getListAnimator());
 							curFilter.loadIn();
 							RelativeLayout.LayoutParams rp = new RelativeLayout.LayoutParams(

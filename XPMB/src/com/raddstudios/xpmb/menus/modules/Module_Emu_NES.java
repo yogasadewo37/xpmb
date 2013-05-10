@@ -45,6 +45,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
@@ -68,7 +69,7 @@ import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
+public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
 	private ObjectCollections mStor = null;
 	private XPMBMenuCategory dest = null;
@@ -83,8 +84,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
 
-	private final String SETTING_LAST_ITEM = "emu.gba.lastitem",
-			SETTING_EMU_ACT = "emu.gba.emuact";
+	private final String SETTING_LAST_ITEM = "emu.nes.lastitem",
+			SETTING_EMU_ACT = "emu.nes.emuact";
 
 	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
 			ANIM_MENU_CENTER_ON_ITEM = 2;
@@ -207,9 +208,9 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 	private class DrawThread extends Thread {
 		boolean mRun;
-		Module_Emu_GBA mMenuView;
+		Module_Emu_NES mMenuView;
 
-		public DrawThread(Context ctx, Module_Emu_GBA sView) {
+		public DrawThread(Context ctx, Module_Emu_NES sView) {
 			mRun = false;
 			mMenuView = sView;
 		}
@@ -228,7 +229,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 	}
 
-	public Module_Emu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+	public Module_Emu_NES(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
@@ -244,7 +245,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		aUIAnimator.addListener(aUIAnimatorW);
 	}
 
-	private static final String ASSET_GRAPH_GBA_CV_NOTFOUND = "theme.asset|gba_emu_cv_nf";
+	private static final String ASSET_GRAPH_NES_CV_NOTFOUND = "theme.asset|nes_emu_cv_nf";
 
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
 		flListener = finishedL;
@@ -252,12 +253,12 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		dest = root;
 		reloadSettings();
 
-		if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ASSET_GRAPH_GBA_CV_NOTFOUND) == null) {
+		if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ASSET_GRAPH_NES_CV_NOTFOUND) == null) {
 			mStor.putObject(
 					XPMB_Main.GRAPH_ASSETS_COL_KEY,
-					ASSET_GRAPH_GBA_CV_NOTFOUND,
+					ASSET_GRAPH_NES_CV_NOTFOUND,
 					((BitmapDrawable) getRootView().getResources().getDrawable(
-							R.drawable.ui_cover_not_found_gba)).getBitmap());
+							R.drawable.ui_cover_not_found_nes)).getBitmap());
 		}
 
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
@@ -267,7 +268,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	private void reloadSettings() {
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
 		strEmuAct = (String) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
-				"com.androidemu.gba/.EmulatorActivity");
+				"com.androidemu.nes/.EmulatorActivity");
 	}
 
 	@Override
@@ -286,13 +287,13 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		if (!bInit) {
 			return;
 		}
-		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
+		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/NES");
 		ROMInfo ridROMInfoDat = null;
 		int y = 0;
 
 		mROMRoot.mkdirs();
 		if (!mROMRoot.isDirectory()) {
-			System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
+			System.err.println("XPMBSubmenu_NES::doInit() : can't create or access "
 					+ mROMRoot.getAbsolutePath());
 			return;
 		}
@@ -300,12 +301,12 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		if (!mROMResDir.exists()) {
 			mROMResDir.mkdirs();
 			if (!mROMResDir.isDirectory()) {
-				System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
+				System.err.println("XPMBSubmenu_NES::doInit() : can't create or access "
 						+ mROMResDir.getAbsolutePath());
 				return;
 			}
 		}
-		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_gba),
+		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_nes),
 				ROMInfo.TYPE_CRC);
 
 		// TODO: prepare assets and animation for scaled (1.17x) effect
@@ -318,7 +319,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					Enumeration<? extends ZipEntry> ze = zf.entries();
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
+						if (zef.getName().endsWith(".nes") || zef.getName().endsWith(".NES")) {
 							// InputStream fi = null;
 							// InputStream fi = zf.getInputStream(zef);
 							// fi.skip(0xAC);
@@ -339,11 +340,11 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 							} else {
 								xmi = new XPMBMenuItem(f.getName());
 							}
-							xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
+							xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 							xmi.enableTwoLine(true);
 
-							//xmi.setIcon("theme.icon|icon_pspms");
-							xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
+							// xmi.setIcon("theme.icon|icon_pspms");
+							xmi.setIcon(ASSET_GRAPH_NES_CV_NOTFOUND);
 							xmi.setData(f);
 
 							xmi.setPositionX(80);
@@ -375,7 +376,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 						}
 					}
 					zf.close();
-				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
+				} else if (f.getName().endsWith(".nes") || f.getName().endsWith(".NES")) {
 					InputStream fi = null;
 					// InputStream fi = new FileInputStream(f);
 					// fi.skip(0xAC); // TODO: Find a better way to associate
@@ -396,7 +397,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 						cCRC.update(buf, 0, cByte);
 					}
 					i = System.currentTimeMillis() - i;
-					System.out.println("Module_Emu_GBA::CRC Calculation for '" + f.getName()
+					Log.d("Module_Emu_NES:loadIn()", "CRC Calculation for '" + f.getName()
 							+ "' took " + i + "ms.");
 					fi.close();
 
@@ -410,11 +411,11 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					} else {
 						xmi = new XPMBMenuItem(f.getName());
 					}
-					xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
+					xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 					xmi.enableTwoLine(true);
 
-					//xmi.setIcon("theme.icon|icon_pspms");
-					xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
+					// xmi.setIcon("theme.icon|icon_pspms");
+					xmi.setIcon(ASSET_GRAPH_NES_CV_NOTFOUND);
 					xmi.setData(f);
 
 					xmi.setPositionX(80);

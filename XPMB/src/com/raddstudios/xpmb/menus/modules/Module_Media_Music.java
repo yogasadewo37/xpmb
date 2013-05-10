@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -36,11 +37,14 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 
 import com.nineoldandroids.animation.Animator;
@@ -55,9 +59,10 @@ import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.MediaPlayerControl;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
+import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class Module_Media_Music extends SurfaceView implements Modules_Base, SurfaceHolder.Callback {
+public class Module_Media_Music extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
 	private ContentResolver cr = null;
 	private ObjectCollections mStor = null;
@@ -78,7 +83,7 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 			SETTING_IS_PLAYING = "mediaplayer.isplaying";
 
 	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
-			ANIM_MENU_CENTER_ON_ITEM = 2;
+			ANIM_MENU_CENTER_ON_ITEM = 2, ANIM_STARTPLAYING = 3, ANIM_STOPPLAYING = 4;
 
 	private class UIAnimatorWorker implements AnimatorUpdateListener, AnimatorListener {
 
@@ -172,7 +177,6 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 			default:
 				break;
 			}
-			// requestRedraw();
 		}
 
 		@Override
@@ -219,12 +223,20 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 		}
 	}
 
-	public Module_Media_Music(Context context) {
-		super(context);
+	public Module_Media_Music(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+		super(root, messageBus, rootView);
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		this.setZOrderOnTop(true);
-		alCoverKeys = new ArrayList<String>();
+
+		//alCoverKeys = new ArrayList<String>();
+		cr = getRootActivity().getContentResolver();
+		mpc = getRootActivity().getPlayerControl();
+		if (!mpc.isInitialized()) {
+			mpc.initialize();
+			mpc.setOnCompletionListener(oclListener);
+		}
+		mStor = getRootActivity().getStorage();
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
 		aUIAnimator.setInterpolator(new DecelerateInterpolator());
 		aUIAnimator.setDuration(150);
@@ -240,16 +252,8 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 		}
 	};
 
-	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, XPMB_Activity resources,
-			FinishedListener finishedL) {
-		cr = resources.getContentResolver();
+	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
 		flListener = finishedL;
-		mpc = resources.getPlayerControl();
-		if (!mpc.isInitialized()) {
-			mpc.initialize();
-			mpc.setOnCompletionListener(oclListener);
-		}
-		mStor = resources.getStorage();
 		container = owner;
 		dest = root;
 		reloadSettings();
@@ -272,10 +276,10 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_IS_PLAYING, bIsPlaying);
 
 		dest.clearSubitems();
-		for (String ck : alCoverKeys) {
-			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
-		}
-		alCoverKeys.clear();
+		//for (String ck : alCoverKeys) {
+		//	mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
+		//}
+		//alCoverKeys.clear();
 	}
 
 	@Override
@@ -302,11 +306,8 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 				XPMBMenuItem xmi = new XPMBMenuItem(mCur.getString(1));
 				xmi.setLabelB(mCur.getString(2));
 				xmi.enableTwoLine(true);
-				//TODO: post-load cover images
-				// xmi.setIcon(strAlbumId);
-				if (!alCoverKeys.contains(strAlbumId)) {
-					alCoverKeys.add(strAlbumId);
-				}
+				// TODO: post-load cover images to decrease loading times for
+				// covers
 
 				xmi.setIcon("theme.icon|icon_music_album_default");
 				xmi.setData(new File(mCur.getString(0)));
@@ -334,18 +335,25 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 				xmi.setWidth(96);
 				xmi.setHeight(96);
 
-				try {
-					/*
-					 * if (!hImageStor.containsKey(strAlbumId)) { Uri
-					 * sArtworkUri =
-					 * Uri.parse("content://media/external/audio/albumart"); Uri
-					 * albumArtUri = ContentUris.withAppendedId(sArtworkUri,
-					 * albumId); hImageStor.put(strAlbumId,
-					 * MediaStore.Images.Media.getBitmap(cr, albumArtUri));
-					 * alCoverKeys.add(strAlbumId); }
-					 */
-				} catch (Exception e) {
-					xmi.setIcon("theme.icon|icon_music_album_default");
+				if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId) == null) {
+					try {
+						Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+						Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
+						mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId,
+								MediaStore.Images.Media.getBitmap(cr, albumArtUri));
+						//alCoverKeys.add(strAlbumId);
+						xmi.setIcon(strAlbumId);
+					} catch (Exception e) {
+						Log.e("Module_Media_Music:loadIn()", "Couldn't load cover for media '"
+								+ strAlbumId + "'");
+						e.printStackTrace();
+						mStor.copyObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
+								"theme.icon|icon_music_album_default",
+								XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId);
+						//alCoverKeys.add(strAlbumId);
+					}
+				} else {
+					xmi.setIcon(strAlbumId);
 				}
 
 				dest.addSubitem(xmi);
@@ -433,7 +441,6 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 	private boolean drawing = false;
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
-	// private long lastFrameTime = 0, maxFrameTime = 0, avgTime = 0;
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
 
 	public void requestRedraw() {
@@ -461,7 +468,7 @@ public class Module_Media_Music extends SurfaceView implements Modules_Base, Sur
 	}
 
 	private void processDraw(Canvas canvas) {
-		// TODO: Take in account the actual orientation of the device
+		// TODO: Take in account the actual orientation and DPI of the device
 
 		drawing = true;
 		canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);

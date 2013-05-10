@@ -19,19 +19,13 @@
 
 package com.raddstudios.xpmb.menus.modules;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.List;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -42,33 +36,27 @@ import android.graphics.Point;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
-import android.os.Environment;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.Toast;
 
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
-import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.ROMInfo;
-import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
-public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
+public class Module_System_Apps extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
 	private ObjectCollections mStor = null;
 	private XPMBMenuCategory dest = null;
@@ -77,14 +65,12 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	private DrawThread mDrwTh = null;
 	private FinishedListener flListener = null;
 	private int intAnimator = 0, intLastItem = -1, intMaxItemsOnScreen = 1;
-	private String strEmuAct = null;
-	private ArrayList<String> alCoverKeys = null;
+	private ArrayList<String> alIconKeys = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
 
-	private final String SETTING_LAST_ITEM = "emu.gba.lastitem",
-			SETTING_EMU_ACT = "emu.gba.emuact";
+	private final String SETTING_LAST_ITEM = "appsmenu.lastitem";
 
 	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
 			ANIM_MENU_CENTER_ON_ITEM = 2;
@@ -207,9 +193,9 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 	private class DrawThread extends Thread {
 		boolean mRun;
-		Module_Emu_GBA mMenuView;
+		Module_System_Apps mMenuView;
 
-		public DrawThread(Context ctx, Module_Emu_GBA sView) {
+		public DrawThread(Context ctx, Module_System_Apps sView) {
 			mRun = false;
 			mMenuView = sView;
 		}
@@ -228,13 +214,13 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 	}
 
-	public Module_Emu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+	public Module_System_Apps(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		this.setZOrderOnTop(true);
 
-		alCoverKeys = new ArrayList<String>();
+		alIconKeys = new ArrayList<String>();
 		mStor = getRootActivity().getStorage();
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
 		aUIAnimator.setInterpolator(new DecelerateInterpolator());
@@ -244,30 +230,17 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		aUIAnimator.addListener(aUIAnimatorW);
 	}
 
-	private static final String ASSET_GRAPH_GBA_CV_NOTFOUND = "theme.asset|gba_emu_cv_nf";
-
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
 		flListener = finishedL;
 		container = owner;
 		dest = root;
 		reloadSettings();
-
-		if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ASSET_GRAPH_GBA_CV_NOTFOUND) == null) {
-			mStor.putObject(
-					XPMB_Main.GRAPH_ASSETS_COL_KEY,
-					ASSET_GRAPH_GBA_CV_NOTFOUND,
-					((BitmapDrawable) getRootView().getResources().getDrawable(
-							R.drawable.ui_cover_not_found_gba)).getBitmap());
-		}
-
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
 		bInit = true;
 	}
 
 	private void reloadSettings() {
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
-		strEmuAct = (String) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
-				"com.androidemu.gba/.EmulatorActivity");
 	}
 
 	@Override
@@ -275,10 +248,10 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
 
 		dest.clearSubitems();
-		for (String ck : alCoverKeys) {
+		for (String ck : alIconKeys) {
 			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
 		}
-		alCoverKeys.clear();
+		alIconKeys.clear();
 	}
 
 	@Override
@@ -286,169 +259,56 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		if (!bInit) {
 			return;
 		}
-		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
-		ROMInfo ridROMInfoDat = null;
+
+		PackageManager pm = getRootActivity().getPackageManager();
+		Intent filter = new Intent(Intent.ACTION_MAIN);
+		filter.addCategory(Intent.CATEGORY_LAUNCHER);
+		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
+
+		//TODO: prepare assets and animation for scaled (1.17x) effect
+		
 		int y = 0;
-
-		mROMRoot.mkdirs();
-		if (!mROMRoot.isDirectory()) {
-			System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
-					+ mROMRoot.getAbsolutePath());
-			return;
-		}
-		File mROMResDir = new File(mROMRoot, "Resources");
-		if (!mROMResDir.exists()) {
-			mROMResDir.mkdirs();
-			if (!mROMResDir.isDirectory()) {
-				System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
-						+ mROMResDir.getAbsolutePath());
-				return;
+		for (ResolveInfo rinf : ri) {
+			if (rinf.activityInfo.packageName.equals(getRootActivity().getPackageName())) {
+				continue;
 			}
-		}
-		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_gba),
-				ROMInfo.TYPE_CRC);
+			XPMBMenuItem xmi = new XPMBMenuItem(rinf.loadLabel(pm).toString());
+			String strIcon = "module.system.apps.icon|" + xmi.getLabel();
+			if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon) == null) {
+				mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon, ((BitmapDrawable)rinf.loadIcon(pm)).getBitmap());
+			}
+			if (!alIconKeys.contains(strIcon)) {
+				alIconKeys.add(strIcon);
+			}
+			xmi.setIcon(strIcon);
+			xmi.setData(pm.getLaunchIntentForPackage(rinf.activityInfo.packageName));
 
-		// TODO: prepare assets and animation for scaled (1.17x) effect
-
-		try {
-			File[] storPtCont = mROMRoot.listFiles();
-			for (File f : storPtCont) {
-				if (f.getName().endsWith(".zip")) {
-					ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
-					Enumeration<? extends ZipEntry> ze = zf.entries();
-					while (ze.hasMoreElements()) {
-						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
-							// InputStream fi = null;
-							// InputStream fi = zf.getInputStream(zef);
-							// fi.skip(0xAC);
-							// String gameCode = "";
-
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// fi.close();
-							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
-									getRootActivity().getResources().getConfiguration().locale);
-
-							ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
-							XPMBMenuItem xmi = null;
-							if (rinCData != null) {
-								xmi = new XPMBMenuItem(rinCData.getGameName());
-							} else {
-								xmi = new XPMBMenuItem(f.getName());
-							}
-							xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
-							xmi.enableTwoLine(true);
-
-							//xmi.setIcon("theme.icon|icon_pspms");
-							xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
-							xmi.setData(f);
-
-							xmi.setPositionX(80);
-							if (intLastItem != -1) {
-								if (y < intLastItem) {
-									xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) - 24);
-									xmi.setSeparatorAlpha(0.0f);
-									xmi.setLabelAlpha(0.5f);
-								} else if (y > intLastItem) {
-									xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) + 24);
-									xmi.setSeparatorAlpha(0.0f);
-									xmi.setLabelAlpha(0.5f);
-								} else {
-									xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y));
-								}
-							} else {
-								xmi.setPositionY(208 + (96 * y));
-								if (y > 0) {
-									xmi.setPositionY(xmi.getPosition().y + 24);
-									xmi.setSeparatorAlpha(0.0f);
-									xmi.setLabelAlpha(0.5f);
-								}
-							}
-							xmi.setWidth(128);
-							xmi.setHeight(96);
-
-							dest.addSubitem(xmi);
-							y++;
-						}
-					}
-					zf.close();
-				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
-					InputStream fi = null;
-					// InputStream fi = new FileInputStream(f);
-					// fi.skip(0xAC); // TODO: Find a better way to associate
-					// ROMS with DB titles
-					// String gameCode = "";
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// fi.close();
-
-					fi = new BufferedInputStream(new FileInputStream(f));
-					CRC32 cCRC = new CRC32();
-					int cByte = 0;
-					long i = System.currentTimeMillis();
-					byte[] buf = new byte[1024 * 64];
-					while ((cByte = fi.read(buf)) > 0) {
-						cCRC.update(buf, 0, cByte);
-					}
-					i = System.currentTimeMillis() - i;
-					System.out.println("Module_Emu_GBA::CRC Calculation for '" + f.getName()
-							+ "' took " + i + "ms.");
-					fi.close();
-
-					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
-							getRootActivity().getResources().getConfiguration().locale);
-
-					ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
-					XPMBMenuItem xmi = null;
-					if (rinCData != null) {
-						xmi = new XPMBMenuItem(rinCData.getGameName());
-					} else {
-						xmi = new XPMBMenuItem(f.getName());
-					}
-					xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
-					xmi.enableTwoLine(true);
-
-					//xmi.setIcon("theme.icon|icon_pspms");
-					xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
-					xmi.setData(f);
-
-					xmi.setPositionX(80);
-					if (intLastItem != -1) {
-						if (y < intLastItem) {
-							xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) - 24);
-							xmi.setSeparatorAlpha(0.0f);
-							xmi.setLabelAlpha(0.5f);
-						} else if (y > intLastItem) {
-							xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) + 24);
-							xmi.setSeparatorAlpha(0.0f);
-							xmi.setLabelAlpha(0.5f);
-						} else {
-							xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y));
-						}
-					} else {
-						xmi.setPositionY(208 + (96 * y));
-						if (y > 0) {
-							xmi.setPositionY(xmi.getPosition().y + 24);
-							xmi.setSeparatorAlpha(0.0f);
-							xmi.setLabelAlpha(0.5f);
-						}
-					}
-					xmi.setWidth(128);
-					xmi.setHeight(96);
-
-					dest.addSubitem(xmi);
-					y++;
+			xmi.setPositionX(80);
+			if (intLastItem != -1) {
+				if (y < intLastItem) {
+					xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) - 24);
+					xmi.setSeparatorAlpha(0.0f);
+					xmi.setLabelAlpha(0.5f);
+				} else if (y > intLastItem) {
+					xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y) + 24);
+					xmi.setSeparatorAlpha(0.0f);
+					xmi.setLabelAlpha(0.5f);
+				} else {
+					xmi.setPositionY((-96 * intLastItem) + 208 + (96 * y));
 				}
-
+			} else {
+				xmi.setPositionY(208 + (96 * y));
+				if (y > 0) {
+					xmi.setPositionY(xmi.getPosition().y + 24);
+					xmi.setSeparatorAlpha(0.0f);
+					xmi.setLabelAlpha(0.5f);
+				}
 			}
-		} catch (Exception e) {
-			// TODO Handle errors when loading found ROMs
-			e.printStackTrace();
+			xmi.setWidth(96);
+			xmi.setHeight(96);
+
+			dest.addSubitem(xmi);
+			y++;
 		}
 	}
 
@@ -462,26 +322,13 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 			@Override
 			public void run() {
-
-				Intent intent = new Intent("android.intent.action.VIEW");
-				intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
-				intent.setData(Uri.fromFile((File) f_item.getData()));
-				intent.setFlags(0x10000000);
-				if (getRootActivity().isActivityAvailable(intent)) {
-					getRootActivity().showLoadingAnim(true);
-					getRootActivity().postIntentStartWait(new FinishedListener() {
-						@Override
-						public void onFinished(Intent intent) {
-							getRootActivity().showLoadingAnim(false);
-						}
-					}, intent);
-				} else {
-					Toast tst = Toast.makeText(
-							getRootActivity().getWindow().getContext(),
-							getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
-									intent.getComponent().getPackageName()), Toast.LENGTH_SHORT);
-					tst.show();
-				}
+				getRootActivity().showLoadingAnim(true);
+				getRootActivity().postIntentStartWait(new FinishedListener() {
+					@Override
+					public void onFinished(Intent intent) {
+						getRootActivity().showLoadingAnim(false);
+					}
+				}, (Intent) f_item.getData());
 			}
 		}).run();
 	}

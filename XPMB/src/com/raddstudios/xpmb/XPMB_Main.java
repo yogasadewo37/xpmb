@@ -48,8 +48,6 @@ import android.widget.Toast;
 
 import com.raddstudios.xpmb.menus.XPMBMenu;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.XPMB_MainMenu;
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 public class XPMB_Main extends XPMB_Activity {
@@ -63,10 +61,9 @@ public class XPMB_Main extends XPMB_Activity {
 	public static final String GRAPH_ASSETS_COL_KEY = "com.raddstudios.graphassets",
 			SETTINGS_COL_KEY = "com.raddstudios.settings";
 
-	private XPMB_MainMenu mMenu = null;
-	private XPMB_Layout mSub = null;
+	private XPMBMenu mMenu = null;
 	private Handler hMessageBus = null;
-	private boolean showingSubmenu = false, bLockedKeys = false, firstInitDone = false;
+	private boolean bLockedKeys = false, firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 	AudioManager amVolControl = null;
 
@@ -205,11 +202,7 @@ public class XPMB_Main extends XPMB_Activity {
 					}
 				} else {
 					if (mTouchedView != null) {
-						if (showingSubmenu) {
-							mSub.sendClickEventToView(mTouchedView);
-						} else {
 							mMenu.sendClickEventToView(mTouchedView);
-						}
 						mTouchedView = null;
 					}
 				}
@@ -289,11 +282,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-		if (showingSubmenu) {
-			mSub.sendKeyDown(keyCode);
-		} else {
 			mMenu.sendKeyDown(keyCode);
-		}
 		event.startTracking();
 
 		switch (keyCode) {
@@ -313,11 +302,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-		if (showingSubmenu) {
-			mSub.sendKeyUp(keyCode);
-		} else {
 			mMenu.sendKeyUp(keyCode);
-		}
 		return true;
 	}
 
@@ -326,11 +311,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-		if (showingSubmenu) {
-			mSub.sendKeyHold(keyCode);
-		} else {
 			mMenu.sendKeyHold(keyCode);
-		}
 		return true;
 	}
 
@@ -340,10 +321,6 @@ public class XPMB_Main extends XPMB_Activity {
 	// that's the reason to be for this procedure.
 	@Override
 	public void requestActivityEnd() {
-		if (mSub != null) {
-			mSub.doCleanup();
-			mSub.requestDestroy();
-		}
 		if (mMenu != null) {
 			mMenu.doCleanup();
 			mMenu.requestDestroy();
@@ -358,15 +335,6 @@ public class XPMB_Main extends XPMB_Activity {
 			mMenu.doCleanup();
 		}
 		super.onDestroy();
-	}
-
-	@Override
-	public void requestUnloadSubmenu() {
-		if (showingSubmenu) {
-			unloadSubmenu();
-			mMenu.postExecuteFinished();
-			showingSubmenu = false;
-		}
 	}
 
 	@Override
@@ -391,10 +359,6 @@ public class XPMB_Main extends XPMB_Activity {
 				iv_la.setVisibility(View.INVISIBLE);
 			}
 		}
-	}
-
-	private void unloadSubmenu() {
-		mSub.doCleanup();
 	}
 
 	private void updateTimeLabel() {

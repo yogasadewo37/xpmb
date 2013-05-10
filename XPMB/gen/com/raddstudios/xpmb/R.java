@@ -43,20 +43,18 @@ containing a value of this type.
         public static final int ui_batt_080=0x7f020005;
         public static final int ui_batt_100=0x7f020006;
         public static final int ui_cover_not_found_gba=0x7f020007;
-        public static final int ui_cover_not_found_md=0x7f020008;
-        public static final int ui_cover_not_found_nes=0x7f020009;
-        public static final int ui_cover_not_found_snes=0x7f02000a;
-        public static final int ui_edit=0x7f02000b;
-        public static final int ui_loading=0x7f02000c;
-        public static final int ui_lock=0x7f02000d;
-        public static final int ui_next=0x7f02000e;
-        public static final int ui_ok=0x7f02000f;
-        public static final int ui_previous=0x7f020010;
-        public static final int ui_properties=0x7f020011;
-        public static final int ui_side_menu=0x7f020012;
-        public static final int ui_status_media_pause=0x7f020013;
-        public static final int ui_status_media_play=0x7f020014;
-        public static final int ui_xmb_back=0x7f020015;
+        public static final int ui_cover_not_found_nes=0x7f020008;
+        public static final int ui_edit=0x7f020009;
+        public static final int ui_loading=0x7f02000a;
+        public static final int ui_lock=0x7f02000b;
+        public static final int ui_next=0x7f02000c;
+        public static final int ui_ok=0x7f02000d;
+        public static final int ui_previous=0x7f02000e;
+        public static final int ui_properties=0x7f02000f;
+        public static final int ui_side_menu=0x7f020010;
+        public static final int ui_status_media_pause=0x7f020011;
+        public static final int ui_status_media_play=0x7f020012;
+        public static final int ui_xmb_back=0x7f020013;
     }
     public static final class id {
         public static final int ivBattStatus=0x7f070007;
@@ -111,7 +109,8 @@ containing a value of this type.
     }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;
-        public static final int xmb_layout=0x7f040001;
+        public static final int rominfo_nes=0x7f040001;
+        public static final int xmb_layout=0x7f040002;
     }
     public static final class styleable {
         /** Attributes that can be used with a com_raddstudios_xpmb_utils_backports_XPMB_ImageView.

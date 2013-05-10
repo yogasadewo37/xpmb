@@ -212,6 +212,11 @@ public class XPMB_Activity extends Activity {
 			}
 			return defValue;
 		}
+		
+		public void copyObject(String srcCollection, String srcKey, String destCollection, String destKey){
+			Object itm = mCollection.get(srcCollection).get(srcKey);
+			mCollection.get(destCollection).put(destKey, itm);
+		}
 
 		public Object removeObject(String collection, String key) {
 			Hashtable<String, Object> cHash = mCollection.get(collection);

@@ -29,6 +29,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 public class ThemeLoader {
 
@@ -72,6 +73,7 @@ public class ThemeLoader {
 			}
 			container.close();
 		} catch (Exception e) {
+			Log.e("ThemeLoader:reloadTheme()", "Couldn't load theme");
 			e.printStackTrace();
 		}
 	}
