@@ -21,6 +21,7 @@ package com.raddstudios.xpmb.utils;
 
 import java.io.File;
 import java.util.Hashtable;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -40,12 +41,27 @@ public class ThemeLoader {
 	}
 
 	public void reloadTheme(ZipFile container) {
+		long startT = System.currentTimeMillis();
+		Hashtable<String, String> hCachedIcons = new Hashtable<String, String>();
 		String zipName = new File(container.getName()).getName();
 		zipName = zipName.substring(0, zipName.indexOf('.'));
 
+		Log.d(getClass().getSimpleName(),
+				"reloadTheme():Attempting to load theme at '" + container.getName() + "'");
+
 		try {
 			XmlPullParser xrpRes = XmlPullParserFactory.newInstance().newPullParser();
-			xrpRes.setInput(container.getInputStream(container.getEntry(zipName + ".xml")), null);
+			ZipEntry thmSrc = container.getEntry(zipName + ".xml");
+
+			if (thmSrc == null) {
+				Log.e(getClass().getSimpleName(),
+						"reloadTheme():Theme XML not found, must be named exactly as the container zip file. ["
+								+ zipName
+								+ ".xml]\rNow expect a NullPointerException at next drawing operation.");
+				return;
+			}
+
+			xrpRes.setInput(container.getInputStream(thmSrc), null);
 
 			int eventType = xrpRes.getEventType();
 			boolean done = false;
@@ -63,9 +79,37 @@ public class ThemeLoader {
 						// TODO: Load theme information from the xml file.
 					}
 					if (cName.equalsIgnoreCase("icon")) {
-						hAssets.put("theme.icon|" + xrpRes.getAttributeValue(null, "id"), BitmapFactory
-								.decodeStream(container.getInputStream(container.getEntry(xrpRes
-										.getAttributeValue(null, "src")))));
+						String strIconID = xrpRes.getAttributeValue(null, "id"), strIconName = xrpRes
+								.getAttributeValue(null, "src");
+
+						Log.d(getClass().getSimpleName(), "reloadTheme():Found icon ID '"
+								+ strIconID + "' and points to file '" + strIconName + "'");
+						Long i = System.currentTimeMillis();
+						ZipEntry srcIcon = container.getEntry(strIconName);
+						if (srcIcon == null) {
+							Log.e(getClass().getSimpleName(),
+									"reloadTheme():Source icon file not found. Check XML and zip contents."
+											+ "\rNow expect a NullPointerException at next drawing operation");
+							Log.i(getClass().getSimpleName(),
+									"reloadTheme():Icon '" + strIconID + "' loading took "
+											+ String.valueOf(System.currentTimeMillis() - i)
+											+ "ms.");
+							continue;
+						}
+						if (!hCachedIcons.containsKey(strIconName)) {
+							hAssets.put("theme.icon|" + strIconID,
+									BitmapFactory.decodeStream(container.getInputStream(srcIcon)));
+							hCachedIcons.put(strIconName, strIconID);
+						} else {
+							Log.w(getClass().getSimpleName(), "reloadTheme():Icon '" + strIconName
+									+ "' already cached under ID '" + hCachedIcons.get(strIconName)
+									+ ". duplicating item.");
+							hAssets.put("theme.icon|" + strIconID,
+									hAssets.get("theme.icon|" + hCachedIcons.get(strIconName)));
+						}
+						Log.i(getClass().getSimpleName(),
+								"reloadTheme():Icon '" + strIconID + "' loading took "
+										+ String.valueOf(System.currentTimeMillis() - i) + "ms.");
 					}
 					break;
 				}
@@ -73,9 +117,14 @@ public class ThemeLoader {
 			}
 			container.close();
 		} catch (Exception e) {
-			Log.e("ThemeLoader:reloadTheme()", "Couldn't load theme");
+			Log.e(getClass().getSimpleName(),
+					"reloadTheme():Couldn't load theme due to an unhandled exception.");
 			e.printStackTrace();
 		}
+
+		Log.i(getClass().getSimpleName(),
+				"reloadTheme():Theme load finished. Took "
+						+ String.valueOf(System.currentTimeMillis() - startT) + "ms.");
 	}
 
 }

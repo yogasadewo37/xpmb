@@ -45,6 +45,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
@@ -247,12 +248,14 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	private static final String ASSET_GRAPH_GBA_CV_NOTFOUND = "theme.asset|gba_emu_cv_nf";
 
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
+		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		flListener = finishedL;
 		container = owner;
 		dest = root;
 		reloadSettings();
 
 		if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ASSET_GRAPH_GBA_CV_NOTFOUND) == null) {
+			Log.v(getClass().getSimpleName(), "initialize():Caching \"cover not found\" asset");
 			mStor.putObject(
 					XPMB_Main.GRAPH_ASSETS_COL_KEY,
 					ASSET_GRAPH_GBA_CV_NOTFOUND,
@@ -261,13 +264,18 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
+		Log.v(getClass().getSimpleName(),
+				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
 		bInit = true;
+		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
 		strEmuAct = (String) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
 				"com.androidemu.gba/.EmulatorActivity");
+		Log.d(getClass().getSimpleName(), "reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
+		Log.d(getClass().getSimpleName(), "reloadSettings():<GBA Emulator Activity>=" + strEmuAct);
 	}
 
 	@Override
@@ -275,6 +283,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
 
 		dest.clearSubitems();
+		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alCoverKeys.size())
+				+ " cached cover assets");
 		for (String ck : alCoverKeys) {
 			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
 		}
@@ -284,24 +294,27 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	@Override
 	public void loadIn() {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		long t = System.currentTimeMillis();
 		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
 		ROMInfo ridROMInfoDat = null;
 		int y = 0;
 
 		mROMRoot.mkdirs();
 		if (!mROMRoot.isDirectory()) {
-			System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
-					+ mROMRoot.getAbsolutePath());
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Couldn't create or access '" + mROMRoot.getAbsolutePath() + "'");
 			return;
 		}
 		File mROMResDir = new File(mROMRoot, "Resources");
 		if (!mROMResDir.exists()) {
 			mROMResDir.mkdirs();
 			if (!mROMResDir.isDirectory()) {
-				System.err.println("XPMBSubmenu_GBA::doInit() : can't create or access "
-						+ mROMResDir.getAbsolutePath());
+				Log.e(getClass().getSimpleName(), "loadIn():Couldn't create or access '"
+						+ mROMResDir.getAbsolutePath() + "'");
 				return;
 			}
 		}
@@ -319,6 +332,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
 						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
+							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
+									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "'");
 							// InputStream fi = null;
 							// InputStream fi = zf.getInputStream(zef);
 							// fi.skip(0xAC);
@@ -331,18 +346,27 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 							// fi.close();
 							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
 									getRootActivity().getResources().getConfiguration().locale);
+							Log.d(getClass().getSimpleName(),
+									"loadIn():CRC for ROM '" + zef.getName() + "' is 0x" + gameCRC);
 
 							ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
 							XPMBMenuItem xmi = null;
 							if (rinCData != null) {
 								xmi = new XPMBMenuItem(rinCData.getGameName());
+								Log.v(getClass().getSimpleName(),
+										"loadIn():Data for ROM with CRC 0x" + gameCRC
+												+ " found. ROM name: '" + rinCData.getGameName()
+												+ "'");
 							} else {
 								xmi = new XPMBMenuItem(f.getName());
+								Log.e(getClass().getSimpleName(),
+										"loadIn():Data for ROM with CRC 0x" + gameCRC
+												+ " not found. Using source filename instead.");
 							}
 							xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
 							xmi.enableTwoLine(true);
 
-							//xmi.setIcon("theme.icon|icon_pspms");
+							// xmi.setIcon("theme.icon|icon_pspms");
 							xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
 							xmi.setData(f);
 
@@ -367,6 +391,12 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 									xmi.setLabelAlpha(0.5f);
 								}
 							}
+							Log.d(getClass().getSimpleName(),
+									"loadIn():Item layout completed for item #" + String.valueOf(y)
+											+ ". Item is at ["
+											+ String.valueOf(xmi.getPosition().x) + ","
+											+ String.valueOf(xmi.getPosition().y) + "].");
+
 							xmi.setWidth(128);
 							xmi.setHeight(96);
 
@@ -376,6 +406,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					}
 					zf.close();
 				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
+					Log.v(getClass().getSimpleName(),
+							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "'");
 					InputStream fi = null;
 					// InputStream fi = new FileInputStream(f);
 					// fi.skip(0xAC); // TODO: Find a better way to associate
@@ -396,24 +428,30 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 						cCRC.update(buf, 0, cByte);
 					}
 					i = System.currentTimeMillis() - i;
-					System.out.println("Module_Emu_GBA::CRC Calculation for '" + f.getName()
-							+ "' took " + i + "ms.");
+					Log.i(getClass().getSimpleName(),
+							"loadIn():CRC Calculation for '" + f.getName() + "' took " + i + "ms.");
 					fi.close();
 
 					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
 							getRootActivity().getResources().getConfiguration().locale);
+					Log.d(getClass().getSimpleName(), "loadIn():CRC for ROM '" + f.getName()
+							+ "' is 0x" + gameCRC);
 
 					ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
 					XPMBMenuItem xmi = null;
 					if (rinCData != null) {
 						xmi = new XPMBMenuItem(rinCData.getGameName());
+						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
+								+ gameCRC + " found. ROM name: '" + rinCData.getGameName() + "'");
 					} else {
 						xmi = new XPMBMenuItem(f.getName());
+						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
+								+ gameCRC + " not found. Using source filename instead.");
 					}
 					xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
 					xmi.enableTwoLine(true);
 
-					//xmi.setIcon("theme.icon|icon_pspms");
+					// xmi.setIcon("theme.icon|icon_pspms");
 					xmi.setIcon(ASSET_GRAPH_GBA_CV_NOTFOUND);
 					xmi.setData(f);
 
@@ -438,6 +476,10 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 							xmi.setLabelAlpha(0.5f);
 						}
 					}
+					Log.d(getClass().getSimpleName(),
+							"loadIn():Item layout completed for item #" + String.valueOf(y)
+									+ ". Item is at [" + String.valueOf(xmi.getPosition().x) + ","
+									+ String.valueOf(xmi.getPosition().y) + "].");
 					xmi.setWidth(128);
 					xmi.setHeight(96);
 
@@ -447,14 +489,29 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 			}
 		} catch (Exception e) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Error when loading info/reading ROM data due to an unhandled exception.");
 			// TODO Handle errors when loading found ROMs
 			e.printStackTrace();
 		}
+		Log.i(getClass().getSimpleName(),
+				"loadIn():ROM list load finished. Process took: "
+						+ String.valueOf(System.currentTimeMillis() - t) + "ms.");
 	}
+
+	FinishedListener flEmuEnd = new FinishedListener() {
+		@Override
+		public void onFinished(Intent intent) {
+			Log.v(getClass().getSimpleName(), "onFinished():Emulator activity finished. Returning to XPMB...");
+			getRootActivity().showLoadingAnim(false);
+		}
+	};
 
 	@Override
 	public void processItem(XPMBMenuItem item) {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
 		final XPMBMenuItem f_item = item;
@@ -462,20 +519,20 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 			@Override
 			public void run() {
-
+				Log.d(getClass().getSimpleName(), "processItem():Trying to boot '" + f_item.getLabel()
+						+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
 				Intent intent = new Intent("android.intent.action.VIEW");
 				intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
 				intent.setData(Uri.fromFile((File) f_item.getData()));
 				intent.setFlags(0x10000000);
 				if (getRootActivity().isActivityAvailable(intent)) {
+					Log.v(getClass().getSimpleName(),
+							"processItem():Emulator activity found. Starting emulation...");
 					getRootActivity().showLoadingAnim(true);
-					getRootActivity().postIntentStartWait(new FinishedListener() {
-						@Override
-						public void onFinished(Intent intent) {
-							getRootActivity().showLoadingAnim(false);
-						}
-					}, intent);
+					getRootActivity().postIntentStartWait(flEmuEnd, intent);
 				} else {
+					Log.e(getClass().getSimpleName(),
+							"processItem():Emulator activity not found. Giving up emulation.");
 					Toast tst = Toast.makeText(
 							getRootActivity().getWindow().getContext(),
 							getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",

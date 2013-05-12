@@ -27,6 +27,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -229,13 +230,13 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		this.setZOrderOnTop(true);
 
-		//alCoverKeys = new ArrayList<String>();
+		// alCoverKeys = new ArrayList<String>();
 		cr = getRootActivity().getContentResolver();
 		mpc = getRootActivity().getPlayerControl();
 		if (!mpc.isInitialized()) {
 			mpc.initialize();
-			mpc.setOnCompletionListener(oclListener);
 		}
+		mpc.setOnCompletionListener(oclListener);
 		mStor = getRootActivity().getStorage();
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
 		aUIAnimator.setInterpolator(new DecelerateInterpolator());
@@ -253,12 +254,16 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 	};
 
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
+		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		flListener = finishedL;
 		container = owner;
 		dest = root;
 		reloadSettings();
-		bInit = true;
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
+		Log.v(getClass().getSimpleName(),
+				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
+		bInit = true;
+		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
@@ -267,6 +272,12 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 				-1);
 		bIsPlaying = (Boolean) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_IS_PLAYING,
 				false);
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<Last Played Item>=" + String.valueOf(intLastPlayed));
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<MediaPlayer is running>=" + String.valueOf(bIsPlaying));
 	}
 
 	@Override
@@ -276,17 +287,33 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_IS_PLAYING, bIsPlaying);
 
 		dest.clearSubitems();
-		//for (String ck : alCoverKeys) {
-		//	mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
-		//}
-		//alCoverKeys.clear();
+		// for (String ck : alCoverKeys) {
+		// mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
+		// }
+		// alCoverKeys.clear();
+	}
+
+	public File getImageFileFromUri(Uri uri) {
+		File out = null;
+		String[] projection = { MediaStore.Images.Media.DATA };
+		Cursor cursor = getRootActivity().getContentResolver().query(uri, projection, null, null,
+				null);
+		cursor.moveToFirst();
+		if (cursor.getCount() != 0) {
+			out = new File(cursor.getString(0));
+		}
+		cursor.close();
+		return out;
 	}
 
 	@Override
 	public void loadIn() {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		long startT = System.currentTimeMillis();
 		String[] projection = new String[] { MediaStore.MediaColumns.DATA,
 				MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
 				MediaStore.Audio.Media.ALBUM_ID };
@@ -300,8 +327,12 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 					Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 							.getAbsolutePath())) {
 
+				long t = System.currentTimeMillis();
 				long albumId = mCur.getLong(3);
-				String strAlbumId = "media.cover|" + String.valueOf(albumId);
+				String strAlbumId = String.valueOf(albumId);
+
+				Log.d(getClass().getSimpleName(), "loadIn():Found track Name='" + mCur.getString(1)
+						+ "' Artist='" + mCur.getString(2) + "' at '" + mCur.getString(0) + "'");
 
 				XPMBMenuItem xmi = new XPMBMenuItem(mCur.getString(1));
 				xmi.setLabelB(mCur.getString(2));
@@ -335,26 +366,43 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 				xmi.setWidth(96);
 				xmi.setHeight(96);
 
-				if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId) == null) {
-					try {
-						Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
-						Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
-						mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId,
-								MediaStore.Images.Media.getBitmap(cr, albumArtUri));
-						//alCoverKeys.add(strAlbumId);
-						xmi.setIcon(strAlbumId);
-					} catch (Exception e) {
-						Log.e("Module_Media_Music:loadIn()", "Couldn't load cover for media '"
-								+ strAlbumId + "'");
-						e.printStackTrace();
-						mStor.copyObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-								"theme.icon|icon_music_album_default",
-								XPMB_Main.GRAPH_ASSETS_COL_KEY, strAlbumId);
-						//alCoverKeys.add(strAlbumId);
+				if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, "media.cover|" + strAlbumId) == null) {
+					Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+					Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
+					File artFile = getImageFileFromUri(albumArtUri);
+
+					if (artFile != null) {
+						if (!artFile.exists()) {
+							Log.e(getClass().getSimpleName(),
+									"loadIn():Couldn't load album art for ID '" + strAlbumId
+											+ "' (File not found), using stock album art.");
+						} else {
+							Long ct = System.currentTimeMillis();
+							mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, "media.cover|"
+									+ strAlbumId,
+									BitmapFactory.decodeFile(artFile.getAbsolutePath()));
+							xmi.setIcon("media.cover|" + strAlbumId);
+							Log.i(getClass().getSimpleName(),
+									"loadIn(): Album art caching for ID '" + strAlbumId + "' took "
+											+ String.valueOf(System.currentTimeMillis() - ct)
+											+ "ms.");
+						}
+					} else {
+						Log.e(getClass().getSimpleName(),
+								"loadIn():Couldn't load album art for ID '"
+										+ strAlbumId
+										+ "' (MediaStore returned no rows for path), using stock album art.");
 					}
 				} else {
-					xmi.setIcon(strAlbumId);
+					xmi.setIcon("media.cover|" + strAlbumId);
+					Log.w(getClass().getSimpleName(), "loadIn():Album art for ID '" + strAlbumId
+							+ "' already cached, skipping reload process.");
+
 				}
+				Log.i(getClass().getSimpleName(),
+						"loadIn():Track info loading for item Name= '" + mCur.getString(1)
+								+ "' took " + String.valueOf(System.currentTimeMillis() - t)
+								+ "ms.");
 
 				dest.addSubitem(xmi);
 				y++;
@@ -362,11 +410,15 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 			mCur.moveToNext();
 		}
 		mCur.close();
+		Log.i(getClass().getSimpleName(), "loadIn():Track list load finished. Process took "
+				+ String.valueOf(System.currentTimeMillis() - startT) + "ms.");
 	}
 
 	@Override
 	public void processItem(XPMBMenuItem item) {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
 		final XPMBMenuItem f_item = item;
@@ -376,6 +428,9 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 			public void run() {
 				mpc.stop();
 				mpc.setMediaSource(((File) f_item.getData()).getAbsolutePath());
+				Log.v(getClass().getSimpleName(),
+						"processItem():Start playing '"
+								+ ((File) f_item.getData()).getAbsolutePath() + "'");
 				mpc.play();
 				bIsPlaying = true;
 			}
