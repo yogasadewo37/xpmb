@@ -50,7 +50,6 @@ import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public class XPMBMenu extends XPMB_Layout {
 

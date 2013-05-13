@@ -19,10 +19,10 @@
 
 package com.raddstudios.xpmb.menus.modules;
 
+import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public interface Modules_Base {
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory dest, FinishedListener finishedL);

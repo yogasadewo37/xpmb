@@ -39,6 +39,7 @@ import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -53,6 +54,7 @@ import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -61,7 +63,6 @@ import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.MediaPlayerControl;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public class Module_Media_Music extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
@@ -330,18 +331,21 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 				long t = System.currentTimeMillis();
 				long albumId = mCur.getLong(3);
 				String strAlbumId = String.valueOf(albumId);
+				String strTrackName = mCur.getString(1);
+				String strTrackArtist = mCur.getString(2);
+				String strTrackPath = mCur.getString(0);
 
-				Log.d(getClass().getSimpleName(), "loadIn():Found track Name='" + mCur.getString(1)
-						+ "' Artist='" + mCur.getString(2) + "' at '" + mCur.getString(0) + "'");
+				Log.d(getClass().getSimpleName(), "loadIn():Found track Name='" + strTrackName
+						+ "' Artist='" + strTrackArtist + "' at '" + strTrackPath + "' ID #" + y);
 
-				XPMBMenuItem xmi = new XPMBMenuItem(mCur.getString(1));
-				xmi.setLabelB(mCur.getString(2));
+				XPMBMenuItem xmi = new XPMBMenuItem(strTrackName);
+				xmi.setLabelB(strTrackArtist);
 				xmi.enableTwoLine(true);
 				// TODO: post-load cover images to decrease loading times for
 				// covers
 
 				xmi.setIcon("theme.icon|icon_music_album_default");
-				xmi.setData(new File(mCur.getString(0)));
+				xmi.setData(new File(strTrackPath));
 				xmi.setPositionX(184);
 				if (intLastItem != -1) {
 					if (y < intLastItem) {
@@ -363,6 +367,9 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 						xmi.setLabelAlpha(0.5f);
 					}
 				}
+				Log.v(getClass().getSimpleName(),
+						"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
+								+ xmi.getPosition().y + "].");
 				xmi.setWidth(96);
 				xmi.setHeight(96);
 
@@ -374,7 +381,7 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 					if (artFile != null) {
 						if (!artFile.exists()) {
 							Log.e(getClass().getSimpleName(),
-									"loadIn():Couldn't load album art for ID '" + strAlbumId
+									"loadIn():Couldn't load album art for mediaID '" + strAlbumId
 											+ "' (File not found), using stock album art.");
 						} else {
 							Long ct = System.currentTimeMillis();
@@ -382,36 +389,33 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 									+ strAlbumId,
 									BitmapFactory.decodeFile(artFile.getAbsolutePath()));
 							xmi.setIcon("media.cover|" + strAlbumId);
-							Log.i(getClass().getSimpleName(),
-									"loadIn(): Album art caching for ID '" + strAlbumId + "' took "
-											+ String.valueOf(System.currentTimeMillis() - ct)
-											+ "ms.");
+							Log.i(getClass().getSimpleName(), "loadIn():Album art caching for ID '"
+									+ strAlbumId + "' took " + (System.currentTimeMillis() - ct)
+									+ "ms.");
 						}
 					} else {
 						Log.e(getClass().getSimpleName(),
-								"loadIn():Couldn't load album art for ID '"
+								"loadIn():Couldn't load album art for mediaID '"
 										+ strAlbumId
 										+ "' (MediaStore returned no rows for path), using stock album art.");
 					}
 				} else {
 					xmi.setIcon("media.cover|" + strAlbumId);
-					Log.w(getClass().getSimpleName(), "loadIn():Album art for ID '" + strAlbumId
-							+ "' already cached, skipping reload process.");
+					Log.w(getClass().getSimpleName(), "loadIn():Album art for mediaID '"
+							+ strAlbumId + "' already cached, skipping cache process.");
 
 				}
-				Log.i(getClass().getSimpleName(),
-						"loadIn():Track info loading for item Name= '" + mCur.getString(1)
-								+ "' took " + String.valueOf(System.currentTimeMillis() - t)
-								+ "ms.");
 
 				dest.addSubitem(xmi);
 				y++;
+				Log.i(getClass().getSimpleName(), "loadIn():Item loading completed for item #" + y
+						+ ". Process took " + (System.currentTimeMillis() - t) + "ms.");
 			}
 			mCur.moveToNext();
 		}
 		mCur.close();
 		Log.i(getClass().getSimpleName(), "loadIn():Track list load finished. Process took "
-				+ String.valueOf(System.currentTimeMillis() - startT) + "ms.");
+				+ (System.currentTimeMillis() - startT) + "ms.");
 	}
 
 	@Override
@@ -498,6 +502,11 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
 
+	@Override
+	public void dispatchDraw(Canvas canvas) {
+		processDraw(canvas);
+	}
+
 	public void requestRedraw() {
 		if (drawing) {
 			return;
@@ -561,7 +570,9 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 			pParams.setColor(Color.WHITE);
 			pParams.setAlpha((int) (alpha_i_l * container.getOpacity()));
 			pParams.setTextAlign(Align.LEFT);
-			pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD) {
+				pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+			}
 			pParams.getTextBounds(strLabel_i, 0, strLabel_i.length(), rTextBounds);
 			// textW = rTextBounds.right - rTextBounds.left;
 			textH = (int) (Math.abs(pParams.getFontMetrics().ascent) + Math.abs(pParams

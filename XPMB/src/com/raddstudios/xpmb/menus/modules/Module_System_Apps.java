@@ -37,6 +37,7 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
@@ -47,6 +48,7 @@ import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -54,7 +56,6 @@ import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public class Module_System_Apps extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
@@ -231,16 +232,22 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 	}
 
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
+		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		flListener = finishedL;
 		container = owner;
 		dest = root;
 		reloadSettings();
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
+		Log.v(getClass().getSimpleName(),
+				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
 		bInit = true;
+		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
 	}
 
 	@Override
@@ -248,6 +255,8 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
 
 		dest.clearSubitems();
+		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alIconKeys.size())
+				+ " cached icon assets");
 		for (String ck : alIconKeys) {
 			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
 		}
@@ -257,31 +266,45 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 	@Override
 	public void loadIn() {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
 
+		long t = System.currentTimeMillis();
 		PackageManager pm = getRootActivity().getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
 		filter.addCategory(Intent.CATEGORY_LAUNCHER);
 		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
 
-		//TODO: prepare assets and animation for scaled (1.17x) effect
-		
+		// TODO: prepare assets and animation for scaled (1.17x) effect
+
 		int y = 0;
 		for (ResolveInfo rinf : ri) {
+			long ct = System.currentTimeMillis();
 			if (rinf.activityInfo.packageName.equals(getRootActivity().getPackageName())) {
 				continue;
 			}
-			XPMBMenuItem xmi = new XPMBMenuItem(rinf.loadLabel(pm).toString());
-			String strIcon = "module.system.apps.icon|" + xmi.getLabel();
+			String strAppLabel = rinf.loadLabel(pm).toString();
+			Intent strAppIntent = pm.getLaunchIntentForPackage(rinf.activityInfo.packageName);
+
+			Log.i(getClass().getSimpleName(), "loadIn():Found app with name '" + strAppLabel
+					+ "' ID #" + y);
+
+			XPMBMenuItem xmi = new XPMBMenuItem(strAppLabel);
+			String strIcon = "module.system.apps.icon|" + strAppLabel;
 			if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon) == null) {
-				mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon, ((BitmapDrawable)rinf.loadIcon(pm)).getBitmap());
+				long dt = System.currentTimeMillis();
+				mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon,
+						((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
+				Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '"
+						+ strAppLabel + "' done. Took " + dt + "ms.");
 			}
 			if (!alIconKeys.contains(strIcon)) {
 				alIconKeys.add(strIcon);
 			}
 			xmi.setIcon(strIcon);
-			xmi.setData(pm.getLaunchIntentForPackage(rinf.activityInfo.packageName));
+			xmi.setData(strAppIntent);
 
 			xmi.setPositionX(80);
 			if (intLastItem != -1) {
@@ -304,17 +327,34 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 					xmi.setLabelAlpha(0.5f);
 				}
 			}
+			Log.v(getClass().getSimpleName(), "loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
+					+ xmi.getPosition().y + "].");
 			xmi.setWidth(96);
 			xmi.setHeight(96);
 
 			dest.addSubitem(xmi);
 			y++;
+			Log.d(getClass().getSimpleName(), "loadIn():Item loading completed for item #" + y
+					+ ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 		}
+		Log.i(getClass().getSimpleName(), "loadIn():App list load finished. Process took: "
+				+ (System.currentTimeMillis() - t) + "ms.");
 	}
+
+	FinishedListener flAppEnd = new FinishedListener() {
+		@Override
+		public void onFinished(Intent intent) {
+			Log.v(getClass().getSimpleName(),
+					"onFinished():App activity finished. Returning to XPMB...");
+			getRootActivity().showLoadingAnim(false);
+		}
+	};
 
 	@Override
 	public void processItem(XPMBMenuItem item) {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
 		final XPMBMenuItem f_item = item;
@@ -322,13 +362,10 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 
 			@Override
 			public void run() {
+				Log.v(getClass().getSimpleName(),
+						"processItem():Starting app's main activity...");
 				getRootActivity().showLoadingAnim(true);
-				getRootActivity().postIntentStartWait(new FinishedListener() {
-					@Override
-					public void onFinished(Intent intent) {
-						getRootActivity().showLoadingAnim(false);
-					}
-				}, (Intent) f_item.getData());
+				getRootActivity().postIntentStartWait(flAppEnd, (Intent) f_item.getData());
 			}
 		}).run();
 	}
@@ -366,6 +403,11 @@ public class Module_System_Apps extends XPMB_Layout implements Modules_Base, Sur
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
+
+	@Override
+	public void dispatchDraw(Canvas canvas) {
+		processDraw(canvas);
+	}
 
 	public void requestRedraw() {
 		if (drawing) {

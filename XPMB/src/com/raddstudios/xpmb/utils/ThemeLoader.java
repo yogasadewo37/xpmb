@@ -73,7 +73,7 @@ public class ThemeLoader {
 				case XmlResourceParser.START_DOCUMENT:
 					hAssets.clear();
 					break;
-				case XmlResourceParser.END_TAG:
+				case XmlResourceParser.START_TAG:
 					cName = xrpRes.getName();
 					if (cName.equalsIgnoreCase("info")) {
 						// TODO: Load theme information from the xml file.
@@ -109,7 +109,7 @@ public class ThemeLoader {
 						}
 						Log.i(getClass().getSimpleName(),
 								"reloadTheme():Icon '" + strIconID + "' loading took "
-										+ String.valueOf(System.currentTimeMillis() - i) + "ms.");
+										+ (System.currentTimeMillis() - i) + "ms.");
 					}
 					break;
 				}
@@ -121,7 +121,6 @@ public class ThemeLoader {
 					"reloadTheme():Couldn't load theme due to an unhandled exception.");
 			e.printStackTrace();
 		}
-
 		Log.i(getClass().getSimpleName(),
 				"reloadTheme():Theme load finished. Took "
 						+ String.valueOf(System.currentTimeMillis() - startT) + "ms.");

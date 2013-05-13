@@ -43,6 +43,7 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
@@ -58,6 +59,7 @@ import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -67,7 +69,6 @@ import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
@@ -264,8 +265,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
-		Log.v(getClass().getSimpleName(),
-				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
+		Log.v(getClass().getSimpleName(), "initialize():Max vertical items on screen: "
+				+ intMaxItemsOnScreen);
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
@@ -274,7 +275,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
 		strEmuAct = (String) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
 				"com.androidemu.gba/.EmulatorActivity");
-		Log.d(getClass().getSimpleName(), "reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
+		Log.d(getClass().getSimpleName(), "reloadSettings():<Selected Item>=" + intLastItem);
 		Log.d(getClass().getSimpleName(), "reloadSettings():<GBA Emulator Activity>=" + strEmuAct);
 	}
 
@@ -283,8 +284,7 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
 
 		dest.clearSubitems();
-		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alCoverKeys.size())
-				+ " cached cover assets");
+		Log.v(getClass().getSimpleName(), "Removing " + alCoverKeys.size() + " cached cover assets");
 		for (String ck : alCoverKeys) {
 			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
 		}
@@ -332,8 +332,10 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
 						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
+							long ct = System.currentTimeMillis();
 							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
-									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "'");
+									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
+									+ y);
 							// InputStream fi = null;
 							// InputStream fi = zf.getInputStream(zef);
 							// fi.skip(0xAC);
@@ -391,23 +393,26 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 									xmi.setLabelAlpha(0.5f);
 								}
 							}
-							Log.d(getClass().getSimpleName(),
-									"loadIn():Item layout completed for item #" + String.valueOf(y)
-											+ ". Item is at ["
-											+ String.valueOf(xmi.getPosition().x) + ","
-											+ String.valueOf(xmi.getPosition().y) + "].");
+							Log.v(getClass().getSimpleName(), "loadin():Item #" + y + " is at ["
+									+ xmi.getPosition().x + "," + xmi.getPosition().y + "].");
 
 							xmi.setWidth(128);
 							xmi.setHeight(96);
 
 							dest.addSubitem(xmi);
 							y++;
+							Log.i(getClass().getSimpleName(),
+									"loadIn():Item loading completed for item #" + y
+											+ ". Process took " + (System.currentTimeMillis() - ct)
+											+ "ms.");
 						}
 					}
 					zf.close();
 				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
+					long ct = System.currentTimeMillis();
 					Log.v(getClass().getSimpleName(),
-							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "'");
+							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "' ID #"
+									+ y);
 					InputStream fi = null;
 					// InputStream fi = new FileInputStream(f);
 					// fi.skip(0xAC); // TODO: Find a better way to associate
@@ -427,9 +432,9 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 					while ((cByte = fi.read(buf)) > 0) {
 						cCRC.update(buf, 0, cByte);
 					}
-					i = System.currentTimeMillis() - i;
 					Log.i(getClass().getSimpleName(),
-							"loadIn():CRC Calculation for '" + f.getName() + "' took " + i + "ms.");
+							"loadIn():CRC Calculation for '" + f.getName() + "' took "
+									+ (System.currentTimeMillis() - i) + "ms.");
 					fi.close();
 
 					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
@@ -476,17 +481,18 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 							xmi.setLabelAlpha(0.5f);
 						}
 					}
-					Log.d(getClass().getSimpleName(),
-							"loadIn():Item layout completed for item #" + String.valueOf(y)
-									+ ". Item is at [" + String.valueOf(xmi.getPosition().x) + ","
-									+ String.valueOf(xmi.getPosition().y) + "].");
+					Log.v(getClass().getSimpleName(),
+							"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
+									+ xmi.getPosition().y + "].");
+
 					xmi.setWidth(128);
 					xmi.setHeight(96);
 
 					dest.addSubitem(xmi);
 					y++;
+					Log.i(getClass().getSimpleName(), "loadIn():Item loading completed for item #"
+							+ y + ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 				}
-
 			}
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
@@ -494,15 +500,15 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 			// TODO Handle errors when loading found ROMs
 			e.printStackTrace();
 		}
-		Log.i(getClass().getSimpleName(),
-				"loadIn():ROM list load finished. Process took: "
-						+ String.valueOf(System.currentTimeMillis() - t) + "ms.");
+		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
+				+ (System.currentTimeMillis() - t) + "ms.");
 	}
 
 	FinishedListener flEmuEnd = new FinishedListener() {
 		@Override
 		public void onFinished(Intent intent) {
-			Log.v(getClass().getSimpleName(), "onFinished():Emulator activity finished. Returning to XPMB...");
+			Log.v(getClass().getSimpleName(),
+					"onFinished():Emulator activity finished. Returning to XPMB...");
 			getRootActivity().showLoadingAnim(false);
 		}
 	};
@@ -519,8 +525,9 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 			@Override
 			public void run() {
-				Log.d(getClass().getSimpleName(), "processItem():Trying to boot '" + f_item.getLabel()
-						+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
+				Log.d(getClass().getSimpleName(),
+						"processItem():Trying to boot '" + f_item.getLabel()
+								+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
 				Intent intent = new Intent("android.intent.action.VIEW");
 				intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
 				intent.setData(Uri.fromFile((File) f_item.getData()));
@@ -576,6 +583,11 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
+
+	@Override
+	public void dispatchDraw(Canvas canvas) {
+		processDraw(canvas);
+	}
 
 	public void requestRedraw() {
 		if (drawing) {

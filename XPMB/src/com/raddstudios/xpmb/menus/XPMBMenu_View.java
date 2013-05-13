@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils.backports;
+package com.raddstudios.xpmb.menus;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -38,6 +38,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -528,7 +529,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		// TODO: Take in account the actual orientation of the device
 
 		drawing = true;
-		// lastFrameTime = SystemClock.elapsedRealtime();
 		canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
 
 		for (int x = 0; x < alItems.size(); x++) {
@@ -559,7 +559,9 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 			pParams.setColor(Color.WHITE);
 			pParams.setAlpha((int) (alpha_c_l * fOpacity));
 			pParams.setTextSize(20);
-			pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD) {
+				pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+			}
 			pParams.getTextBounds(strLabel_c, 0, strLabel_c.length(), rTextBounds);
 			textW = rTextBounds.right - rTextBounds.left;
 			textH = (int) (Math.abs(pParams.getFontMetrics().ascent) + Math.abs(pParams
@@ -603,7 +605,9 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				pParams.setColor(Color.WHITE);
 				pParams.setAlpha((int) (alpha_i_l * fOpacity));
 				pParams.setTextAlign(Align.LEFT);
-				pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+				if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD) {
+					pParams.setShadowLayer(4, 0, 0, Color.WHITE);
+				}
 				pParams.getTextBounds(strLabel_i, 0, strLabel_i.length(), rTextBounds);
 				textW = rTextBounds.right - rTextBounds.left;
 				textH = (int) (Math.abs(pParams.getFontMetrics().ascent) + Math.abs(pParams
@@ -616,17 +620,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 			}
 		}
 		drawing = false;
-		/*
-		 * long cFrameTime = (SystemClock.elapsedRealtime() - lastFrameTime); if
-		 * (cFrameTime > maxFrameTime) { maxFrameTime = cFrameTime; } avgTime =
-		 * (avgTime + cFrameTime) / 2; String cTime = "TPF=" +
-		 * String.valueOf(cFrameTime) + "ms | MAX=" +
-		 * String.valueOf(maxFrameTime) + "ms | AVG=" + String.valueOf(avgTime)
-		 * + "ms"; pParams.setColor(Color.CYAN); pParams.setAlpha(0xD0);
-		 * pParams.setTextSize(18.0f); pParams.getTextBounds(cTime, 0,
-		 * cTime.length(), rTextBounds); canvas.drawText(cTime, 0,
-		 * canvas.getHeight() - rTextBounds.bottom, pParams); pParams.reset();
-		 */
 	}
 
 	public void moveLeft() {

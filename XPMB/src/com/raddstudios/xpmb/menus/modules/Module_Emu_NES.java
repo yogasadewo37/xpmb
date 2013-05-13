@@ -58,6 +58,7 @@ import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -67,7 +68,6 @@ import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
-import com.raddstudios.xpmb.utils.backports.XPMBMenu_View;
 
 public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
 
@@ -248,12 +248,14 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 	private static final String ASSET_GRAPH_NES_CV_NOTFOUND = "theme.asset|nes_emu_cv_nf";
 
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory root, FinishedListener finishedL) {
+		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		flListener = finishedL;
 		container = owner;
 		dest = root;
 		reloadSettings();
 
 		if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ASSET_GRAPH_NES_CV_NOTFOUND) == null) {
+			Log.v(getClass().getSimpleName(), "initialize():Caching \"cover not found\" asset");
 			mStor.putObject(
 					XPMB_Main.GRAPH_ASSETS_COL_KEY,
 					ASSET_GRAPH_NES_CV_NOTFOUND,
@@ -262,13 +264,19 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 		}
 
 		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
+		Log.v(getClass().getSimpleName(), "initialize():Max vertical items on screen: "
+				+ intMaxItemsOnScreen);
 		bInit = true;
+		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
 		intLastItem = (Integer) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, -1);
 		strEmuAct = (String) mStor.getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
 				"com.androidemu.nes/.EmulatorActivity");
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
+		Log.d(getClass().getSimpleName(), "reloadSettings():<NES Emulator Activity>=" + strEmuAct);
 	}
 
 	@Override
@@ -276,6 +284,7 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 		mStor.putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
 
 		dest.clearSubitems();
+		Log.v(getClass().getSimpleName(), "Removing " + alCoverKeys.size() + " cached cover assets");
 		for (String ck : alCoverKeys) {
 			mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
 		}
@@ -285,24 +294,27 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 	@Override
 	public void loadIn() {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		long t = System.currentTimeMillis();
 		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/NES");
 		ROMInfo ridROMInfoDat = null;
 		int y = 0;
 
 		mROMRoot.mkdirs();
 		if (!mROMRoot.isDirectory()) {
-			System.err.println("XPMBSubmenu_NES::doInit() : can't create or access "
-					+ mROMRoot.getAbsolutePath());
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Couldn't create or access '" + mROMRoot.getAbsolutePath() + "'");
 			return;
 		}
 		File mROMResDir = new File(mROMRoot, "Resources");
 		if (!mROMResDir.exists()) {
 			mROMResDir.mkdirs();
 			if (!mROMResDir.isDirectory()) {
-				System.err.println("XPMBSubmenu_NES::doInit() : can't create or access "
-						+ mROMResDir.getAbsolutePath());
+				Log.e(getClass().getSimpleName(), "loadIn():Couldn't create or access '"
+						+ mROMResDir.getAbsolutePath() + "'");
 				return;
 			}
 		}
@@ -320,6 +332,10 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
 						if (zef.getName().endsWith(".nes") || zef.getName().endsWith(".NES")) {
+							long ct = System.currentTimeMillis();
+							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
+									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
+									+ y);
 							// InputStream fi = null;
 							// InputStream fi = zf.getInputStream(zef);
 							// fi.skip(0xAC);
@@ -332,13 +348,22 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 							// fi.close();
 							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
 									getRootActivity().getResources().getConfiguration().locale);
+							Log.d(getClass().getSimpleName(),
+									"loadIn():CRC for ROM '" + zef.getName() + "' is 0x" + gameCRC);
 
 							ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
 							XPMBMenuItem xmi = null;
 							if (rinCData != null) {
 								xmi = new XPMBMenuItem(rinCData.getGameName());
+								Log.v(getClass().getSimpleName(),
+										"loadIn():Data for ROM with CRC 0x" + gameCRC
+												+ " found. ROM name: '" + rinCData.getGameName()
+												+ "'");
 							} else {
 								xmi = new XPMBMenuItem(f.getName());
+								Log.e(getClass().getSimpleName(),
+										"loadIn():Data for ROM with CRC 0x" + gameCRC
+												+ " not found. Using source filename instead.");
 							}
 							xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 							xmi.enableTwoLine(true);
@@ -368,15 +393,26 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 									xmi.setLabelAlpha(0.5f);
 								}
 							}
+							Log.v(getClass().getSimpleName(), "loadin():Item #" + y + " is at ["
+									+ xmi.getPosition().x + "," + xmi.getPosition().y + "].");
+
 							xmi.setWidth(128);
 							xmi.setHeight(96);
 
 							dest.addSubitem(xmi);
 							y++;
+							Log.i(getClass().getSimpleName(),
+									"loadIn():Item loading completed for item #" + y
+											+ ". Process took " + (System.currentTimeMillis() - ct)
+											+ "ms.");
 						}
 					}
 					zf.close();
 				} else if (f.getName().endsWith(".nes") || f.getName().endsWith(".NES")) {
+					long ct = System.currentTimeMillis();
+					Log.v(getClass().getSimpleName(),
+							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "' ID #"
+									+ y);
 					InputStream fi = null;
 					// InputStream fi = new FileInputStream(f);
 					// fi.skip(0xAC); // TODO: Find a better way to associate
@@ -396,20 +432,26 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 					while ((cByte = fi.read(buf)) > 0) {
 						cCRC.update(buf, 0, cByte);
 					}
-					i = System.currentTimeMillis() - i;
-					Log.d("Module_Emu_NES:loadIn()", "CRC Calculation for '" + f.getName()
-							+ "' took " + i + "ms.");
+					Log.i(getClass().getSimpleName(),
+							"loadIn():CRC Calculation for '" + f.getName() + "' took "
+									+ (System.currentTimeMillis() - i) + "ms.");
 					fi.close();
 
 					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
 							getRootActivity().getResources().getConfiguration().locale);
+					Log.d(getClass().getSimpleName(), "loadIn():CRC for ROM '" + f.getName()
+							+ "' is 0x" + gameCRC);
 
 					ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
 					XPMBMenuItem xmi = null;
 					if (rinCData != null) {
 						xmi = new XPMBMenuItem(rinCData.getGameName());
+						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
+								+ gameCRC + " found. ROM name: '" + rinCData.getGameName() + "'");
 					} else {
 						xmi = new XPMBMenuItem(f.getName());
+						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
+								+ gameCRC + " not found. Using source filename instead.");
 					}
 					xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 					xmi.enableTwoLine(true);
@@ -439,23 +481,44 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 							xmi.setLabelAlpha(0.5f);
 						}
 					}
+					Log.v(getClass().getSimpleName(),
+							"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
+									+ xmi.getPosition().y + "].");
+
 					xmi.setWidth(128);
 					xmi.setHeight(96);
 
 					dest.addSubitem(xmi);
 					y++;
+					Log.i(getClass().getSimpleName(), "loadIn():Item loading completed for item #"
+							+ y + ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 				}
 
 			}
 		} catch (Exception e) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Error when loading info/reading ROM data due to an unhandled exception.");
 			// TODO Handle errors when loading found ROMs
 			e.printStackTrace();
 		}
+		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
+				+ (System.currentTimeMillis() - t) + "ms.");
 	}
+
+	FinishedListener flEmuEnd = new FinishedListener() {
+		@Override
+		public void onFinished(Intent intent) {
+			Log.v(getClass().getSimpleName(),
+					"onFinished():Emulator activity finished. Returning to XPMB...");
+			getRootActivity().showLoadingAnim(false);
+		}
+	};
 
 	@Override
 	public void processItem(XPMBMenuItem item) {
 		if (!bInit) {
+			Log.e(getClass().getSimpleName(),
+					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
 		final XPMBMenuItem f_item = item;
@@ -463,20 +526,21 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 
 			@Override
 			public void run() {
-
+				Log.d(getClass().getSimpleName(),
+						"processItem():Trying to boot '" + f_item.getLabel()
+								+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
 				Intent intent = new Intent("android.intent.action.VIEW");
 				intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
 				intent.setData(Uri.fromFile((File) f_item.getData()));
 				intent.setFlags(0x10000000);
 				if (getRootActivity().isActivityAvailable(intent)) {
+					Log.v(getClass().getSimpleName(),
+							"processItem():Emulator activity found. Starting emulation...");
 					getRootActivity().showLoadingAnim(true);
-					getRootActivity().postIntentStartWait(new FinishedListener() {
-						@Override
-						public void onFinished(Intent intent) {
-							getRootActivity().showLoadingAnim(false);
-						}
-					}, intent);
+					getRootActivity().postIntentStartWait(flEmuEnd, intent);
 				} else {
+					Log.e(getClass().getSimpleName(),
+							"processItem():Emulator activity not found. Giving up emulation.");
 					Toast tst = Toast.makeText(
 							getRootActivity().getWindow().getContext(),
 							getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
@@ -520,6 +584,11 @@ public class Module_Emu_NES extends XPMB_Layout implements Modules_Base, Surface
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
+
+	@Override
+	public void dispatchDraw(Canvas canvas) {
+		processDraw(canvas);
+	}
 
 	public void requestRedraw() {
 		if (drawing) {
