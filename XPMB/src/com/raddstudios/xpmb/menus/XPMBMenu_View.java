@@ -44,11 +44,12 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.animation.DecelerateInterpolator;
 
-import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -62,6 +63,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 	private int intSelItem = 0;
 	private float fOpacity = 1.0f;
 	private DrawThread mDrwTh = null;
+	private Modules_Base mbChildModule = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
@@ -493,6 +495,8 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		//setFocus(true);
 	}
 
 	private boolean drawing = false;
@@ -500,18 +504,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 	private Rect rTextBounds = new Rect();
 	private int px_c_i = 0, py_c_i = 0, px_c_l = 0, py_c_l = 0, px_i_i = 0, py_i_i = 0, px_i_l = 0,
 			py_i_l = 0, textH = 0, textW = 0;
-
-	public void requestRedraw() {
-		if (drawing) {
-			return;
-		}
-		Canvas mcanvas = getHolder().lockCanvas();
-
-		if (mcanvas != null) {
-			processDraw(mcanvas);
-			getHolder().unlockCanvasAndPost(mcanvas);
-		}
-	}
 
 	private Rect getAlignedAndScaledRect(int left, int top, int width, int height, float scaleX,
 			float scaleY, int gravity) {
@@ -525,7 +517,19 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		return out;
 	}
 
-	private void processDraw(Canvas canvas) {
+	public void requestRedraw() {
+		if (drawing) {
+			return;
+		}
+		Canvas mcanvas = getHolder().lockCanvas();
+
+		if (mcanvas != null) {
+			processDraw(mcanvas);
+			getHolder().unlockCanvasAndPost(mcanvas);
+		}
+	}
+
+	public void processDraw(Canvas canvas) {
 		// TODO: Take in account the actual orientation of the device
 
 		drawing = true;
@@ -619,7 +623,14 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				pParams.reset();
 			}
 		}
+		if (mbChildModule != null) {
+			mbChildModule.drawTo(canvas);
+		}
 		drawing = false;
+	}
+
+	public void setChildModule(Modules_Base child) {
+		mbChildModule = child;
 	}
 
 	public void moveLeft() {
@@ -691,7 +702,7 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 	}
 
 	public void setFocus(boolean focused) {
-		if (focused && bSurfaceExists) {
+		if (focused) {
 			mDrwTh = new DrawThread(getContext(), this);
 			mDrwTh.setRunning(true);
 			mDrwTh.start();
@@ -699,8 +710,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 			mDrwTh.setRunning(false);
 		}
 	}
-
-	private boolean bSurfaceExists = false;
 
 	public void startAnim(int animType) {
 		aUIAnimatorW.setAnimationType(animType);
@@ -712,7 +721,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 		mDrwTh = new DrawThread(getContext(), this);
 		mDrwTh.setRunning(true);
 		mDrwTh.start();
-		bSurfaceExists = true;
 	}
 
 	@Override
@@ -731,7 +739,6 @@ public class XPMBMenu_View extends SurfaceView implements SurfaceHolder.Callback
 				e.printStackTrace();
 			}
 		}
-		bSurfaceExists = false;
 	}
 
 	@Override

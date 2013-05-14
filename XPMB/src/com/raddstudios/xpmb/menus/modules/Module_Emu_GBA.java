@@ -30,25 +30,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Toast;
@@ -70,13 +65,12 @@ import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 
-public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
+public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base {
 
 	private ObjectCollections mStor = null;
 	private XPMBMenuCategory dest = null;
 	private XPMBMenu_View container = null;
 	private boolean bInit = false;
-	private DrawThread mDrwTh = null;
 	private FinishedListener flListener = null;
 	private int intAnimator = 0, intLastItem = -1, intMaxItemsOnScreen = 1;
 	private String strEmuAct = null;
@@ -207,34 +201,8 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 	};
 
-	private class DrawThread extends Thread {
-		boolean mRun;
-		Module_Emu_GBA mMenuView;
-
-		public DrawThread(Context ctx, Module_Emu_GBA sView) {
-			mRun = false;
-			mMenuView = sView;
-		}
-
-		void setRunning(boolean bRun) {
-			mRun = bRun;
-		}
-
-		@Override
-		public void run() {
-			super.run();
-
-			while (mRun) {
-				mMenuView.requestRedraw();
-			}
-		}
-	}
-
 	public Module_Emu_GBA(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
-		getHolder().addCallback(this);
-		getHolder().setFormat(PixelFormat.TRANSPARENT);
-		this.setZOrderOnTop(true);
 
 		alCoverKeys = new ArrayList<String>();
 		mStor = getRootActivity().getStorage();
@@ -579,27 +547,9 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		}
 	}
 
-	private boolean drawing = false;
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
-
-	@Override
-	public void dispatchDraw(Canvas canvas) {
-		processDraw(canvas);
-	}
-
-	public void requestRedraw() {
-		if (drawing) {
-			return;
-		}
-		Canvas mcanvas = getHolder().lockCanvas();
-
-		if (mcanvas != null) {
-			processDraw(mcanvas);
-			getHolder().unlockCanvasAndPost(mcanvas);
-		}
-	}
 
 	private Rect getAlignedAndScaledRect(int left, int top, int width, int height, float scaleX,
 			float scaleY, int gravity) {
@@ -613,11 +563,10 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 		return out;
 	}
 
-	private void processDraw(Canvas canvas) {
+	public void drawTo(Canvas canvas) {
 		// TODO: Take in account the actual orientation and DPI of the device
 
-		drawing = true;
-		canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
+		//canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
 
 		// Process subitems
 		for (int y = (intLastItem - intMaxItemsOnScreen / 2); y < (intLastItem + intMaxItemsOnScreen); y++) {
@@ -679,7 +628,6 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 			}
 			pParams.reset();
 		}
-		drawing = false;
 	}
 
 	public void moveUp() {
@@ -717,35 +665,6 @@ public class Module_Emu_GBA extends XPMB_Layout implements Modules_Base, Surface
 
 		dest.setSelectedSubItem(index);
 		intLastItem = index;
-	}
-
-	@Override
-	public void surfaceCreated(SurfaceHolder holder) {
-		mDrwTh = new DrawThread(getContext(), this);
-		mDrwTh.setRunning(true);
-		mDrwTh.start();
-	}
-
-	@Override
-	public void surfaceDestroyed(SurfaceHolder holder) {
-
-		mDrwTh.setRunning(false);
-		boolean retry = true;
-
-		while (retry) {
-			try {
-				mDrwTh.join();
-				retry = false;
-			}
-
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Override
-	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
 	}
 
 	@Override

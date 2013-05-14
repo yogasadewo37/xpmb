@@ -19,6 +19,8 @@
 
 package com.raddstudios.xpmb.menus.modules;
 
+import android.graphics.Canvas;
+
 import com.raddstudios.xpmb.menus.XPMBMenu_View;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
@@ -28,6 +30,8 @@ public interface Modules_Base {
 	public void initialize(XPMBMenu_View owner, XPMBMenuCategory dest, FinishedListener finishedL);
 
 	public void deInitialize();
+	
+	public void drawTo(Canvas dest);
 
 	public void loadIn();
 

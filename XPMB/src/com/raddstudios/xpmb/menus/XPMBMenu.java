@@ -137,8 +137,8 @@ public class XPMBMenu extends XPMB_Layout {
 		@Override
 		public void onFinished(Intent intent) {
 			bLockedKeyPad = true;
-			getRootView().removeView((View) curFilter);
-			xmvRoot.setFocus(true);
+			xmvRoot.setChildModule(null);
+			//xmvRoot.setFocus(true);
 			switch (curFilter.getListAnimator()) {
 			case XPMBMenuCategory.LIST_ANIM_FULL:
 				xmvRoot.startAnim(XPMBMenu_View.ANIM_SHOW_MENU_FULL);
@@ -223,13 +223,10 @@ public class XPMBMenu extends XPMB_Layout {
 							curFilter.initialize(xmvRoot, xmc, flListener);
 							curFilter.setListAnimator(xmc.getListAnimator());
 							curFilter.loadIn();
-							RelativeLayout.LayoutParams rp = new RelativeLayout.LayoutParams(
-									LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-							((View) curFilter).setLayoutParams(rp);
+							xmvRoot.setChildModule(curFilter);
 						}
-						getRootView().addView((View) curFilter);
 						getRootActivity().showLoadingAnim(false);
-						xmvRoot.setFocus(false);
+						//xmvRoot.setFocus(false);
 						isFocusedOnSubcategory = true;
 						bLockedKeyPad = false;
 					}

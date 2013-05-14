@@ -24,7 +24,6 @@ import java.util.ArrayList;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,9 +31,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -45,7 +42,6 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 
@@ -64,7 +60,7 @@ import com.raddstudios.xpmb.utils.XPMB_Activity.MediaPlayerControl;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 import com.raddstudios.xpmb.utils.XPMB_Layout;
 
-public class Module_Media_Music extends XPMB_Layout implements Modules_Base, SurfaceHolder.Callback {
+public class Module_Media_Music extends XPMB_Layout implements Modules_Base{
 
 	private ContentResolver cr = null;
 	private ObjectCollections mStor = null;
@@ -72,7 +68,6 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 	private XPMBMenu_View container = null;
 	private MediaPlayerControl mpc = null;
 	private boolean bInit = false, bIsPlaying = false;
-	private DrawThread mDrwTh = null;
 	private FinishedListener flListener = null;
 	private int intAnimator = 0, intLastItem = -1, intLastPlayed = -1, intMaxItemsOnScreen = 1;
 	private ArrayList<String> alCoverKeys = null;
@@ -201,35 +196,9 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 		public void onAnimationStart(Animator arg0) {
 		}
 	};
-
-	private class DrawThread extends Thread {
-		boolean mRun;
-		Module_Media_Music mMenuView;
-
-		public DrawThread(Context ctx, Module_Media_Music sView) {
-			mRun = false;
-			mMenuView = sView;
-		}
-
-		void setRunning(boolean bRun) {
-			mRun = bRun;
-		}
-
-		@Override
-		public void run() {
-			super.run();
-
-			while (mRun) {
-				mMenuView.requestRedraw();
-			}
-		}
-	}
-
+	
 	public Module_Media_Music(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
 		super(root, messageBus, rootView);
-		getHolder().addCallback(this);
-		getHolder().setFormat(PixelFormat.TRANSPARENT);
-		this.setZOrderOnTop(true);
 
 		// alCoverKeys = new ArrayList<String>();
 		cr = getRootActivity().getContentResolver();
@@ -497,27 +466,9 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 		}
 	}
 
-	private boolean drawing = false;
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect();
 	private int px_i_l = 0, py_i_l = 0, textH = 0;
-
-	@Override
-	public void dispatchDraw(Canvas canvas) {
-		processDraw(canvas);
-	}
-
-	public void requestRedraw() {
-		if (drawing) {
-			return;
-		}
-		Canvas mcanvas = getHolder().lockCanvas();
-
-		if (mcanvas != null) {
-			processDraw(mcanvas);
-			getHolder().unlockCanvasAndPost(mcanvas);
-		}
-	}
 
 	private Rect getAlignedAndScaledRect(int left, int top, int width, int height, float scaleX,
 			float scaleY, int gravity) {
@@ -531,11 +482,10 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 		return out;
 	}
 
-	private void processDraw(Canvas canvas) {
+	public void drawTo(Canvas canvas) {
 		// TODO: Take in account the actual orientation and DPI of the device
 
-		drawing = true;
-		canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
+		//canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
 
 		// Process subitems
 		for (int y = (intLastItem - intMaxItemsOnScreen / 2); y < (intLastItem + intMaxItemsOnScreen); y++) {
@@ -599,7 +549,6 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 			}
 			pParams.reset();
 		}
-		drawing = false;
 	}
 
 	public void moveUp() {
@@ -637,35 +586,6 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base, Sur
 
 		dest.setSelectedSubItem(index);
 		intLastItem = index;
-	}
-
-	@Override
-	public void surfaceCreated(SurfaceHolder holder) {
-		mDrwTh = new DrawThread(getContext(), this);
-		mDrwTh.setRunning(true);
-		mDrwTh.start();
-	}
-
-	@Override
-	public void surfaceDestroyed(SurfaceHolder holder) {
-
-		mDrwTh.setRunning(false);
-		boolean retry = true;
-
-		while (retry) {
-			try {
-				mDrwTh.join();
-				retry = false;
-			}
-
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Override
-	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
 	}
 
 	@Override
