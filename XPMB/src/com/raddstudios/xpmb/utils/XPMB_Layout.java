@@ -19,20 +19,24 @@
 
 package com.raddstudios.xpmb.utils;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.util.TypedValue;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.raddstudios.xpmb.utils.backports.XPMB_View;
 
-public class XPMB_Layout {
+@SuppressLint("ViewConstructor")
+public class XPMB_Layout extends SurfaceView {
 
 	private XPMB_Activity mRoot = null;
 	private ViewGroup mRootView = null;
 	private Handler hMessageBus = null;
 
 	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
+		super(rootView.getContext());
 		mRoot = root;
 		hMessageBus = messageBus;
 		mRootView = rootView;

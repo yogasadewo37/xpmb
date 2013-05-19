@@ -33,6 +33,9 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.RelativeLayout;
 
 import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
@@ -40,7 +43,7 @@ import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 public class XPMB_Activity extends Activity {
 
 	public interface FinishedListener {
-		public void onFinished(Intent intent);
+		public void onFinished(Object data);
 	}
 
 	public final class MediaPlayerControl implements MediaPlayer.OnPreparedListener,
@@ -57,6 +60,7 @@ public class XPMB_Activity extends Activity {
 		}
 
 		public void initialize() {
+			Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 			mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 			mMediaPlayer.setOnPreparedListener(this);
 			bInit = true;
@@ -122,16 +126,16 @@ public class XPMB_Activity extends Activity {
 				mMediaPlayer.setDataSource(url);
 				mMediaPlayer.prepareAsync();
 			} catch (Exception e) {
-				Log.d(getClass().getSimpleName(), e.getLocalizedMessage());
-				e.printStackTrace();
+				Log.e(getClass().getSimpleName(), "setMediaSource():"+e.getMessage());
 			}
 		}
 
 		public void release() {
 			mMediaPlayer.release();
+			Log.v(getClass().getSimpleName(),"release():MediaPlayer released.");
 		}
-		
-		public boolean isInitialized(){
+
+		public boolean isInitialized() {
 			return bInit;
 		}
 
@@ -139,6 +143,7 @@ public class XPMB_Activity extends Activity {
 		public boolean onError(MediaPlayer mp, int what, int extra) {
 			mp.reset();
 			intPlayerStatus = STATE_NOT_INITIALIZED;
+			Log.e(getClass().getSimpleName(),"release():MediaPlayer threw an error.");
 			return false;
 		}
 
@@ -212,8 +217,9 @@ public class XPMB_Activity extends Activity {
 			}
 			return defValue;
 		}
-		
-		public void copyObject(String srcCollection, String srcKey, String destCollection, String destKey){
+
+		public void copyObject(String srcCollection, String srcKey, String destCollection,
+				String destKey) {
 			Object itm = mCollection.get(srcCollection).get(srcKey);
 			mCollection.get(destCollection).put(destKey, itm);
 		}
@@ -234,6 +240,7 @@ public class XPMB_Activity extends Activity {
 
 	private MediaPlayerControl mpMedia = null;
 	private ObjectCollections ocCollections = null;
+	private RelativeLayout rlRootView = null;
 
 	private FinishedListener cIntentWaitListener = null;
 
@@ -246,6 +253,10 @@ public class XPMB_Activity extends Activity {
 		super.onCreate(savedInstanceState);
 		mpMedia = new MediaPlayerControl();
 		ocCollections = new ObjectCollections();
+		rlRootView = new RelativeLayout(getBaseContext());
+		rlRootView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+				LayoutParams.MATCH_PARENT));
+		setContentView(rlRootView);
 	}
 
 	@Override
@@ -254,30 +265,15 @@ public class XPMB_Activity extends Activity {
 		mpMedia.release();
 		ocCollections.release();
 	}
-
-	public XPMB_ImageView getCustomBGView() {
-		return null;
+	
+	public ViewGroup getRootView() {
+		return rlRootView;
 	}
 
 	public void lockKeys(boolean locked) {
 	}
 
-	public void showLoadingAnim(boolean showAnim) {
-	}
-
-	public void preloadSubmenu(String submenu) {
-	}
-
-	public void requestUnloadSubmenu() {
-	}
-
 	public void requestActivityEnd() {
-	}
-
-	public void enableTouchEvents(boolean enabled) {
-	}
-
-	public void setTouchedChildView(View v) {
 	}
 
 	public boolean isActivityAvailable(Intent intent) {

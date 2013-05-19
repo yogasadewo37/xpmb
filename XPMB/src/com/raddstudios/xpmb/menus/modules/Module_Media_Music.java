@@ -229,7 +229,7 @@ public class Module_Media_Music extends XPMB_Layout implements Modules_Base{
 		container = owner;
 		dest = root;
 		reloadSettings();
-		intMaxItemsOnScreen = (owner.getHeight() / 96) + 1;
+		intMaxItemsOnScreen = ( / 96) + 1;
 		Log.v(getClass().getSimpleName(),
 				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
 		bInit = true;

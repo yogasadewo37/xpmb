@@ -30,6 +30,7 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -68,11 +69,13 @@ public class XPMBMenu extends XPMB_Layout {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void doInit() {
+		Log.v(getClass().getSimpleName(), "doInit():Initializing XPMB menu.");
 		Looper.prepare();
 		thm = new ThemeLoader((Hashtable<String, Bitmap>) getRootActivity().getStorage()
 				.getCollection(XPMB_Main.GRAPH_ASSETS_COL_KEY));
 		xmvRoot = new XPMBMenu_View(getRootView().getContext(), src, getRootActivity());
 		xmvRoot.doInit();
+		Log.v(getClass().getSimpleName(), "doInit():Finished initialization.");
 	}
 
 	@Override

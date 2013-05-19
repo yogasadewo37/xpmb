@@ -19,6 +19,7 @@
 
 package com.raddstudios.xpmb;
 
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -32,9 +33,11 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -63,6 +66,7 @@ public class XPMB_Main extends XPMB_Activity {
 
 	private XPMBMenu mMenu = null;
 	private Handler hMessageBus = null;
+	private XPMB_UI xuLayerManager = null;
 	private boolean bLockedKeys = false, firstInitDone = false;
 	private AnimationDrawable bmAnim = null;
 	AudioManager amVolControl = null;
@@ -71,31 +75,24 @@ public class XPMB_Main extends XPMB_Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		Log.v(getClass().getSimpleName(), "onCreate():Initializing XPMB...");
+		Log.d(getClass().getSimpleName(), "onCreate():Reported Android version is ["
+				+ Build.VERSION.RELEASE + "]");
+		Log.v(getClass().getSimpleName(), "onCreate():Reported locale is ["
+				+ Locale.getDefault().getDisplayLanguage() + "]");
+		Log.d(getClass().getSimpleName(), "onCreate():Reported board name is [" + Build.BOARD + "]");
+
+		//Setup services
 		hMessageBus = new Handler();
-		if (!checkForSupportedDevice()) {
-			Toast tst = Toast.makeText(getWindow().getContext(),
-					getString(R.string.strIncorrectDevice), Toast.LENGTH_SHORT);
-			tst.show();
+		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
-			hMessageBus.postDelayed(new Runnable() {
-
-				@Override
-				public void run() {
-					finish();
-				}
-
-			}, 2500);
-			return;
-		}
-
+		//Setup window params
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); //This should be optional
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER); //This should be optional
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.xpmb_main);
 		findViewById(R.id.main_l).setOnTouchListener(mTouchListener);
-
-		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
 		setupAnimations();
 
@@ -116,13 +113,15 @@ public class XPMB_Main extends XPMB_Activity {
 		}, 0, 10000);
 
 		if (firstInitDone && mMenu != null) {
+			Log.v(getClass().getSimpleName(), "onCreate():Already initialized. Skipping process.");
 			return;
 		}
 
 		getStorage().createCollection(GRAPH_ASSETS_COL_KEY);
 		getStorage().createCollection(SETTINGS_COL_KEY);
+		xuLayerManager = new XPMB_UI(this, hMessageBus, getRootView());
 		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus,
-				(ViewGroup) findViewById(R.id.main_l), this);
+				getRootView(), this);
 	}
 
 	private static final int MOVING_DIR_VERT = 0, MOVING_DIR_HORZ = 1;
@@ -202,7 +201,7 @@ public class XPMB_Main extends XPMB_Activity {
 					}
 				} else {
 					if (mTouchedView != null) {
-							mMenu.sendClickEventToView(mTouchedView);
+						mMenu.sendClickEventToView(mTouchedView);
 						mTouchedView = null;
 					}
 				}
@@ -218,12 +217,6 @@ public class XPMB_Main extends XPMB_Activity {
 	@Override
 	public void enableTouchEvents(boolean enabled) {
 		isTouchEnabled = enabled;
-	}
-
-	private boolean checkForSupportedDevice() {
-		return true;
-		// return new
-		// File("/system/framework/xperiaplaycertified.jar").exists();
 	}
 
 	private void setupAnimations() {
@@ -242,7 +235,8 @@ public class XPMB_Main extends XPMB_Activity {
 		drwAnimSrc = null;
 		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
 	}
-
+	
+	//TODO: Optimize onResume() to speed up resuming process.
 	@Override
 	public void onResume() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
@@ -282,7 +276,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-			mMenu.sendKeyDown(keyCode);
+		mMenu.sendKeyDown(keyCode);
 		event.startTracking();
 
 		switch (keyCode) {
@@ -302,7 +296,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-			mMenu.sendKeyUp(keyCode);
+		mMenu.sendKeyUp(keyCode);
 		return true;
 	}
 
@@ -311,7 +305,7 @@ public class XPMB_Main extends XPMB_Activity {
 		if (bLockedKeys) {
 			return true;
 		}
-			mMenu.sendKeyHold(keyCode);
+		mMenu.sendKeyHold(keyCode);
 		return true;
 	}
 
@@ -330,6 +324,7 @@ public class XPMB_Main extends XPMB_Activity {
 
 	@Override
 	public void onDestroy() {
+		Log.w(getClass().getSimpleName(), "onDestroy():Method was called.");
 		requestUnloadSubmenu();
 		if (mMenu != null) {
 			mMenu.doCleanup();
