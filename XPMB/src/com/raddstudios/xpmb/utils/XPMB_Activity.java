@@ -22,6 +22,8 @@ package com.raddstudios.xpmb.utils;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import com.raddstudios.xpmb.menus.XPMB_BaseUILayer;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -30,14 +32,14 @@ import android.content.pm.ResolveInfo;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
-
-import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 @SuppressLint("Registered")
 public class XPMB_Activity extends Activity {
@@ -126,13 +128,13 @@ public class XPMB_Activity extends Activity {
 				mMediaPlayer.setDataSource(url);
 				mMediaPlayer.prepareAsync();
 			} catch (Exception e) {
-				Log.e(getClass().getSimpleName(), "setMediaSource():"+e.getMessage());
+				Log.e(getClass().getSimpleName(), "setMediaSource():" + e.getMessage());
 			}
 		}
 
 		public void release() {
 			mMediaPlayer.release();
-			Log.v(getClass().getSimpleName(),"release():MediaPlayer released.");
+			Log.v(getClass().getSimpleName(), "release():MediaPlayer released.");
 		}
 
 		public boolean isInitialized() {
@@ -143,7 +145,7 @@ public class XPMB_Activity extends Activity {
 		public boolean onError(MediaPlayer mp, int what, int extra) {
 			mp.reset();
 			intPlayerStatus = STATE_NOT_INITIALIZED;
-			Log.e(getClass().getSimpleName(),"release():MediaPlayer threw an error.");
+			Log.e(getClass().getSimpleName(), "release():MediaPlayer threw an error.");
 			return false;
 		}
 
@@ -241,6 +243,8 @@ public class XPMB_Activity extends Activity {
 	private MediaPlayerControl mpMedia = null;
 	private ObjectCollections ocCollections = null;
 	private RelativeLayout rlRootView = null;
+	private XPMB_UILayerManager xuLayerManager = null;
+	private Handler hMessageBus = null;
 
 	private FinishedListener cIntentWaitListener = null;
 
@@ -256,7 +260,8 @@ public class XPMB_Activity extends Activity {
 		rlRootView = new RelativeLayout(getBaseContext());
 		rlRootView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
-		setContentView(rlRootView);
+		hMessageBus = new Handler(Looper.getMainLooper());
+		xuLayerManager = new XPMB_UILayerManager(this);
 	}
 
 	@Override
@@ -265,15 +270,44 @@ public class XPMB_Activity extends Activity {
 		mpMedia.release();
 		ocCollections.release();
 	}
-	
+
+	public XPMB_UILayerManager getDrawingLayerManager() {
+		return xuLayerManager;
+	}
+
 	public ViewGroup getRootView() {
 		return rlRootView;
+	}
+
+	public Handler getMessageBus() {
+		return hMessageBus;
+	}
+
+	public void showLoadingAnim(boolean visible) {
+		((XPMB_BaseUILayer) xuLayerManager.getLayer(0)).setLoadingAnimationVisible(visible);
 	}
 
 	public void lockKeys(boolean locked) {
 	}
 
 	public void requestActivityEnd() {
+	}
+	
+	public boolean isExtStorageRW(){
+		boolean mExternalStorageAvailable = false;
+		boolean mExternalStorageWriteable = false;
+		String state = Environment.getExternalStorageState();
+
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			mExternalStorageAvailable = mExternalStorageWriteable = true;
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+			mExternalStorageAvailable = true;
+			mExternalStorageWriteable = false;
+		} else {
+			mExternalStorageAvailable = mExternalStorageWriteable = false;
+		}
+		
+		return (mExternalStorageAvailable && mExternalStorageWriteable);
 	}
 
 	public boolean isActivityAvailable(Intent intent) {

@@ -36,76 +36,60 @@ containing a value of this type.
     }
     public static final class drawable {
         public static final int ic_launcher=0x7f020000;
-        public static final int ui_batt_000=0x7f020001;
-        public static final int ui_batt_020=0x7f020002;
-        public static final int ui_batt_040=0x7f020003;
-        public static final int ui_batt_060=0x7f020004;
-        public static final int ui_batt_080=0x7f020005;
-        public static final int ui_batt_100=0x7f020006;
-        public static final int ui_cover_not_found_gba=0x7f020007;
-        public static final int ui_cover_not_found_nes=0x7f020008;
-        public static final int ui_edit=0x7f020009;
-        public static final int ui_loading=0x7f02000a;
-        public static final int ui_lock=0x7f02000b;
-        public static final int ui_next=0x7f02000c;
-        public static final int ui_ok=0x7f02000d;
-        public static final int ui_previous=0x7f02000e;
-        public static final int ui_properties=0x7f02000f;
-        public static final int ui_side_menu=0x7f020010;
-        public static final int ui_status_media_pause=0x7f020011;
-        public static final int ui_status_media_play=0x7f020012;
-        public static final int ui_xmb_back=0x7f020013;
     }
     public static final class id {
-        public static final int ivBattStatus=0x7f070007;
-        public static final int ivCustomBG=0x7f070006;
-        public static final int ivLoadAnim=0x7f07000a;
-        public static final int ivPlayStatus=0x7f070004;
-        public static final int ivSubmenuShown=0x7f070009;
-        public static final int lbCurTime=0x7f070008;
-        public static final int main_l=0x7f070005;
-        public static final int pbCurPos=0x7f070001;
-        public static final int playerc_l=0x7f070000;
-        public static final int tvCurPos=0x7f070003;
-        public static final int tvTotalLen=0x7f070002;
+        public static final int ivBattStatus=0x7f080007;
+        public static final int ivCustomBG=0x7f080006;
+        public static final int ivLoadAnim=0x7f08000a;
+        public static final int ivPlayStatus=0x7f080004;
+        public static final int ivSubmenuShown=0x7f080009;
+        public static final int lbCurTime=0x7f080008;
+        public static final int main_l=0x7f080005;
+        public static final int pbCurPos=0x7f080001;
+        public static final int playerc_l=0x7f080000;
+        public static final int tvCurPos=0x7f080003;
+        public static final int tvTotalLen=0x7f080002;
     }
     public static final class layout {
         public static final int mediaplayer_control=0x7f030000;
         public static final int xpmb_main=0x7f030001;
     }
+    public static final class raw {
+        public static final int xpmb=0x7f050000;
+    }
     public static final class string {
-        public static final int app_name=0x7f050000;
-        public static final int ivCover_desc=0x7f050003;
-        public static final int ivNextGame_desc=0x7f050008;
-        public static final int ivPrevGame_desc=0x7f050009;
-        public static final int ivRunGame_desc=0x7f050002;
-        public static final int lbGameDescription_defText=0x7f050007;
-        public static final int lbGameDescription_desc=0x7f05000a;
-        public static final int lbGameName_deftext=0x7f050004;
-        public static final int lbGameName_desc=0x7f050005;
-        public static final int strAppNotInstalled=0x7f05001a;
-        public static final int strBackKeyHint=0x7f050014;
-        public static final int strCoverNotFound=0x7f050006;
-        public static final int strEmuGBARom=0x7f05001b;
-        public static final int strEmuNESRom=0x7f05001c;
-        public static final int strIncorrectDevice=0x7f050001;
-        public static final int strLangCh=0x7f050010;
-        public static final int strLangDe=0x7f05000f;
-        public static final int strLangEn=0x7f05000b;
-        public static final int strLangEs=0x7f05000c;
-        public static final int strLangFr=0x7f05000d;
-        public static final int strLangIt=0x7f05000e;
-        public static final int strLangJa=0x7f050012;
-        public static final int strLangKo=0x7f050011;
-        public static final int strLangNl=0x7f050013;
-        public static final int strNoApps=0x7f050019;
-        public static final int strNoGames=0x7f050018;
-        public static final int strNoMusic=0x7f050017;
-        public static final int strNoPictures=0x7f050016;
-        public static final int strNoVideos=0x7f050015;
+        public static final int app_name=0x7f060000;
+        public static final int ivCover_desc=0x7f060003;
+        public static final int ivNextGame_desc=0x7f060008;
+        public static final int ivPrevGame_desc=0x7f060009;
+        public static final int ivRunGame_desc=0x7f060002;
+        public static final int lbGameDescription_defText=0x7f060007;
+        public static final int lbGameDescription_desc=0x7f06000a;
+        public static final int lbGameName_deftext=0x7f060004;
+        public static final int lbGameName_desc=0x7f060005;
+        public static final int strAppNotInstalled=0x7f06001a;
+        public static final int strBackKeyHint=0x7f060014;
+        public static final int strCoverNotFound=0x7f060006;
+        public static final int strEmuGBARom=0x7f06001b;
+        public static final int strEmuNESRom=0x7f06001c;
+        public static final int strIncorrectDevice=0x7f060001;
+        public static final int strLangCh=0x7f060010;
+        public static final int strLangDe=0x7f06000f;
+        public static final int strLangEn=0x7f06000b;
+        public static final int strLangEs=0x7f06000c;
+        public static final int strLangFr=0x7f06000d;
+        public static final int strLangIt=0x7f06000e;
+        public static final int strLangJa=0x7f060012;
+        public static final int strLangKo=0x7f060011;
+        public static final int strLangNl=0x7f060013;
+        public static final int strNoApps=0x7f060019;
+        public static final int strNoGames=0x7f060018;
+        public static final int strNoMusic=0x7f060017;
+        public static final int strNoPictures=0x7f060016;
+        public static final int strNoVideos=0x7f060015;
     }
     public static final class style {
-        public static final int Theme_Transparent=0x7f060000;
+        public static final int Theme_Transparent=0x7f070000;
     }
     public static final class xml {
         public static final int rominfo_gba=0x7f040000;

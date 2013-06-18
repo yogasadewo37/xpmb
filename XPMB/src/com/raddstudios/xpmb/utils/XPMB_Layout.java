@@ -22,43 +22,27 @@ package com.raddstudios.xpmb.utils;
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.util.TypedValue;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.raddstudios.xpmb.utils.backports.XPMB_View;
-
 @SuppressLint("ViewConstructor")
-public class XPMB_Layout extends SurfaceView {
+public class XPMB_Layout {
 
 	private XPMB_Activity mRoot = null;
-	private ViewGroup mRootView = null;
-	private Handler hMessageBus = null;
 
-	public XPMB_Layout(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
-		super(rootView.getContext());
+	public XPMB_Layout(XPMB_Activity root) {
 		mRoot = root;
-		hMessageBus = messageBus;
-		mRootView = rootView;
 	}
 
 	protected Handler getMessageBus() {
-		return hMessageBus;
+		return mRoot.getMessageBus();
 	}
 
 	public ViewGroup getRootView() {
-		return mRootView;
+		return mRoot.getRootView();
 	}
 
-	protected XPMB_View getView_l(int id) {
-		return (XPMB_View) mRootView.findViewById(id);
-	}
-
-	protected View getView(int id) {
-		return mRootView.findViewById(id);
-	}
-
-	protected XPMB_Activity getRootActivity() {
+	public XPMB_Activity getRootActivity() {
 		return mRoot;
 	}
 
@@ -79,7 +63,7 @@ public class XPMB_Layout extends SurfaceView {
 
 	public void sendClickEventToView(View v) {
 	}
-
+	
 	protected int pxFromDip(int dip) {
 		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dip, mRoot
 				.getResources().getDisplayMetrics());

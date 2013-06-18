@@ -19,39 +19,36 @@
 
 package com.raddstudios.xpmb;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Hashtable;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.zip.ZipFile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.text.format.Time;
+import android.os.Environment;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.raddstudios.xpmb.menus.XPMBMenu;
+import com.raddstudios.xpmb.menus.XPMB_BaseUILayer;
+import com.raddstudios.xpmb.utils.ThemeLoader;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.backports.XPMB_ImageView;
 
 public class XPMB_Main extends XPMB_Activity {
 
@@ -65,12 +62,11 @@ public class XPMB_Main extends XPMB_Activity {
 			SETTINGS_COL_KEY = "com.raddstudios.settings";
 
 	private XPMBMenu mMenu = null;
-	private Handler hMessageBus = null;
-	private XPMB_UI xuLayerManager = null;
+	private XPMB_BaseUILayer mBaseLayer = null;
 	private boolean bLockedKeys = false, firstInitDone = false;
-	private AnimationDrawable bmAnim = null;
 	AudioManager amVolControl = null;
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -78,39 +74,68 @@ public class XPMB_Main extends XPMB_Activity {
 		Log.v(getClass().getSimpleName(), "onCreate():Initializing XPMB...");
 		Log.d(getClass().getSimpleName(), "onCreate():Reported Android version is ["
 				+ Build.VERSION.RELEASE + "]");
-		Log.v(getClass().getSimpleName(), "onCreate():Reported locale is ["
+		Log.d(getClass().getSimpleName(), "onCreate():Reported locale is ["
 				+ Locale.getDefault().getDisplayLanguage() + "]");
 		Log.d(getClass().getSimpleName(), "onCreate():Reported board name is [" + Build.BOARD + "]");
 
-		//Setup services
-		hMessageBus = new Handler();
+		if (!isExtStorageRW()) {
+			Log.e(getClass().getSimpleName(),
+					"onCreate():Error initializing XPMB. External storage is not available.");
+			finish();
+		}
+
+		// Setup services
 		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
-		//Setup window params
+		// Setup window params
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); //This should be optional
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER); //This should be optional
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+		// ^^ These 2 or 3 should be optional
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		setContentView(R.layout.xpmb_main);
-		findViewById(R.id.main_l).setOnTouchListener(mTouchListener);
 
-		setupAnimations();
+		getRootView().setOnTouchListener(mTouchListener);
+		setContentView(getRootView());
 
-		new Timer().scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				hMessageBus.post(new Runnable() {
-
-					@Override
-					public void run() {
-						updateTimeLabel();
-					}
-
-				});
+		File fRootStoragePath = new File(Environment.getExternalStorageDirectory().getPath()
+				+ "/XPMB");
+		if (!fRootStoragePath.exists()) {
+			Log.w(getClass().getSimpleName(),
+					"onCreate():Root storage path not found. Creating directory.");
+			fRootStoragePath.mkdirs();
+		}
+		File defTheme = new File(fRootStoragePath.getAbsolutePath() + "/themes/XPMB.zip");
+		if (!defTheme.exists()) {
+			if (!defTheme.getParentFile().exists()) {
+				Log.w(getClass().getSimpleName(),
+						"onCreate():Theme path not found. Creating directory.");
+				defTheme.getParentFile().mkdir();
 			}
+			long t = System.currentTimeMillis();
+			Log.w(getClass().getSimpleName(),
+					"onCreate():Default theme file not found. Creating default theme into '"
+							+ defTheme.getAbsolutePath() + "'...");
 
-		}, 0, 10000);
+			FileOutputStream oFile = null;
+			try {
+				oFile = new FileOutputStream(defTheme);
+				int cByte = 0;
+				InputStream fi = getResources().openRawResource(R.raw.xpmb);
+
+				byte[] buf = new byte[1024 * 64];
+				while ((cByte = fi.read(buf)) > 0) {
+					oFile.write(buf, 0, cByte);
+				}
+				oFile.close();
+				Log.i(getClass().getSimpleName(),
+						"onCreate():Default theme creation finished. Process took "
+								+ (System.currentTimeMillis() - t) + "ms");
+			} catch (IOException e) {
+				Log.e(getClass().getSimpleName(),
+						"onCreate():Error creating default theme. Process took "
+								+ (System.currentTimeMillis() - t) + "ms");
+			}
+		}
 
 		if (firstInitDone && mMenu != null) {
 			Log.v(getClass().getSimpleName(), "onCreate():Already initialized. Skipping process.");
@@ -119,9 +144,18 @@ public class XPMB_Main extends XPMB_Activity {
 
 		getStorage().createCollection(GRAPH_ASSETS_COL_KEY);
 		getStorage().createCollection(SETTINGS_COL_KEY);
-		xuLayerManager = new XPMB_UI(this, hMessageBus, getRootView());
-		mMenu = new XPMBMenu(getResources().getXml(R.xml.xmb_layout), hMessageBus,
-				getRootView(), this);
+		try {
+			new ThemeLoader((Hashtable<String, Bitmap>) getStorage().getCollection(
+					XPMB_Main.GRAPH_ASSETS_COL_KEY)).reloadTheme(new ZipFile(new File(Environment
+					.getExternalStorageDirectory().getPath() + "/XPMB/themes/XPMB.zip"),
+					ZipFile.OPEN_READ));
+		} catch (Exception e) {
+			Log.e(getClass().getSimpleName(),
+					"onCreate():Error loading theme file. Now expect NullPointerExceptions");
+		}
+		mBaseLayer = new XPMB_BaseUILayer(this);
+		getDrawingLayerManager().addLayer(mBaseLayer);
+		mMenu = new XPMBMenu(this);
 	}
 
 	private static final int MOVING_DIR_VERT = 0, MOVING_DIR_HORZ = 1;
@@ -131,7 +165,7 @@ public class XPMB_Main extends XPMB_Activity {
 	private boolean isTouchEnabled = true;
 	private View mTouchedView = null;
 
-	@Override
+	// @Override
 	public void setTouchedChildView(View v) {
 		mTouchedView = v;
 	}
@@ -214,33 +248,19 @@ public class XPMB_Main extends XPMB_Activity {
 		}
 	};
 
-	@Override
+	// @Override
 	public void enableTouchEvents(boolean enabled) {
 		isTouchEnabled = enabled;
 	}
 
-	private void setupAnimations() {
-
-		bmAnim = new AnimationDrawable();
-		Bitmap drwAnimSrc = BitmapFactory.decodeResource(getResources(), R.drawable.ui_loading);
-		int bmSizeX = drwAnimSrc.getWidth(), bmSizeY = drwAnimSrc.getHeight(), bmFrameSzx = bmSizeX
-				/ bmSizeY;
-		for (int dp = 0; dp < bmFrameSzx; dp++) {
-			bmAnim.addFrame(
-					new BitmapDrawable(getResources(), Bitmap.createBitmap(drwAnimSrc,
-							bmSizeY * dp, 0, bmSizeY, bmSizeY)), 50);
-		}
-
-		bmAnim.setOneShot(false);
-		drwAnimSrc = null;
-		((ImageView) findViewById(R.id.ivLoadAnim)).setImageDrawable(bmAnim);
-	}
-	
-	//TODO: Optimize onResume() to speed up resuming process.
+	// TODO: Optimize onResume() to speed up resuming process.
 	@Override
 	public void onResume() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mBatInfoReceiver, filter);
+		if (!getDrawingLayerManager().isEnabled()) {
+			getDrawingLayerManager().setDrawingEnabled(true);
+		}
 		if (!firstInitDone && mMenu != null) {
 			showLoadingAnim(true);
 			new Thread(new Runnable() {
@@ -248,16 +268,7 @@ public class XPMB_Main extends XPMB_Activity {
 				@Override
 				public void run() {
 					mMenu.doInit();
-					hMessageBus.post(new Runnable() {
-
-						@Override
-						public void run() {
-							mMenu.parseInitLayout();
-							showLoadingAnim(false);
-							firstInitDone = true;
-						}
-
-					});
+					showLoadingAnim(false);
 				}
 
 			}).start();
@@ -267,6 +278,9 @@ public class XPMB_Main extends XPMB_Activity {
 
 	@Override
 	public void onPause() {
+		if (getDrawingLayerManager().isEnabled()) {
+			getDrawingLayerManager().setDrawingEnabled(false);
+		}
 		unregisterReceiver(mBatInfoReceiver);
 		super.onPause();
 	}
@@ -315,6 +329,9 @@ public class XPMB_Main extends XPMB_Activity {
 	// that's the reason to be for this procedure.
 	@Override
 	public void requestActivityEnd() {
+		if (getDrawingLayerManager().isEnabled()) {
+			getDrawingLayerManager().setDrawingEnabled(false);
+		}
 		if (mMenu != null) {
 			mMenu.doCleanup();
 			mMenu.requestDestroy();
@@ -325,7 +342,6 @@ public class XPMB_Main extends XPMB_Activity {
 	@Override
 	public void onDestroy() {
 		Log.w(getClass().getSimpleName(), "onDestroy():Method was called.");
-		requestUnloadSubmenu();
 		if (mMenu != null) {
 			mMenu.doCleanup();
 		}
@@ -333,36 +349,8 @@ public class XPMB_Main extends XPMB_Activity {
 	}
 
 	@Override
-	public XPMB_ImageView getCustomBGView() {
-		return (XPMB_ImageView) findViewById(R.id.ivCustomBG);
-	}
-
-	@Override
 	public void lockKeys(boolean locked) {
 		bLockedKeys = locked;
-	}
-
-	@Override
-	public void showLoadingAnim(boolean show) {
-		ImageView iv_la = (ImageView) findViewById(R.id.ivLoadAnim);
-		if (iv_la != null) {
-			if (show) {
-				iv_la.setVisibility(View.VISIBLE);
-				bmAnim.start();
-			} else {
-				bmAnim.stop();
-				iv_la.setVisibility(View.INVISIBLE);
-			}
-		}
-	}
-
-	private void updateTimeLabel() {
-		Time today = new Time(Time.getCurrentTimezone());
-		today.setToNow();
-		TextView lb_ct = (TextView) findViewById(R.id.lbCurTime);
-		if (lb_ct != null) {
-			lb_ct.setText(today.format("%d/%m %H:%M "));
-		}
 	}
 
 	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
@@ -370,24 +358,15 @@ public class XPMB_Main extends XPMB_Activity {
 		public void onReceive(final Context context, Intent intent) {
 			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
 			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+			boolean isCharging = (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) == 1);
 			int percent = (level * 100) / scale;
 
-			ImageView iv_bt = (ImageView) findViewById(R.id.ivBattStatus);
-			if (iv_bt != null) {
-				if (percent > 80) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_100));
-				} else if (percent < 81 && percent > 60) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_080));
-				} else if (percent < 61 && percent > 40) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_060));
-				} else if (percent < 41 && percent > 20) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_040));
-				} else if (percent < 21 && percent > 4) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_020));
-				} else if (percent < 5) {
-					iv_bt.setImageDrawable(getResources().getDrawable(R.drawable.ui_batt_000));
-				}
-			}
+			Log.i(getClass().getSimpleName(),
+					"onReceive():Received battery status change broadcast. Level is " + percent
+							+ "%, plugged=" + isCharging + ".");
+
+			((XPMB_BaseUILayer) getDrawingLayerManager().getLayer(0)).setBatteryIndicatorStatus(
+					percent, isCharging);
 		}
 	};
 }

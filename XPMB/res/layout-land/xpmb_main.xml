@@ -25,49 +25,49 @@
         android:layout_height="28dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="4dp"
-        android:src="@drawable/ui_batt_100"
+        android:layout_marginTop="4dp" > <!-- android:src="@drawable/ui_batt_100" -->
         tools:ignore="ContentDescription" />
 
-    <TextView
-        android:id="@+id/lbCurTime"
-        android:layout_width="wrap_content"
-        android:layout_height="28dp"
-        android:layout_marginTop="4dp"
-        android:layout_toLeftOf="@id/ivBattStatus"
-        android:gravity="right|center_vertical"
-        android:paddingRight="6dp"
-        android:shadowColor="#000000"
-        android:shadowDx="4"
-        android:shadowDy="4"
-        android:shadowRadius="10"
-        android:text="24/7 21:59"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        tools:ignore="HardcodedText" />
+        <TextView
+            android:id="@+id/lbCurTime"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_marginTop="4dp"
+            android:layout_toLeftOf="@id/ivBattStatus"
+            android:gravity="right|center_vertical"
+            android:paddingRight="6dp"
+            android:shadowColor="#000000"
+            android:shadowDx="4"
+            android:shadowDy="4"
+            android:shadowRadius="10"
+            android:text="24/7 21:59"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:ignore="HardcodedText" />
 
-    <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
-        android:id="@+id/ivSubmenuShown"
-        android:layout_width="12dp"
-        android:layout_height="24dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="156dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ui_xmb_back"
+        <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
+            android:id="@+id/ivSubmenuShown"
+            android:layout_width="12dp"
+            android:layout_height="24dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="156dp"
+            android:scaleType="centerCrop" > <!-- android:src="@drawable/ui_xmb_back" -->
         android:visibility="visible"
         backports:alpha="0.0"
         tools:ignore="ContentDescription" />
 
-    <ImageView
-        android:id="@+id/ivLoadAnim"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="4dp"
-        android:layout_marginRight="4dp"
-        android:scaleType="fitXY"
-        android:visibility="visible"
-        tools:ignore="ContentDescription" />
+            <ImageView
+                android:id="@+id/ivLoadAnim"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginBottom="4dp"
+                android:layout_marginRight="4dp"
+                android:scaleType="fitXY"
+                android:visibility="visible"
+                tools:ignore="ContentDescription" />
+        </com.raddstudios.xpmb.utils.backports.XPMB_ImageView>
+    </ImageView>
 
 </RelativeLayout>

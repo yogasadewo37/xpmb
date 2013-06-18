@@ -54,8 +54,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="false"
         android:layout_alignParentTop="false"
-        android:layout_marginLeft="2dp"
-        android:src="@drawable/ui_status_media_play"
+        android:layout_marginLeft="2dp" > <!-- android:src="@drawable/ui_status_media_play" -->
         tools:ignore="ContentDescription" />
+    </com.raddstudios.xpmb.utils.backports.XPMB_ImageView>
 
 </com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout>

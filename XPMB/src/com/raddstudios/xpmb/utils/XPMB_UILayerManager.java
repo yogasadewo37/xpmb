@@ -17,37 +17,41 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb;
+package com.raddstudios.xpmb.utils;
 
 import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.os.Handler;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
-import android.view.ViewGroup;
+import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Layout;
-
 @SuppressLint("ViewConstructor")
-public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Callback {
+public class XPMB_UILayerManager extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
-	public interface UILayer {
+	public interface UILayer_I {
 		public void drawTo(Canvas canvas);
+
+		public void setDrawingConstraints(Rect constraints);
+		
+		public Rect getDrawingConstraints();
 	}
 
 	private Thread thDraw = null;
-	private boolean bIsEnabled = true, bSurfaceExists = false;
+	private boolean bIsEnabled = true, bSurfaceExists = false, bModifyingList = false;
 	private ArrayList<UILayer> alLayers = null;
+	private Canvas mCanvas = null;
 
-	public XPMB_UI(XPMB_Activity root, Handler messageBus, ViewGroup rootView) {
-		super(root, messageBus, rootView);
+	public XPMB_UILayerManager(XPMB_Activity root) {
+		super(root.getBaseContext());
 
-		Log.v(getClass().getSimpleName(), "XPMB_UI():Start draw thread initialization.");
+		Log.v(getClass().getSimpleName(), "XPMB_UILayerManager():Start draw thread initialization.");
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		this.setZOrderOnTop(true);
@@ -55,27 +59,41 @@ public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Call
 		thDraw = new Thread(this);
 		alLayers = new ArrayList<UILayer>();
 		setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		rootView.addView(this);
-		Log.v(getClass().getSimpleName(), "XPMB_UI():Finished draw thread initialization.");
+		root.getRootView().addView(this);
+		Log.v(getClass().getSimpleName(),
+				"XPMB_UILayerManager():Finished draw thread initialization.");
 	}
 
 	@Override
 	public void run() {
+		int ly = 0;
 		while (bIsEnabled) {
 			if (bSurfaceExists) {
-				Canvas mcanvas = getHolder().lockCanvas();
-
-				for (UILayer l : alLayers) {
-					l.drawTo(mcanvas);
+				if (mCanvas == null){
+					mCanvas = getHolder().lockCanvas();
 				}
 
-				getHolder().unlockCanvasAndPost(mcanvas);
+				if (mCanvas != null && !bModifyingList) {
+					mCanvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
+
+					for (ly = 0; ly < alLayers.size(); ly++) {
+						alLayers.get(ly).drawTo(mCanvas);
+					}
+
+					getHolder().unlockCanvasAndPost(mCanvas);
+					mCanvas = null;
+				}
+
 			}
 		}
 	}
 
 	public int addLayer(UILayer layer) {
+		bModifyingList = true;
 		alLayers.add(layer);
+		Log.d(getClass().getSimpleName(), "addLayer():Added layer '"
+				+ layer.getClass().getSimpleName() + "'");
+		bModifyingList = false;
 		return alLayers.indexOf(layer);
 	}
 
@@ -83,22 +101,59 @@ public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Call
 		return alLayers.indexOf(layer);
 	}
 
+	public UILayer getLayer(int index) {
+		return alLayers.get(index);
+	}
+
 	public void removeLayer(UILayer layer) {
+		bModifyingList = true;
 		alLayers.remove(layer);
+		Log.d(getClass().getSimpleName(), "removeLayer():Removed layer '"
+				+ layer.getClass().getSimpleName() + "'");
+		bModifyingList = false;
 	}
 
 	public void removeLayer(int layerIndex) {
-		alLayers.remove(layerIndex);
+		bModifyingList = true;
+		UILayer layer = alLayers.get(layerIndex);
+		alLayers.remove(layer);
+		Log.d(getClass().getSimpleName(), "removeLayer():Removed layer '"
+				+ layer.getClass().getSimpleName() + "'");
+		bModifyingList = false;
 	}
 
+	public void setDrawingConstraints(Rect constraints) {
+		for (UILayer l : alLayers) {
+			l.setDrawingConstraints(constraints);
+		}
+	}
+
+	@Override
 	public boolean isEnabled() {
 		return bIsEnabled;
 	}
 
 	public void setDrawingEnabled(boolean enabled) {
 		bIsEnabled = enabled;
-		if (bIsEnabled) {
+		if (bIsEnabled && bSurfaceExists && !thDraw.isAlive()) {
 			thDraw.start();
+			Log.v(getClass().getSimpleName(), "setDrawingEnabled():Starting drawing thread...");
+		} else if (!bIsEnabled) {
+			Log.v(getClass().getSimpleName(), "setDrawingEnabled():Stopping drawing thread...");
+			boolean retry = true;
+
+			while (retry) {
+				try {
+					thDraw.join();
+					retry = false;
+				}
+
+				catch (Exception e) {
+					Log.e(getClass().getSimpleName(),
+							"setDrawingEnabled():Error stopping drawing thread.");
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -106,6 +161,7 @@ public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Call
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 		Log.v(getClass().getSimpleName(), "surfaceChanged():New surface size is " + width + "w "
 				+ height + "h");
+		setDrawingConstraints(new Rect(0, 0, width, height));
 	}
 
 	@Override
@@ -113,7 +169,9 @@ public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Call
 		Log.v(getClass().getSimpleName(), "surfaceCreated():New drawing surface available, "
 				+ "starting drawing thread.");
 		bSurfaceExists = true;
-		thDraw.start();
+		if (bIsEnabled && !thDraw.isAlive()) {
+			thDraw.start();
+		}
 	}
 
 	@Override
@@ -131,6 +189,8 @@ public class XPMB_UI extends XPMB_Layout implements Runnable, SurfaceHolder.Call
 			}
 
 			catch (Exception e) {
+				Log.e(getClass().getSimpleName(),
+						"surfaceDestroyed():Error stopping drawing thread.");
 				e.printStackTrace();
 			}
 		}

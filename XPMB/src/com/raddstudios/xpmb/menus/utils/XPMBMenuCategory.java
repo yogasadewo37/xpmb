@@ -22,53 +22,48 @@ package com.raddstudios.xpmb.menus.utils;
 import java.util.ArrayList;
 
 import android.graphics.Point;
-import android.graphics.PointF;
-import android.graphics.Rect;
 
-public class XPMBMenuCategory implements XPMBMenuItemDef {
+public class XPMBMenuCategory extends XPMBMenuItem {
 
 	public static final int LIST_ANIM_NONE = 0, LIST_ANIM_FULL = 4, LIST_ANIM_HALF = 2,
 			LIST_ANIM_HIGHLIGHT = 3;
-	public static final int FILTER_SYSTEM_DUMMY = 0, FILTER_MEDIA_MUSIC = 1,
-			FILTER_MEDIA_PICTURES = 2, FILTER_MEDIA_VIDEOS = 3, FILTER_SYSTEM_APPS = 4,
-			FILTER_EMU_GBA = 5, FILTER_EMU_NES = 6, FILTER_EMU_SNES = 7;
+	public static final int MODULE_SYSTEM_DUMMY = 0, MODULE_MEDIA_MUSIC = 1,
+			MODULE_MEDIA_PICTURES = 2, MODULE_MEDIA_VIDEOS = 3, MODULE_SYSTEM_APPS = 4,
+			MODULE_EMU_GBA = 5, MODULE_EMU_NES = 6, MODULE_EMU_SNES = 7;
 
 	private ArrayList<XPMBMenuItemDef> alSubitems = null;
-	private String strLabel = null, strLabelB = null, strIcon = null;
 	private int intCurSubitem = 0, intListAnimator = LIST_ANIM_NONE,
-			intListFilter = FILTER_SYSTEM_DUMMY;
-	private PointF pfScale = null;
-	private Rect rLoc = null;
-	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha = 1.0f, fAlpha_s = 1.0f;
-	private boolean bSubitemsVisible = false, bTwoLines = false;
+			intSubmodule = MODULE_SYSTEM_DUMMY;
+	private float fSubAlpha = 1.0f;
+	private Point pContainerPos = null;
+	private boolean bSubitemsVisible = false;
 
 	public XPMBMenuCategory(String label) {
-		strLabel = label;
+		super(label);
 		alSubitems = new ArrayList<XPMBMenuItemDef>();
-		pfScale = new PointF(1.0f, 1.0f);
-		rLoc = new Rect(0, 0, 0, 0);
+		pContainerPos = new Point();
+	}
+	
+	@Override
+	public void setSubitemsAlpha(float alpha) {
+		fSubAlpha = alpha;
 	}
 
 	@Override
-	public void setLabel(String label) {
-		strLabel = label;
+	public float getSubitemsAlpha() {
+		return fSubAlpha;
 	}
 
 	@Override
-	public String getLabel() {
-		return strLabel;
+	public void setSubitemsVisibility(boolean visible){
+		bSubitemsVisible = visible;
 	}
-
+	
 	@Override
-	public void setIcon(String icon) {
-		strIcon = icon;
+	public boolean getSubitemsVisibility(){
+		return bSubitemsVisible;
 	}
-
-	@Override
-	public String getIcon() {
-		return strIcon;
-	}
-
+	
 	public void addSubitem(XPMBMenuItemDef subitem) {
 		alSubitems.add(subitem);
 	}
@@ -109,28 +104,28 @@ public class XPMBMenuCategory implements XPMBMenuItemDef {
 		return alSubitems.indexOf(value);
 	}
 
-	public void setItemFilter(String type) {
+	public void setSubmoduleIDFromString(String type) {
 		if (type == null) {
-			intListFilter = FILTER_SYSTEM_DUMMY;
+			intSubmodule = MODULE_SYSTEM_DUMMY;
 		} else if (type.equalsIgnoreCase("com.xpmb.media.music")) {
-			intListFilter = FILTER_MEDIA_MUSIC;
+			intSubmodule = MODULE_MEDIA_MUSIC;
 		} else if (type.equalsIgnoreCase("com.xpmb.media.pictures")) {
-			intListFilter = FILTER_MEDIA_PICTURES;
+			intSubmodule = MODULE_MEDIA_PICTURES;
 		} else if (type.equalsIgnoreCase("com.xpmb.media.videos")) {
-			intListFilter = FILTER_MEDIA_VIDEOS;
+			intSubmodule = MODULE_MEDIA_VIDEOS;
 		} else if (type.equalsIgnoreCase("com.xpmb.emu.nes")) {
-			intListFilter = FILTER_EMU_NES;
+			intSubmodule = MODULE_EMU_NES;
 		} else if (type.equalsIgnoreCase("com.xpmb.emu.snes")) {
-			intListFilter = FILTER_EMU_SNES;
+			intSubmodule = MODULE_EMU_SNES;
 		} else if (type.equalsIgnoreCase("com.xpmb.emu.gba")) {
-			intListFilter = FILTER_EMU_GBA;
+			intSubmodule = MODULE_EMU_GBA;
 		} else if (type.equalsIgnoreCase("com.xpmb.system.apps")) {
-			intListFilter = FILTER_SYSTEM_APPS;
+			intSubmodule = MODULE_SYSTEM_APPS;
 		}
 	}
 
-	public int getItemFilter() {
-		return intListFilter;
+	public int getSubmoduleID() {
+		return intSubmodule;
 	}
 
 	public void setListAnimator(String animator) {
@@ -149,152 +144,15 @@ public class XPMBMenuCategory implements XPMBMenuItemDef {
 		return intListAnimator;
 	}
 
-	@Override
-	public void setIconAlpha(float alpha) {
-		fAlpha_i = alpha;
+	public void setSubitemsPosX(int pos) {
+		pContainerPos.x = pos;
 	}
 
-	@Override
-	public float getIconAlpha() {
-		return fAlpha_i;
+	public void setSubitemsPosY(int pos) {
+		pContainerPos.y = pos;
 	}
 
-	@Override
-	public void setLabelAlpha(float alpha) {
-		fAlpha_l = alpha;
-	}
-
-	@Override
-	public float getLabelAlpha() {
-		return fAlpha_l;
-	}
-
-	@Override
-	public void setSubitemsAlpha(float alpha) {
-		fAlpha = alpha;
-	}
-
-	@Override
-	public float getSubitemsAlpha() {
-		return fAlpha;
-	}
-
-	@Override
-	public void setSubitemsVisibility(boolean visible) {
-		bSubitemsVisible = visible;
-	}
-
-	@Override
-	public boolean getSubitemsVisibility() {
-		return bSubitemsVisible;
-	}
-
-	@Override
-	public void setPosition(Point position) {
-		rLoc.left = position.x;
-		rLoc.top = position.y;
-	}
-
-	@Override
-	public Point getPosition() {
-		return new Point(rLoc.left, rLoc.top);
-	}
-
-	@Override
-	public void setIconScale(PointF scale) {
-		pfScale = scale;
-	}
-
-	@Override
-	public PointF getIconScale() {
-		return pfScale;
-	}
-
-	@Override
-	public void setSize(Point size) {
-		setWidth(size.x);
-		setHeight(size.y);
-	}
-
-	@Override
-	public Point getSize() {
-		return new Point(rLoc.right - rLoc.left, rLoc.bottom - rLoc.top);
-	}
-
-	@Override
-	public Rect getComputedLocation() {
-		return rLoc;
-	}
-
-	@Override
-	public void setIconScaleX(float scx) {
-		pfScale.x = scx;
-	}
-
-	@Override
-	public void setIconScaleY(float scy) {
-		pfScale.y = scy;
-	}
-
-	@Override
-	public void setWidth(int width) {
-		if (rLoc.left != 0) {
-			rLoc.right = rLoc.left + width;
-		} else {
-			rLoc.right = width;
-		}
-	}
-
-	@Override
-	public void setHeight(int height) {
-		if (rLoc.top != 0) {
-			rLoc.bottom = rLoc.top + height;
-		} else {
-			rLoc.bottom = height;
-		}
-	}
-
-	@Override
-	public void setPositionX(int x) {
-		int w = rLoc.right - rLoc.left;
-		rLoc.left = x;
-		rLoc.right = x + w;
-	}
-
-	@Override
-	public void setPositionY(int y) {
-		int h = rLoc.bottom - rLoc.top;
-		rLoc.top = y;
-		rLoc.bottom = y + h;
-	}
-
-	@Override
-	public void setLabelB(String label) {
-		strLabelB = label;
-	}
-
-	@Override
-	public void enableTwoLine(boolean enabled) {
-		bTwoLines = enabled;
-	}
-
-	@Override
-	public String getLabelB() {
-		return strLabelB;
-	}
-
-	@Override
-	public boolean isTwoLines() {
-		return bTwoLines;
-	}
-
-	@Override
-	public void setSeparatorAlpha(float alpha) {
-		fAlpha_s = alpha;
-	}
-
-	@Override
-	public float getSeparatorAlpha() {
-		return fAlpha_s;
+	public Point getSubitemsPos() {
+		return pContainerPos;
 	}
 }

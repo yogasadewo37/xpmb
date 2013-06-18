@@ -37,7 +37,7 @@ public class ThemeLoader {
 	Hashtable<String, Bitmap> hAssets = null;
 
 	public ThemeLoader(Hashtable<String, Bitmap> dest) {
-		hAssets = dest;
+		hAssets = dest;		
 	}
 
 	public void reloadTheme(ZipFile container) {

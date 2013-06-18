@@ -28,14 +28,18 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	private String strLabelA = null, strLabelB = null, strIcon = null;
 	private Object oData = null;
 	private PointF pfScale = null;
-	private Rect rLoc = null;
+	private Point pSize = null;
+	private Rect rLoc = null, rMargins = null;
 	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha_s = 1.0f;
 	private boolean bTwoLines = false;
+	private int iIconType = 0;
 
 	public XPMBMenuItem(String label) {
 		strLabelA = label;
 		pfScale = new PointF(1.0f, 1.0f);
-		rLoc = new Rect(0, 0, 0, 0);
+		rLoc = new Rect();
+		rMargins = new Rect();
+		pSize = new Point();
 	}
 
 	public void setData(Object data) {
@@ -57,12 +61,12 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	}
 
 	@Override
-	public void setIcon(String icon) {
+	public void setIconBitmapID(String icon) {
 		strIcon = icon;
 	}
 
 	@Override
-	public String getIcon() {
+	public String getIconBitmapID() {
 		return strIcon;
 	}
 
@@ -108,6 +112,8 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	public void setPosition(Point position) {
 		rLoc.left = position.x;
 		rLoc.top = position.y;
+		rLoc.right = rLoc.left + pSize.x;
+		rLoc.bottom = rLoc.top + pSize.y;
 	}
 
 	@Override
@@ -133,7 +139,7 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 
 	@Override
 	public Point getSize() {
-		return new Point(rLoc.right - rLoc.left, rLoc.bottom - rLoc.top);
+		return pSize;
 	}
 
 	@Override
@@ -153,34 +159,24 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 
 	@Override
 	public void setWidth(int width) {
-		if (rLoc.left != 0) {
-			rLoc.right = rLoc.left + width;
-		} else {
-			rLoc.right = width;
-		}
+		pSize.x = width;
+		rLoc.right = rLoc.left + width;
 	}
 
 	@Override
 	public void setHeight(int height) {
-		if (rLoc.top != 0) {
-			rLoc.bottom = rLoc.top + height;
-		} else {
-			rLoc.bottom = height;
-		}
+		pSize.y = height;
+		rLoc.bottom = rLoc.top + height;
 	}
 
 	@Override
 	public void setPositionX(int x) {
-		int w = rLoc.right - rLoc.left;
-		rLoc.left = x;
-		rLoc.right = x + w;
+		rLoc.offsetTo(x, rLoc.top);
 	}
 
 	@Override
 	public void setPositionY(int y) {
-		int h = rLoc.bottom - rLoc.top;
-		rLoc.top = y;
-		rLoc.bottom = y + h;
+		rLoc.offsetTo(rLoc.left, y);
 	}
 
 	@Override
@@ -211,5 +207,40 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	@Override
 	public float getSeparatorAlpha() {
 		return fAlpha_s;
+	}
+
+	@Override
+	public Rect getMargins() {
+		return rMargins;
+	}
+
+	@Override
+	public void setMarginLeft(int left) {
+		rMargins.left = left;
+	}
+
+	@Override
+	public void setMarginTop(int top) {
+		rMargins.top = top;
+	}
+
+	@Override
+	public void setMarginRight(int right) {
+		rMargins.right = right;
+	}
+
+	@Override
+	public void setMarginBottom(int bottom) {
+		rMargins.bottom = bottom;
+	}
+
+	@Override
+	public void setIconType(int type) {
+		iIconType = type;
+	}
+
+	@Override
+	public int getIconType() {
+		return iIconType;
 	}
 }

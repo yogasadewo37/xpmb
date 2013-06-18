@@ -25,14 +25,18 @@ import android.graphics.Rect;
 
 
 public interface XPMBMenuItemDef {
+	final static int ICON_TYPE_COUNTER = 0, ICON_TYPE_BITMAP = 1;
+	
 	void setLabel(String label);
 	void setLabelB(String label);
 	String getLabel();
 	String getLabelB();
 	void setLabelAlpha(float alpha);
 	float getLabelAlpha();
-	void setIcon(String icon);
-	String getIcon();
+	void setIconBitmapID(String icon);
+	String getIconBitmapID();
+	void setIconType(int type);
+	int getIconType();
 	void enableTwoLine(boolean enabled);
 	boolean isTwoLines();
 	void setIconScale(PointF scale);
@@ -55,5 +59,10 @@ public interface XPMBMenuItemDef {
 	Point getPosition();
 	void setPositionX(int x);
 	void setPositionY(int y);
+	Rect getMargins();
+	void setMarginLeft(int left);
+	void setMarginTop(int top);
+	void setMarginRight(int right);
+	void setMarginBottom(int bottom);
 	Rect getComputedLocation();
 }
