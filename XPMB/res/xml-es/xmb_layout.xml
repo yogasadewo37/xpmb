@@ -23,7 +23,7 @@
         label="Música" >
         <subcategory
             anim="highlight"
-            filter="com.xpmb.media.music"
+            module="com.xpmb.media.music"
             icon="theme.icon|icon_sd"
             label="Memoria externa" />
     </category>
@@ -39,12 +39,12 @@
         label="Juegos" >
         <subcategory
             anim="half"
-            filter="com.xpmb.emu.nes"
+            module="com.xpmb.emu.nes"
             icon="theme.icon|icon_savedata"
             label="Nintendo Entertainment System" />
         <subcategory
             anim="half"
-            filter="com.xpmb.emu.gba"
+            module="com.xpmb.emu.gba"
             icon="theme.icon|icon_savedata"
             label="Gameboy Advance" />
     </category>
@@ -65,9 +65,10 @@
         label="Aplicaciones" >
         <subcategory
             anim="half"
-            filter="com.xpmb.system.apps"
             icon="theme.icon|icon_download"
-            label="Aplicaciones instaladas" />
+            label="Aplicaciones instaladas"
+            module="com.xpmb.system.apps" />
+
     </category>
 
 </xpmbroot>

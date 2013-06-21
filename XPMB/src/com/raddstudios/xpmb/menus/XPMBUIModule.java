@@ -28,17 +28,19 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.text.format.Time;
 import android.view.Gravity;
 
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.utils.UILayer;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.UI.UILayer;
 
-public class XPMB_BaseUILayer extends UILayer {
+public class XPMBUIModule extends UILayer {
 
 	private XPMB_Activity mRoot = null;
-	private Rect rConstraints = null, bmRect = null;
+	private RectF rConstraints = null;
+	private Rect bmRect = null;
 	private String strBatteryIcon = "theme.icon|icon_batt_status_000";
 	private boolean bLoadingAnim = false, bBatteryIndicator = true, bDateTimeLabel = true;
 	private Paint pPaint = null;
@@ -47,11 +49,11 @@ public class XPMB_BaseUILayer extends UILayer {
 	private int intLoadAnimFrames = 0, intLoadAnimCurFrame = 0;
 	private Timer tUpdateAnims = null;
 
-	public XPMB_BaseUILayer(XPMB_Activity root) {
+	public XPMBUIModule(XPMB_Activity root) {
 		super(root);
 		mRoot = root;
 		bmRect = new Rect();
-		setDrawingConstraints(new Rect(0, 0, root.getRootView().getWidth(), root.getRootView()
+		setDrawingConstraints(new RectF(0, 0, root.getRootView().getWidth(), root.getRootView()
 				.getHeight()));
 		pPaint = new Paint();
 		tClock = new Time(Time.getCurrentTimezone());
@@ -60,7 +62,7 @@ public class XPMB_BaseUILayer extends UILayer {
 		intLoadAnimFrames = drwAnimSrc.getWidth() / drwAnimSrc.getHeight();
 		tUpdateAnims = new Timer();
 		tUpdateAnims.scheduleAtFixedRate(ttUpdateLoadAnim, 0, 30);
-		tUpdateAnims.scheduleAtFixedRate(ttUpdateDateTime, 0, 1000);
+		tUpdateAnims.scheduleAtFixedRate(ttUpdateDateTime, 0, 10000);
 	}
 
 	@Override
@@ -80,7 +82,7 @@ public class XPMB_BaseUILayer extends UILayer {
 			pPaint.setTextAlign(Align.RIGHT);
 			pPaint.setTextSize(pxfd(19));
 			pPaint.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
-			int intTime_x = rConstraints.right - pxfd(42), intTime_y = (int) (rConstraints.top
+			int intTime_x = (int) rConstraints.right - pxfd(42), intTime_y = (int) (rConstraints.top
 					- pPaint.ascent() + pxfd(6));
 			canvas.drawText(strFormattedDate, intTime_x, intTime_y, pPaint);
 			pPaint.reset();
@@ -88,7 +90,7 @@ public class XPMB_BaseUILayer extends UILayer {
 		if (bLoadingAnim) {
 			Bitmap bmAnim = (Bitmap) mRoot.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
 					"theme.icon|ui_load_anim");
-			int intAnim_x = rConstraints.right - pxfd(37), intAnim_y = rConstraints.bottom
+			int intAnim_x = (int) rConstraints.right - pxfd(37), intAnim_y = (int) rConstraints.bottom
 					- pxfd(37), intAnim_bx = bmAnim.getHeight() * intLoadAnimCurFrame;
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 			canvas.drawBitmap(bmAnim, new Rect(intAnim_bx, 0, intAnim_bx + bmAnim.getHeight(),
@@ -99,13 +101,13 @@ public class XPMB_BaseUILayer extends UILayer {
 	}
 
 	@Override
-	public void setDrawingConstraints(Rect constraints) {
+	public void setDrawingConstraints(RectF constraints) {
 		rConstraints = constraints;
 		Bitmap bm_batt = (Bitmap) mRoot.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
 				strBatteryIcon);
 		Rect bm_rect = new Rect(0, 0, bm_batt.getWidth(), bm_batt.getHeight()), br = new Rect(
-				rConstraints.right - pxfd(37), rConstraints.top, rConstraints.right
-						- pxfd(37) + pxfd(32), rConstraints.top + pxfd(32));
+				(int) rConstraints.right - pxfd(37), (int) rConstraints.top,
+				(int) rConstraints.right - pxfd(37) + pxfd(32), (int) rConstraints.top + pxfd(32));
 		bmRect = getScaledRect(br, bm_rect.width() / br.width(), bm_rect.height() / br.height(),
 				Gravity.CENTER);
 	}

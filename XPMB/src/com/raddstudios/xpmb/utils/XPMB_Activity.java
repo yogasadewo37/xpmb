@@ -22,7 +22,8 @@ package com.raddstudios.xpmb.utils;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import com.raddstudios.xpmb.menus.XPMB_BaseUILayer;
+import com.raddstudios.xpmb.menus.XPMBUIModule;
+import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -44,6 +45,15 @@ import android.widget.RelativeLayout;
 @SuppressLint("Registered")
 public class XPMB_Activity extends Activity {
 
+	// XPERIA Play's physical button Key Codes
+	public static final int KEYCODE_UP = 19, KEYCODE_DOWN = 20, KEYCODE_LEFT = 21,
+			KEYCODE_RIGHT = 22, KEYCODE_CROSS = 23, KEYCODE_CIRCLE = 4, KEYCODE_SQUARE = 99,
+			KEYCODE_TRIANGLE = 100, KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
+			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLUME_DOWN = 25,
+			KEYCODE_VOLUME_UP = 24;
+	public static final String GRAPH_ASSETS_COL_KEY = "com.raddstudios.graphassets",
+			SETTINGS_COL_KEY = "com.raddstudios.settings";
+	
 	public interface FinishedListener {
 		public void onFinished(Object data);
 	}
@@ -284,7 +294,7 @@ public class XPMB_Activity extends Activity {
 	}
 
 	public void showLoadingAnim(boolean visible) {
-		((XPMB_BaseUILayer) xuLayerManager.getLayer(0)).setLoadingAnimationVisible(visible);
+		((XPMBUIModule) xuLayerManager.getLayer(0)).setLoadingAnimationVisible(visible);
 	}
 
 	public void lockKeys(boolean locked) {

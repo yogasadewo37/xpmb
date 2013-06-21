@@ -31,6 +31,8 @@ public interface XPMBMenuItemDef {
 	void setLabelB(String label);
 	String getLabel();
 	String getLabelB();
+	void setData(Object Data);
+	Object getData();
 	void setLabelAlpha(float alpha);
 	float getLabelAlpha();
 	void setIconBitmapID(String icon);
@@ -47,10 +49,6 @@ public interface XPMBMenuItemDef {
 	float getIconAlpha();
 	void setSeparatorAlpha(float alpha);
 	float getSeparatorAlpha();
-	void setSubitemsAlpha(float alpha);
-	float getSubitemsAlpha();
-	void setSubitemsVisibility(boolean visible);
-	boolean getSubitemsVisibility();
 	void setSize(Point size);
 	void setWidth(int width);
 	void setHeight(int height);

@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules;
+package com.raddstudios.xpmb.menus.modules.games;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -38,59 +38,103 @@ import android.widget.Toast;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.menus.XPMBMenu_UILayer;
+import com.raddstudios.xpmb.menus.XPMBUIModule;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.games.ROMInfo.ROMInfoNode;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.ROMInfo;
-import com.raddstudios.xpmb.utils.ROMInfo.ROMInfoNode;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.utils.UI.UILayer;
+import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V2;
 
-public class Module_Emu_GBA extends Modules_Base {
+public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 
 	private boolean bInit = false;
-	private int intLastItem = -1, intMaxItemsOnScreen = 1;
 	private String strEmuAct = null;
 	private ArrayList<String> alCoverKeys = null;
+	private ProcessItemThread rProcessItem = null;
 
-	private final String SETTING_LAST_ITEM = "emu.gba.lastitem",
-			SETTING_EMU_ACT = "emu.gba.emuact";
+	private final String SETTING_LAST_ITEM = "emu.nes.lastitem",
+			SETTING_EMU_ACT = "emu.nes.emuact";
 
-	public Module_Emu_GBA(XPMB_Activity root) {
+	private class ProcessItemThread implements Runnable {
+
+		private XPMBMenuItemDef f_item = null;
+		private Module_Emu_NES mOwner = null;
+
+		public ProcessItemThread(Module_Emu_NES owner) {
+			mOwner = owner;
+		}
+
+		public void setItem(XPMBMenuItemDef item) {
+			f_item = item;
+		}
+
+		@Override
+		public void run() {
+			Log.d(getClass().getSimpleName(), "processItem():Trying to boot '" + f_item.getLabel()
+					+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
+			Intent intent = new Intent("android.intent.action.VIEW");
+			intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
+			intent.setData(Uri.fromFile((File) f_item.getData()));
+			intent.setFlags(0x10000000);
+			if (getRootActivity().isActivityAvailable(intent)) {
+				Log.v(getClass().getSimpleName(),
+						"processItem():Emulator activity found. Starting emulation...");
+				((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+						.setLoadingAnimationVisible(true);
+				getRootActivity().postIntentStartWait(mOwner, intent);
+			} else {
+				Log.e(getClass().getSimpleName(),
+						"processItem():Emulator activity not found. Giving up emulation.");
+				Toast tst = Toast.makeText(
+						getRootActivity().getWindow().getContext(),
+						getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
+								intent.getComponent().getPackageName()), Toast.LENGTH_SHORT);
+				tst.show();
+			}
+		}
+	}
+
+	public Module_Emu_NES(XPMB_Activity root) {
 		super(root);
 
 		alCoverKeys = new ArrayList<String>();
+		rProcessItem = new ProcessItemThread(this);
 	}
 
-	private static final String ASSET_GRAPH_GBA_CV_NOTFOUND = "theme.icon|ui_cover_not_found_gba";
+	private static final String ASSET_GRAPH_NES_CV_NOTFOUND = "theme.icon|ui_cover_not_found_nes";
 
 	@Override
-	public void initialize(XPMBMenu_UILayer parentLayer, XPMBMenuCategory container,
+	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
 			FinishedListener listener) {
 		super.initialize(parentLayer, container, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
-		getAnimatorWorker().setIconScaling(true, 1.25f);
 		reloadSettings();
-		intMaxItemsOnScreen = (getRootActivity().getDrawingLayerManager().getHeight() / pxfd(64)) + 1;
-		Log.v(getClass().getSimpleName(), "initialize():Max vertical items on screen: "
-				+ intMaxItemsOnScreen);
+		super.setListAnimator(new SubmenuAnimator_V2(container, this));
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
-		intLastItem = (Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_LAST_ITEM, -1);
+		getContainerCategory()
+				.setSelectedSubitem(
+						(Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
+								SETTING_LAST_ITEM, -1));
 		strEmuAct = (String) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
-				"com.androidemu.gba/.EmulatorActivity");
-		Log.d(getClass().getSimpleName(), "reloadSettings():<Selected Item>=" + intLastItem);
-		Log.d(getClass().getSimpleName(), "reloadSettings():<GBA Emulator Activity>=" + strEmuAct);
+				"com.androidemu.nes/.EmulatorActivity");
+		Log.d(getClass().getSimpleName(),
+				"reloadSettings():<Selected Item>="
+						+ String.valueOf(getContainerCategory().getSelectedSubitem()));
+		Log.d(getClass().getSimpleName(), "reloadSettings():<NES Emulator Activity>=" + strEmuAct);
 	}
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
+		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM,
+				getContainerCategory().getSelectedSubitem());
 
 		getContainerCategory().clearSubitems();
 		Log.v(getClass().getSimpleName(), "Removing " + alCoverKeys.size() + " cached cover assets");
@@ -108,7 +152,7 @@ public class Module_Emu_GBA extends Modules_Base {
 			return;
 		}
 		long t = System.currentTimeMillis();
-		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
+		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/NES");
 		ROMInfo ridROMInfoDat = null;
 		int y = 0;
 
@@ -127,10 +171,8 @@ public class Module_Emu_GBA extends Modules_Base {
 				return;
 			}
 		}
-		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_gba),
+		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_nes),
 				ROMInfo.TYPE_CRC);
-
-		// TODO: prepare assets and animation for scaled (1.17x) effect
 
 		try {
 			File[] storPtCont = mROMRoot.listFiles();
@@ -140,7 +182,7 @@ public class Module_Emu_GBA extends Modules_Base {
 					Enumeration<? extends ZipEntry> ze = zf.entries();
 					while (ze.hasMoreElements()) {
 						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
+						if (zef.getName().endsWith(".nes") || zef.getName().endsWith(".NES")) {
 							long ct = System.currentTimeMillis();
 							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
 									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
@@ -174,38 +216,15 @@ public class Module_Emu_GBA extends Modules_Base {
 										"loadIn():Data for ROM with CRC 0x" + gameCRC
 												+ " not found. Using source filename instead.");
 							}
-							xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
+							xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 							xmi.enableTwoLine(true);
 
 							xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
-							xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
+							xmi.setIconBitmapID(ASSET_GRAPH_NES_CV_NOTFOUND);
 							xmi.setData(f);
 							xmi.setWidth(pxfd(85));
 							xmi.setHeight(pxfd(64));
 
-							if (intLastItem != -1) {
-								getContainerCategory().setSubitemsPosY(
-										pxfd(122) - (pxfd(64) * intLastItem));
-								if (y != intLastItem) {
-									xmi.setSeparatorAlpha(0.0f);
-									xmi.setLabelAlpha(0.5f);
-								} else {
-									xmi.setIconScaleX(1.25f);
-									xmi.setIconScaleY(1.25f);
-									xmi.setMarginTop(pxfd(16));
-									xmi.setMarginBottom(pxfd(16));
-								}
-							} else {
-								if (y == 0) {
-									xmi.setIconScaleX(1.25f);
-									xmi.setIconScaleY(1.25f);
-									xmi.setMarginTop(pxfd(16));
-									xmi.setMarginBottom(pxfd(16));
-								} else {
-									xmi.setSeparatorAlpha(0.0f);
-									xmi.setLabelAlpha(0.5f);
-								}
-							}
 							Log.v(getClass().getSimpleName(), "loadin():Item #" + y + " is at ["
 									+ xmi.getPosition().x + "," + xmi.getPosition().y + "].");
 
@@ -218,7 +237,7 @@ public class Module_Emu_GBA extends Modules_Base {
 						}
 					}
 					zf.close();
-				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
+				} else if (f.getName().endsWith(".nes") || f.getName().endsWith(".NES")) {
 					long ct = System.currentTimeMillis();
 					Log.v(getClass().getSimpleName(),
 							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "' ID #"
@@ -263,38 +282,14 @@ public class Module_Emu_GBA extends Modules_Base {
 						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
 								+ gameCRC + " not found. Using source filename instead.");
 					}
-					xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
+					xmi.setLabelB(getRootActivity().getString(R.string.strEmuNESRom));
 					xmi.enableTwoLine(true);
 
-					xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
-					xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
+					xmi.setIconBitmapID(ASSET_GRAPH_NES_CV_NOTFOUND);
 					xmi.setData(f);
 					xmi.setWidth(pxfd(85));
 					xmi.setHeight(pxfd(64));
 
-					if (intLastItem != -1) {
-						getContainerCategory()
-								.setSubitemsPosY(pxfd(122) - (pxfd(64) * intLastItem));
-						if (y != intLastItem) {
-							xmi.setSeparatorAlpha(0.0f);
-							xmi.setLabelAlpha(0.5f);
-						} else {
-							xmi.setIconScaleX(1.25f);
-							xmi.setIconScaleY(1.25f);
-							xmi.setMarginTop(pxfd(16));
-							xmi.setMarginBottom(pxfd(16));
-						}
-					} else {
-						if (y == 0) {
-							xmi.setIconScaleX(1.25f);
-							xmi.setIconScaleY(1.25f);
-							xmi.setMarginTop(pxfd(16));
-							xmi.setMarginBottom(pxfd(16));
-						} else {
-							xmi.setSeparatorAlpha(0.0f);
-							xmi.setLabelAlpha(0.5f);
-						}
-					}
 					Log.v(getClass().getSimpleName(),
 							"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
 									+ xmi.getPosition().y + "].");
@@ -304,6 +299,7 @@ public class Module_Emu_GBA extends Modules_Base {
 					Log.i(getClass().getSimpleName(), "loadIn():Item loading completed for item #"
 							+ y + ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 				}
+
 			}
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
@@ -311,54 +307,28 @@ public class Module_Emu_GBA extends Modules_Base {
 			// TODO Handle errors when loading found ROMs
 			e.printStackTrace();
 		}
+		getListAnimator().initializeItems();
 		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
 	}
 
-	FinishedListener flEmuEnd = new FinishedListener() {
-		@Override
-		public void onFinished(Object data) {
-			Log.v(getClass().getSimpleName(),
-					"onFinished():Emulator activity finished. Returning to XPMB...");
-			// TODO: Loading animation stop
-		}
-	};
+	@Override
+	public void onFinished(Object data) {
+		Log.v(getClass().getSimpleName(),
+				"onFinished():Emulator activity finished. Returning to XPMB...");
+		((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+				.setLoadingAnimationVisible(false);
+	}
 
 	@Override
-	public void processItem(XPMBMenuItem item) {
+	public void processItem(XPMBMenuItemDef item) {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		final XPMBMenuItem f_item = item;
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				Log.d(getClass().getSimpleName(),
-						"processItem():Trying to boot '" + f_item.getLabel()
-								+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
-				Intent intent = new Intent("android.intent.action.VIEW");
-				intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
-				intent.setData(Uri.fromFile((File) f_item.getData()));
-				intent.setFlags(0x10000000);
-				if (getRootActivity().isActivityAvailable(intent)) {
-					Log.v(getClass().getSimpleName(),
-							"processItem():Emulator activity found. Starting emulation...");
-					// TODO: Loading animation start
-					getRootActivity().postIntentStartWait(flEmuEnd, intent);
-				} else {
-					Log.e(getClass().getSimpleName(),
-							"processItem():Emulator activity not found. Giving up emulation.");
-					Toast tst = Toast.makeText(
-							getRootActivity().getWindow().getContext(),
-							getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
-									intent.getComponent().getPackageName()), Toast.LENGTH_SHORT);
-					tst.show();
-				}
-			}
-		}).run();
+		rProcessItem.setItem(item);
+		new Thread(rProcessItem).run();
 	}
 
 	@Override
@@ -367,7 +337,7 @@ public class Module_Emu_GBA extends Modules_Base {
 	}
 
 	@Override
-	public void processkeyDown(int keyCode) {
+	public void sendKeyDown(int keyCode) {
 
 		switch (keyCode) {
 		case XPMB_Main.KEYCODE_UP:
@@ -385,45 +355,5 @@ public class Module_Emu_GBA extends Modules_Base {
 					getContainerCategory().getSelectedSubitem()));
 			break;
 		}
-	}
-
-	public void moveUp() {
-		if (getContainerCategory().getSelectedSubitem() == 0
-				|| getContainerCategory().getNumSubItems() == 0) {
-			return;
-		}
-
-		getAnimatorWorker().setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_MOVE_UP);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(getContainerCategory().getSelectedSubitem() - 1);
-		intLastItem = getContainerCategory().getSelectedSubitem();
-	}
-
-	public void moveDown() {
-		if (getContainerCategory().getSelectedSubitem() == getContainerCategory().getNumSubItems() - 1
-				|| getContainerCategory().getNumSubItems() == 0) {
-			return;
-		}
-
-		getAnimatorWorker().setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_MOVE_DOWN);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(getContainerCategory().getSelectedSubitem() + 1);
-		intLastItem = getContainerCategory().getSelectedSubitem();
-	}
-
-	public void centerOnItem(int index) {
-		if (index < 0 || index >= getContainerCategory().getNumSubItems()) {
-			return;
-		}
-
-		getAnimatorWorker().setParams(new int[] { index });
-		getAnimatorWorker()
-				.setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_CENTER_ON_ITEM);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(index);
-		intLastItem = index;
 	}
 }

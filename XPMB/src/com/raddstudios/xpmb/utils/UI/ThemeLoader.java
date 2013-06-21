@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.utils.UI;
 
 import java.io.File;
 import java.util.Hashtable;

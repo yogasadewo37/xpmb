@@ -2,8 +2,8 @@
 <manifest xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.raddstudios.xpmb"
-    android:versionCode="933"
-    android:versionName="Crateria-0.5.933 (build 20130617+2304)" >
+    android:versionCode="993"
+    android:versionName="Crateria-0.5.993 (build 20130621+0050)" >
 
     <uses-sdk
         android:minSdkVersion="10"

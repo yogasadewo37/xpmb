@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules;
+package com.raddstudios.xpmb.menus.modules.system;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,48 +29,73 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.menus.XPMBMenu_UILayer;
+import com.raddstudios.xpmb.menus.XPMBUIModule;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.utils.UI.UILayer;
+import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V1;
 
-public class Module_System_Apps extends Modules_Base {
+public class Module_System_Apps extends Modules_Base implements FinishedListener {
 
 	private boolean bInit = false;
-	private int intLastItem = -1, intMaxItemsOnScreen = 1;
 	private ArrayList<String> alIconKeys = null;
+	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTING_LAST_ITEM = "appsmenu.lastitem";
+
+	private class ProcessItemThread implements Runnable {
+
+		private XPMBMenuItemDef f_item = null;
+		private FinishedListener mOwner = null;
+
+		public ProcessItemThread(FinishedListener owner) {
+			mOwner = owner;
+		}
+
+		public void setItem(XPMBMenuItemDef item) {
+			f_item = item;
+		}
+
+		@Override
+		public void run() {
+			Log.v(getClass().getSimpleName(), "processItem():Starting app's main activity...");
+			((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+					.setLoadingAnimationVisible(true);
+			getRootActivity().postIntentStartWait(mOwner, (Intent) f_item.getData());
+		}
+	}
 
 	public Module_System_Apps(XPMB_Activity root) {
 		super(root);
 		alIconKeys = new ArrayList<String>();
+		rProcessItem = new ProcessItemThread(this);
 	}
 
 	@Override
-	public void initialize(XPMBMenu_UILayer parentLayer, XPMBMenuCategory container, FinishedListener listener) {
+	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
+			FinishedListener listener) {
 		super.initialize(parentLayer, container, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		reloadSettings();
-		intMaxItemsOnScreen = (getRootActivity().getDrawingLayerManager().getHeight() / pxfd(64)) + 1;
-		Log.v(getClass().getSimpleName(),
-				"initialize():Max vertical items on screen: " + String.valueOf(intMaxItemsOnScreen));
+		super.setListAnimator(new SubmenuAnimator_V1(container, this));
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
 	private void reloadSettings() {
-		intLastItem = (Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_LAST_ITEM, -1);
+		getContainerCategory().setSelectedSubitem((Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
+				SETTING_LAST_ITEM, -1));
 		Log.d(getClass().getSimpleName(),
-				"reloadSettings():<Selected Item>=" + String.valueOf(intLastItem));
+				"reloadSettings():<Selected Item>=" + String.valueOf(getContainerCategory().getSelectedSubitem()));
 	}
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, intLastItem);
+		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 
 		getContainerCategory().clearSubitems();
 		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alIconKeys.size())
@@ -94,8 +119,6 @@ public class Module_System_Apps extends Modules_Base {
 		Intent filter = new Intent(Intent.ACTION_MAIN);
 		filter.addCategory(Intent.CATEGORY_LAUNCHER);
 		List<ResolveInfo> ri = pm.queryIntentActivities(filter, PackageManager.GET_META_DATA);
-
-		// TODO: prepare assets and animation for scaled (1.17x) effect
 
 		int y = 0;
 		for (ResolveInfo rinf : ri) {
@@ -127,24 +150,6 @@ public class Module_System_Apps extends Modules_Base {
 			xmi.setWidth(pxfd(64));
 			xmi.setHeight(pxfd(64));
 
-			if (intLastItem != -1) {
-				getContainerCategory().setSubitemsPosY(pxfd(122) - (pxfd(64) * intLastItem));
-				if (y != intLastItem) {
-					xmi.setSeparatorAlpha(0.0f);
-					xmi.setLabelAlpha(0.5f);
-				} else {
-					xmi.setMarginTop(pxfd(16));
-					xmi.setMarginBottom(pxfd(16));
-				}
-			} else {
-				if (y == 0) {
-					xmi.setMarginTop(pxfd(16));
-					xmi.setMarginBottom(pxfd(16));
-				} else {
-					xmi.setSeparatorAlpha(0.0f);
-					xmi.setLabelAlpha(0.5f);
-				}
-			}
 			Log.v(getClass().getSimpleName(),
 					"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
 							+ xmi.getPosition().y + "].");
@@ -154,36 +159,29 @@ public class Module_System_Apps extends Modules_Base {
 			Log.d(getClass().getSimpleName(), "loadIn():Item loading completed for item #" + y
 					+ ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 		}
+		getListAnimator().initializeItems();
 		Log.i(getClass().getSimpleName(), "loadIn():App list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
 	}
 
-	FinishedListener flAppEnd = new FinishedListener() {
-		@Override
-		public void onFinished(Object data) {
-			Log.v(getClass().getSimpleName(),
-					"onFinished():App activity finished. Returning to XPMB...");
-			// TODO: Loading animation stop
-		}
-	};
+	@Override
+	public void onFinished(Object data) {
+		Log.v(getClass().getSimpleName(),
+				"onFinished():App activity finished. Returning to XPMB...");
+		((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+				.setLoadingAnimationVisible(false);
+	}
 
 	@Override
-	public void processItem(XPMBMenuItem item) {
+	public void processItem(XPMBMenuItemDef item) {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		final XPMBMenuItem f_item = item;
-		new Thread(new Runnable() {
 
-			@Override
-			public void run() {
-				Log.v(getClass().getSimpleName(), "processItem():Starting app's main activity...");
-				// TODO: Loading animation start
-				getRootActivity().postIntentStartWait(flAppEnd, (Intent) f_item.getData());
-			}
-		}).run();
+		rProcessItem.setItem(item);
+		new Thread(rProcessItem).run();
 	}
 
 	@Override
@@ -192,7 +190,7 @@ public class Module_System_Apps extends Modules_Base {
 	}
 
 	@Override
-	public void processkeyDown(int keyCode) {
+	public void sendKeyDown(int keyCode) {
 
 		switch (keyCode) {
 		case XPMB_Main.KEYCODE_UP:
@@ -210,45 +208,5 @@ public class Module_System_Apps extends Modules_Base {
 					getContainerCategory().getSelectedSubitem()));
 			break;
 		}
-	}
-
-	public void moveUp() {
-		if (getContainerCategory().getSelectedSubitem() == 0
-				|| getContainerCategory().getNumSubItems() == 0) {
-			return;
-		}
-
-		getAnimatorWorker().setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_MOVE_UP);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(getContainerCategory().getSelectedSubitem() - 1);
-		intLastItem = getContainerCategory().getSelectedSubitem();
-	}
-
-	public void moveDown() {
-		if (getContainerCategory().getSelectedSubitem() == getContainerCategory().getNumSubItems() - 1
-				|| getContainerCategory().getNumSubItems() == 0) {
-			return;
-		}
-
-		getAnimatorWorker().setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_MOVE_DOWN);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(getContainerCategory().getSelectedSubitem() + 1);
-		intLastItem = getContainerCategory().getSelectedSubitem();
-	}
-
-	public void centerOnItem(int index) {
-		if (index < 0 || index >= getContainerCategory().getNumSubItems()) {
-			return;
-		}
-
-		getAnimatorWorker().setParams(new int[] { index });
-		getAnimatorWorker()
-				.setAnimationType(Modules_Base.UIAnimatorWorker.ANIM_MENU_CENTER_ON_ITEM);
-		getAnimator().start();
-
-		getContainerCategory().setSelectedSubItem(index);
-		intLastItem = index;
 	}
 }

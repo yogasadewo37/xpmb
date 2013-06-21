@@ -19,8 +19,6 @@
 
 package com.raddstudios.xpmb.menus;
 
-import java.util.ArrayList;
-
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.ComponentName;
@@ -39,30 +37,43 @@ import android.graphics.RectF;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.Toast;
 
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_GBA;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_NES;
+import com.raddstudios.xpmb.menus.modules.media.Module_Media_Music;
+import com.raddstudios.xpmb.menus.modules.system.Module_System_Apps;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.UILayer;
-import com.raddstudios.xpmb.utils.XPMB_Layout;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.utils.UI.UILayer;
+import com.raddstudios.xpmb.utils.UI.XPMB_Layout;
 
-public class XPMBMenu_UILayer extends UILayer {
+public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 
-	private ArrayList<XPMBMenuCategory> alItems = null;
-	private int intSelItem = 0;
-	private float fOpacity = 1.0f;
-	private boolean mInit = false;
+	private XPMBMenuCategory alItems = null;
+	private int intSelItem = 0, intMaxItemsOnScreenH = 0, intMaxItemsOnScreenV = 0;
+	private float fOpacity = 1.0f, fSelIconAlpha = 0.0f;
+	private boolean mInit = false, firstBackPress = false, bLockedKeyPad = false,
+			bShowSelIcon = false;
+	private ExecItemThread rExecItem = null;
+	private Modules_Base curModule = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
 
 	private Paint pParams = new Paint();
-	private Rect rTextBounds = new Rect(), tS = new Rect(), cP = new Rect();
+	private Rect rTextBounds = null, tS = null, cP = null, rSelIconRect = null;
+	private Bitmap bmSelIcon = null;
 
 	public static final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
 			ANIM_CENTER_ON_MENUITEM = 2, ANIM_CENTER_ON_SUBMENUITEM = 3, ANIM_HIDE_MENU_HALF = 4,
@@ -72,29 +83,20 @@ public class XPMBMenu_UILayer extends UILayer {
 
 	private class UIAnimatorWorker implements AnimatorUpdateListener, AnimatorListener {
 
-		private int intAnimType = -1, pInitPosY = 0, intAnimItem = -1, intNextItem = -1;
-		private Point[][] apInitValues = null;
+		// Common Vars
+		private int intAnimType = -1, pInitPosY = 0, pInitPosX = 0, intAnimItem = -1,
+				intNextItem = -1;
 		// private int[] iaParams = null;
 		private ValueAnimator mOwner = null;
+
+		// Animator Vars
+		int dispA = 0, marginA = 0, marginB = 0;
+		float alphaA = 0.0f, alphaB = 0.0f, alphaC = 0.0f, alphaD = 0.0f, scaleA = 0.0f,
+				scaleB = 0.0f;
 
 		public UIAnimatorWorker(ValueAnimator parentAnimator) {
 			super();
 			mOwner = parentAnimator;
-		}
-
-		// public void setParams(int[] params) {
-		// iaParams = params;
-		// }
-
-		private void setInitialValues() {
-			apInitValues = new Point[alItems.size()][];
-			for (int i = 0; i < alItems.size(); i++) {
-				apInitValues[i] = new Point[alItems.get(i).getNumSubItems() + 1];
-				apInitValues[i][0] = alItems.get(i).getPosition();
-				for (int j = 0; j < alItems.get(i).getNumSubItems(); j++) {
-					apInitValues[i][j + 1] = alItems.get(i).getSubitem(j).getPosition();
-				}
-			}
 		}
 
 		public void setAnimationType(int type) {
@@ -102,48 +104,53 @@ public class XPMBMenu_UILayer extends UILayer {
 				mOwner.end();
 			}
 			intAnimType = type;
-			setInitialValues();
 
 			switch (type) {
 			case ANIM_MENU_MOVE_LEFT:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
 				intNextItem = intAnimItem - 1;
-				alItems.get(intNextItem).setSubitemsVisibility(true);
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_MENU_MOVE_RIGHT:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
 				intNextItem = intAnimItem + 1;
-				alItems.get(intNextItem).setSubitemsVisibility(true);
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_MENU_MOVE_UP:
 				mOwner.setDuration(250);
-				intAnimItem = alItems.get(intSelItem).getSelectedSubitem();
+				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+						.getSelectedSubitem();
 				intNextItem = intAnimItem - 1;
-				pInitPosY = alItems.get(intSelItem).getSubitemsPos().y;
+				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSubitemsPos().y;
 				break;
 			case ANIM_MENU_MOVE_DOWN:
 				mOwner.setDuration(250);
-				intAnimItem = alItems.get(intSelItem).getSelectedSubitem();
+				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+						.getSelectedSubitem();
 				intNextItem = intAnimItem + 1;
-				pInitPosY = alItems.get(intSelItem).getSubitemsPos().y;
+				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSubitemsPos().y;
 				break;
 			case ANIM_HIDE_MENU_HALF:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_SHOW_MENU_HALF:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_HIGHLIGHT_MENU_PRE:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_HIGHLIGHT_MENU_POS:
 				mOwner.setDuration(250);
 				intAnimItem = intSelItem;
+				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			}
 		}
@@ -151,9 +158,6 @@ public class XPMBMenu_UILayer extends UILayer {
 		@Override
 		public void onAnimationUpdate(ValueAnimator arg0) {
 			float completion = (Float) arg0.getAnimatedValue();
-
-			int dispA = 0, marginA = 0, marginB = 0;
-			float alphaA = 0.0f, alphaB = 0.0f, alphaC = 0.0f, alphaD = 0.0f, scaleA = 0.0f, scaleB = 0.0f;
 
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_RIGHT:
@@ -163,33 +167,32 @@ public class XPMBMenu_UILayer extends UILayer {
 				} else {
 					dispA = (int) (pxfd(85) * completion);
 				}
-				scaleA = 1.0f - (0.27f * completion);
-				scaleB = 0.7f + (0.27f * completion);
+				scaleA = 1.0f - (0.25f * completion);
+				scaleB = 0.75f + (0.25f * completion);
 				alphaA = 1.0f - (0.5f * completion);
 				alphaB = 0.5f + (0.5f * completion);
 				alphaC = 1.0f - completion;
 				alphaD = completion;
+				alItems.setSubitemsPosX(pInitPosX + dispA);
 
-				for (int x = 0; x < alItems.size(); x++) {
-					alItems.get(x).setPositionX(apInitValues[x][0].x + dispA);
+				for (int x = 0; x < alItems.getNumSubitems(); x++) {
+					XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(x);
 					if (x == intAnimItem || x == intNextItem) {
 						if (x == intAnimItem) {
-							alItems.get(x).setIconScale(new PointF(scaleA, scaleA));
-							alItems.get(x).setIconAlpha(alphaA);
-							alItems.get(x).setLabelAlpha(alphaC);
-							alItems.get(x).setSubitemsAlpha(alphaC);
+							xmc.setIconScaleX(scaleA);
+							xmc.setIconScaleY(scaleA);
+							xmc.setIconAlpha(alphaA);
+							xmc.setLabelAlpha(alphaC);
+							xmc.setSubitemsAlpha(alphaC);
 						}
 						if (x == intNextItem) {
-							alItems.get(x).setIconScale(new PointF(scaleB, scaleB));
-							alItems.get(x).setIconAlpha(alphaB);
-							alItems.get(x).setLabelAlpha(alphaD);
-							alItems.get(x).setSubitemsAlpha(alphaD);
+							xmc.setIconScaleX(scaleB);
+							xmc.setIconScaleY(scaleB);
+							xmc.setIconAlpha(alphaB);
+							xmc.setLabelAlpha(alphaD);
+							xmc.setSubitemsAlpha(alphaD);
 						}
-						alItems.get(x).setSubitemsPosX(alItems.get(x).getPosition().x);
 					}
-				}
-				if (completion == 1.0f) {
-					alItems.get(intAnimItem).setSubitemsVisibility(false);
 				}
 				break;
 			case ANIM_MENU_MOVE_UP:
@@ -207,9 +210,11 @@ public class XPMBMenu_UILayer extends UILayer {
 				}
 				dispA = (int) (((intNextItem - intAnimItem) * pxfd(-85)) * completion);
 
-				alItems.get(intSelItem).setSubitemsPosY(pInitPosY + dispA);
-				for (int y = 0; y < alItems.get(intSelItem).getNumSubItems(); y++) {
-					XPMBMenuItemDef xmid = alItems.get(intSelItem).getSubitem(y);
+				XPMBMenuCategory axmc = (XPMBMenuCategory) alItems.getSubitem(intSelItem);
+
+				axmc.setSubitemsPosY(pInitPosY + dispA);
+				for (int y = 0; y < axmc.getNumSubitems(); y++) {
+					XPMBMenuItemDef xmid = axmc.getSubitem(y);
 
 					if (intAnimType == ANIM_MENU_MOVE_UP) {
 						if (y == intNextItem) {
@@ -237,26 +242,29 @@ public class XPMBMenu_UILayer extends UILayer {
 					alphaA = 1.0f - completion;
 					alphaB = 1.0f - (0.5f * completion);
 					alphaC = 0.7f - (0.7f * completion);
+					fSelIconAlpha = completion;
 				} else {
 					dispA = (int) (pxfd(74) * completion);
 					alphaA = completion;
 					alphaB = 0.5f + (0.5f * completion);
 					alphaC = 0.7f * completion;
+					fSelIconAlpha = 1.0f - completion;
 				}
 
-				for (int x = 0; x < alItems.size(); x++) {
-					alItems.get(x).setPositionX(apInitValues[x][0].x + dispA);
-					alItems.get(x).setSubitemsPosX(alItems.get(x).getPosition().x);
+				alItems.setSubitemsPosX(pInitPosX + dispA);
+
+				for (int x = 0; x < alItems.getNumSubitems(); x++) {
+					XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(x);
 					if (x == intAnimItem) {
-						for (int y = 0; y < alItems.get(x).getNumSubItems(); y++) {
-							if (y == alItems.get(x).getSelectedSubitem()) {
-								alItems.get(x).getSubitem(y).setLabelAlpha(alphaA);
+						for (int y = 0; y < xmc.getNumSubitems(); y++) {
+							if (y == xmc.getSelectedSubitem()) {
+								xmc.getSubitem(y).setLabelAlpha(alphaA);
 							} else {
-								alItems.get(x).getSubitem(y).setIconAlpha(alphaB);
+								xmc.getSubitem(y).setIconAlpha(alphaB);
 							}
 						}
 					} else {
-						alItems.get(x).setIconAlpha(alphaC);
+						xmc.setIconAlpha(alphaC);
 					}
 				}
 				break;
@@ -277,28 +285,30 @@ public class XPMBMenu_UILayer extends UILayer {
 					alphaA = 1.0f - completion;
 					alphaB = 1.0f - (0.5f * completion);
 					alphaC = 0.7f - (0.7f * completion);
+					fSelIconAlpha = completion;
 
 				} else {
 					dispA = (int) (176 * completion);
 					alphaA = completion;
 					alphaB = 0.5f + (0.5f * completion);
 					alphaC = 0.7f * completion;
+					fSelIconAlpha = 1.0f - completion;
 				}
+				alItems.setSubitemsPosX(pInitPosX + dispA);
 
-				for (int x = 0; x < alItems.size(); x++) {
-					alItems.get(x).setPositionX(apInitValues[x][0].x + dispA);
-					alItems.get(x).setSubitemsPosX(alItems.get(x).getPosition().x);
+				for (int x = 0; x < alItems.getNumSubitems(); x++) {
+					XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(x);
 					if (x == intAnimItem) {
-						alItems.get(x).setLabelAlpha(alphaA);
-						for (int y = 0; y < alItems.get(x).getNumSubItems(); y++) {
-							if (y == alItems.get(x).getSelectedSubitem()) {
-								alItems.get(x).getSubitem(y).setLabelAlpha(alphaA);
+						xmc.setLabelAlpha(alphaA);
+						for (int y = 0; y < xmc.getNumSubitems(); y++) {
+							if (y == xmc.getSelectedSubitem()) {
+								xmc.getSubitem(y).setLabelAlpha(alphaA);
 							} else {
-								alItems.get(x).getSubitem(y).setIconAlpha(alphaB);
+								xmc.getSubitem(y).setIconAlpha(alphaB);
 							}
 						}
 					} else {
-						alItems.get(x).setIconAlpha(alphaC);
+						xmc.setIconAlpha(alphaC);
 					}
 				}
 
@@ -311,18 +321,24 @@ public class XPMBMenu_UILayer extends UILayer {
 
 		@Override
 		public void onAnimationCancel(Animator arg0) {
-			apInitValues = null;
-			// iaParams = null;
 		}
 
 		@Override
 		public void onAnimationEnd(Animator arg0) {
-			apInitValues = null;
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_UP:
 			case ANIM_MENU_MOVE_DOWN:
-				alItems.get(intSelItem).setSubitemsPosY(
-						pInitPosY + ((intNextItem - intAnimItem) * pxfd(-85)));
+				((XPMBMenuCategory) alItems.getSubitem(intSelItem)).setSubitemsPosY(pInitPosY
+						+ ((intNextItem - intAnimItem) * pxfd(-85)));
+				break;
+			case ANIM_MENU_MOVE_RIGHT:
+			case ANIM_MENU_MOVE_LEFT:
+				((XPMBMenuCategory) alItems.getSubitem(intAnimItem)).setSubitemsVisibility(false);
+				break;
+			case ANIM_SHOW_MENU_HALF:
+			case ANIM_HIGHLIGHT_MENU_POS:
+				bShowSelIcon = false;
+				break;
 			}
 		}
 
@@ -332,17 +348,44 @@ public class XPMBMenu_UILayer extends UILayer {
 
 		@Override
 		public void onAnimationStart(Animator arg0) {
+			switch (intAnimType) {
+			case ANIM_MENU_MOVE_RIGHT:
+			case ANIM_MENU_MOVE_LEFT:
+				((XPMBMenuCategory) alItems.getSubitem(intNextItem)).setSubitemsVisibility(true);
+				break;
+			case ANIM_HIDE_MENU_HALF:
+			case ANIM_HIGHLIGHT_MENU_PRE:
+				bShowSelIcon = true;
+				break;
+			}
 		}
 	};
 
-	public XPMBMenu_UILayer(XPMB_Layout root) {
-		super(root.getRootActivity());
+	public XPMBMenuModule(XPMB_Activity root) {
+		super(root);
 
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
 		aUIAnimator.setInterpolator(new DecelerateInterpolator());
 		aUIAnimator.setDuration(150);
 		aUIAnimatorW = new UIAnimatorWorker(aUIAnimator);
 		aUIAnimator.addUpdateListener(aUIAnimatorW);
+		aUIAnimator.addListener(aUIAnimatorW);
+		rExecItem = new ExecItemThread(this);
+		rTextBounds = new Rect();
+		tS = new Rect();
+		cP = new Rect();
+	}
+
+	@Override
+	public void doInit() {
+		Log.v(getClass().getSimpleName(), "doInit():Initializing XPMB Main Menu (XMB type) Module.");
+		doInit(getRootActivity().getResources().getXml(R.xml.xmb_layout));
+		getRootActivity().getDrawingLayerManager().addLayer(this);
+		bmSelIcon = flipBitmap((Bitmap) getRootActivity().getStorage().getObject(
+				XPMB_Activity.GRAPH_ASSETS_COL_KEY, "theme.icon|ui_backicon"));
+		rSelIconRect = new Rect(0, 0, bmSelIcon.getWidth(), bmSelIcon.getHeight());
+		Log.v(getClass().getSimpleName(),
+				"doInit():Finished XPMB Main Menu (XMB type) Module initialization.");
 	}
 
 	public void doInit(XmlResourceParser xrpRes) {
@@ -358,7 +401,9 @@ public class XPMBMenu_UILayer extends UILayer {
 
 				switch (eventType) {
 				case XmlResourceParser.START_DOCUMENT:
-					alItems = new ArrayList<XPMBMenuCategory>();
+					alItems = new XPMBMenuCategory("@RootXPMBNode");
+					alItems.setSubitemsPosX(pxfd(74));
+					alItems.setSubitemsPosY(pxfd(42));
 					break;
 				case XmlResourceParser.START_TAG:
 					cName = xrpRes.getName();
@@ -376,13 +421,12 @@ public class XPMBMenu_UILayer extends UILayer {
 						cItem.setHeight(pxfd(85));
 
 						// Positioning Data
-						cItem.setPosition(new Point(pxfd(74) + (pxfd(85) * x), pxfd(42)));
-						cItem.setSubitemsPosX(cItem.getPosition().x);
+						cItem.setSubitemsPosX(alItems.getSubitemsPos().x);
 						cItem.setSubitemsPosY(pxfd(42));
 						if (x == 0) {
 							cItem.setSubitemsVisibility(true);
 						} else {
-							cItem.setIconScale(new PointF(0.7f, 0.7f));
+							cItem.setIconScale(new PointF(0.75f, 0.75f));
 							cItem.setIconAlpha(0.5f);
 							cItem.setLabelAlpha(0.0f);
 						}
@@ -439,7 +483,7 @@ public class XPMBMenu_UILayer extends UILayer {
 						cSubcategory.setWidth(pxfd(85));
 						cSubcategory.setHeight(pxfd(85));
 						cSubcategory.setSubmoduleIDFromString(xrpRes.getAttributeValue(null,
-								"filter"));
+								"module"));
 						cSubcategory.setListAnimator(xrpRes.getAttributeValue(null, "anim"));
 						if (x != 0 && y != 0) {
 							cSubcategory.setLabelAlpha(0.0f);
@@ -455,7 +499,7 @@ public class XPMBMenu_UILayer extends UILayer {
 				case XmlResourceParser.END_TAG:
 					cName = xrpRes.getName();
 					if (cName.equals("category")) {
-						alItems.add(cItem);
+						alItems.addSubitem(cItem);
 						++x;
 						y = 0;
 					}
@@ -480,59 +524,72 @@ public class XPMBMenu_UILayer extends UILayer {
 		}
 		// TODO: Take in account the actual orientation of the device
 		Rect rILoc = new Rect();
-		int iAlpha = 255;
+		int iAlpha = 255, px_x = 0, px_y = 0;
 
-		for (int x = 0; x < alItems.size(); x++) {
-			XPMBMenuCategory xmi_x = alItems.get(x);
+		px_x = alItems.getSubitemsPos().x;
+		for (int x = 0; x < alItems.getNumSubitems(); x++) {
+			XPMBMenuCategory xmi_x = (XPMBMenuCategory) alItems.getSubitem(x);
 
-			rILoc = getScaledRect(xmi_x.getComputedLocation(), xmi_x.getIconScale().x,
-					xmi_x.getIconScale().y, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			px_x += xmi_x.getMargins().left;
 
-			// Icon
-			Bitmap bmIcon_h = (Bitmap) getRootActivity().getStorage().getObject(
-					XPMB_Main.GRAPH_ASSETS_COL_KEY, xmi_x.getIconBitmapID(),
-					"theme.icon|icon_mbox_received");
-			iAlpha = (int) (255 * xmi_x.getIconAlpha() * fOpacity);
+			rILoc = xmi_x.getComputedLocation();
+			rILoc.offsetTo(px_x, alItems.getSubitemsPos().y);
+			rILoc = getScaledRect(rILoc, xmi_x.getIconScale().x, xmi_x.getIconScale().y,
+					Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 
-			pParams.setAlpha(iAlpha);
-			pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
-			canvas.drawBitmap(bmIcon_h, null, rILoc, pParams);
-			pParams.reset();
+			if (px_x > pxfd(-85) && px_x < getDrawingConstraints().right + pxfd(85)) {
+				// Icon
+				Bitmap bmIcon_h = (Bitmap) getRootActivity().getStorage().getObject(
+						XPMB_Main.GRAPH_ASSETS_COL_KEY, xmi_x.getIconBitmapID(),
+						"theme.icon|icon_mbox_received");
+				iAlpha = (int) (255 * xmi_x.getIconAlpha() * fOpacity);
 
-			// Label
-			String strLabel_c = xmi_x.getLabel();
-			iAlpha = (int) ((255 * xmi_x.getLabelAlpha()) * fOpacity);
-			pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
-			pParams.setColor(Color.WHITE);
-			pParams.setTextSize(pxfd(13));
-			pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
-			pParams.getTextBounds(strLabel_c, 0, strLabel_c.length(), rTextBounds);
-			rTextBounds = getBoundsFromTextRect(rTextBounds);
-			rTextBounds.offsetTo(rILoc.centerX() - rTextBounds.centerX(), rILoc.bottom);
-			rTextBounds.offset(0, (int) pParams.ascent());
-			canvas.saveLayerAlpha(rTextBounds.left - pxfd(6), rTextBounds.top - pxfd(6),
-					rTextBounds.right + pxfd(6), rTextBounds.bottom + pxfd(6), iAlpha,
-					Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-			rTextBounds.offset(0, (int) (pParams.ascent() * -1));
-			canvas.drawText(xmi_x.getLabel(), rTextBounds.left, rTextBounds.top, pParams);
-			canvas.restore();
-			pParams.reset();
+				pParams.setAlpha(iAlpha);
+				pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
+				canvas.drawBitmap(bmIcon_h, null, rILoc, pParams);
+				pParams.reset();
+
+				// Label
+				String strLabel_c = xmi_x.getLabel();
+				iAlpha = (int) ((255 * xmi_x.getLabelAlpha()) * fOpacity);
+				pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
+				pParams.setColor(Color.WHITE);
+				pParams.setTextSize(pxfd(13));
+				pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
+				pParams.getTextBounds(strLabel_c, 0, strLabel_c.length(), rTextBounds);
+				rTextBounds = getBoundsFromTextRect(rTextBounds);
+				rTextBounds.offsetTo(rILoc.centerX() - rTextBounds.centerX(),
+						(int) (rILoc.bottom + (pParams.ascent() / 2)));
+				rTextBounds.offset(0, (int) pParams.ascent());
+				canvas.saveLayerAlpha(rTextBounds.left - pxfd(6), rTextBounds.top - pxfd(6),
+						rTextBounds.right + pxfd(6), rTextBounds.bottom + pxfd(6), iAlpha,
+						Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+				rTextBounds.offset(0, (int) (pParams.ascent() * -1));
+				canvas.drawText(xmi_x.getLabel(), rTextBounds.left, rTextBounds.top, pParams);
+				canvas.restore();
+				pParams.reset();
+			}
 
 			if (!xmi_x.getSubitemsVisibility()) {
+				px_x += xmi_x.getSize().x + xmi_x.getMargins().right;
 				continue;
 			}
 
-			rILoc = new Rect();
 			// Process subitems
-			int px_y = xmi_x.getSubitemsPos().y;
-			for (int y = 0; y < xmi_x.getNumSubItems(); y++) {
+			px_y = xmi_x.getSubitemsPos().y;
+			for (int y = 0; y < xmi_x.getNumSubitems(); y++) {
 				XPMBMenuItemDef xmi_y = xmi_x.getSubitem(y);
 
 				px_y += xmi_y.getMargins().top;
 				rILoc = xmi_y.getComputedLocation();
-				rILoc.offsetTo(xmi_x.getSubitemsPos().x, px_y);
+				rILoc.offsetTo(px_x, px_y);
 				rILoc = getScaledRect(rILoc, xmi_y.getIconScale().x, xmi_y.getIconScale().y,
 						Gravity.CENTER_VERTICAL | Gravity.LEFT);
+
+				if (x == intSelItem && y == xmi_x.getSelectedSubitem()) {
+					centerRect(rILoc, rSelIconRect, Gravity.CENTER_VERTICAL | Gravity.LEFT);
+					rSelIconRect.offset(rILoc.width(), 0);
+				}
 
 				if (px_y > getDrawingConstraints().top - pxfd(64)
 						&& px_y < getDrawingConstraints().bottom + pxfd(64)) {
@@ -615,7 +672,7 @@ public class XPMBMenu_UILayer extends UILayer {
 						canvas.restore();
 					} else {
 						rTextBounds.offsetTo(rILoc.right + pxfd(10),
-								(int) (rILoc.centerY() + pParams.descent()));
+								(int) (rILoc.centerY() - (pParams.ascent() / 2)));
 						canvas.drawText(strLabel_A, rTextBounds.left, rTextBounds.top, pParams);
 						canvas.restore();
 					}
@@ -624,11 +681,19 @@ public class XPMBMenu_UILayer extends UILayer {
 
 				px_y += rILoc.height() + xmi_y.getMargins().bottom;
 			}
+
+			px_x += xmi_x.getSize().x + xmi_x.getMargins().right;
+		}
+		if (bShowSelIcon) {
+			canvas.saveLayerAlpha(new RectF(rSelIconRect), (int) (255 * fSelIconAlpha),
+					Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+			canvas.drawBitmap(bmSelIcon, null, rSelIconRect, pParams);
+			canvas.restore();
 		}
 	}
 
 	public void moveLeft() {
-		if (intSelItem == 0 || alItems.size() == 0) {
+		if (intSelItem == 0 || alItems.getNumSubitems() == 0) {
 			return;
 		}
 
@@ -639,7 +704,7 @@ public class XPMBMenu_UILayer extends UILayer {
 	}
 
 	public void moveRight() {
-		if (intSelItem == (alItems.size() - 1) || alItems.size() == 0) {
+		if (intSelItem == (alItems.getNumSubitems() - 1) || alItems.getNumSubitems() == 0) {
 			return;
 		}
 
@@ -650,33 +715,27 @@ public class XPMBMenu_UILayer extends UILayer {
 	}
 
 	public void moveUp() {
-		if (alItems.get(intSelItem).getSelectedSubitem() == 0
-				|| alItems.get(intSelItem).getNumSubItems() == 0) {
+		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(intSelItem));
+		if (xmc.getSelectedSubitem() == 0 || xmc.getNumSubitems() == 0) {
 			return;
 		}
 
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_UP);
 		aUIAnimator.start();
 
-		alItems.get(intSelItem)
-				.setSelectedSubItem(alItems.get(intSelItem).getSelectedSubitem() - 1);
+		xmc.setSelectedSubitem(xmc.getSelectedSubitem() - 1);
 	}
 
 	public void moveDown() {
-		if (alItems.get(intSelItem).getSelectedSubitem() == alItems.get(intSelItem)
-				.getNumSubItems() - 1 || alItems.get(intSelItem).getNumSubItems() == 0) {
+		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(intSelItem));
+		if (xmc.getSelectedSubitem() == xmc.getNumSubitems() - 1 || xmc.getNumSubitems() == 0) {
 			return;
 		}
 
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_DOWN);
 		aUIAnimator.start();
 
-		alItems.get(intSelItem)
-				.setSelectedSubItem(alItems.get(intSelItem).getSelectedSubitem() + 1);
-	}
-
-	public ArrayList<XPMBMenuCategory> getItems() {
-		return alItems;
+		xmc.setSelectedSubitem(xmc.getSelectedSubitem() + 1);
 	}
 
 	public void setSelectedCategory(int category) {
@@ -698,5 +757,208 @@ public class XPMBMenu_UILayer extends UILayer {
 	public void startAnim(int animType) {
 		aUIAnimatorW.setAnimationType(animType);
 		aUIAnimator.start();
+	}
+
+	@Override
+	public void sendKeyDown(int keyCode) {
+		if (bLockedKeyPad) {
+			return;
+		}
+		switch (keyCode) {
+		case XPMB_Activity.KEYCODE_LEFT:
+			firstBackPress = false;
+			moveLeft();
+			break;
+		case XPMB_Activity.KEYCODE_RIGHT:
+			firstBackPress = false;
+			moveRight();
+			break;
+		case XPMB_Activity.KEYCODE_UP:
+			firstBackPress = false;
+			moveUp();
+			break;
+		case XPMB_Activity.KEYCODE_DOWN:
+			firstBackPress = false;
+			moveDown();
+			break;
+		case XPMB_Activity.KEYCODE_CROSS:
+			firstBackPress = false;
+			execSelectedItem();
+			break;
+		case XPMB_Activity.KEYCODE_CIRCLE:
+			if (!firstBackPress) {
+				firstBackPress = true;
+				Toast tst = Toast.makeText(getRootActivity().getWindow().getContext(),
+						getRootActivity().getString(R.string.strBackKeyHint), Toast.LENGTH_SHORT);
+				tst.show();
+			} else {
+				getRootActivity().requestActivityEnd();
+			}
+			break;
+		}
+	}
+
+	@Override
+	public void onFinished(Object data) {
+		bLockedKeyPad = true;
+		getRootActivity().getDrawingLayerManager().removeLayer((UILayer) curModule);
+		switch (curModule.getSubmenuType()) {
+		case XPMBMenuCategory.LIST_ANIM_FULL:
+			startAnim(XPMBMenuModule.ANIM_SHOW_MENU_FULL);
+			break;
+		case XPMBMenuCategory.LIST_ANIM_HALF:
+			startAnim(XPMBMenuModule.ANIM_SHOW_MENU_HALF);
+			break;
+		case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
+			startAnim(XPMBMenuModule.ANIM_HIGHLIGHT_MENU_POS);
+			break;
+		}
+		getRootActivity().getDrawingLayerManager().setFocusOnLayer(this);
+		curModule.deInitialize();
+		curModule = null;
+		getMessageBus().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				bLockedKeyPad = false;
+			}
+		}, 250);
+	}
+
+	private class ExecItemThread implements Runnable {
+		XPMBMenuModule mOwner = null;
+		XPMBMenuCategory xmc = null;
+
+		public ExecItemThread(XPMBMenuModule owner) {
+			mOwner = owner;
+		}
+
+		public void setSubcategory(XPMBMenuCategory subcategory) {
+			xmc = subcategory;
+		}
+
+		@Override
+		public void run() {
+			if (curModule != null) {
+				curModule.initialize(mOwner, xmc, mOwner);
+				curModule.setSubmenuType(xmc.getListAnimator());
+				curModule.loadIn();
+				getRootActivity().getDrawingLayerManager().addLayer((UILayer) curModule);
+				getRootActivity().getDrawingLayerManager().setFocusOnLayer(curModule);
+			}
+			bLockedKeyPad = false;
+			((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+					.setLoadingAnimationVisible(false);
+		}
+	}
+
+	// TODO: Split this method (V/H).
+	private void execCustItem(int index) {
+		XPMBMenuItemDef xmid = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+				.getSubitem(index);
+		if (xmid instanceof XPMBMenuCategory) {
+			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
+
+			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_MEDIA_MUSIC) {
+				curModule = new Module_Media_Music(getRootActivity());
+			}
+			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_EMU_GBA) {
+				curModule = new Module_Emu_GBA(getRootActivity());
+			}
+			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_EMU_NES) {
+				curModule = new Module_Emu_NES(getRootActivity());
+			}
+			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_SYSTEM_APPS) {
+				curModule = new Module_System_Apps(getRootActivity());
+			}
+
+			if (curModule != null) {
+				bLockedKeyPad = true;
+				((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
+						.setLoadingAnimationVisible(true);
+				switch (xmc.getListAnimator()) {
+				case XPMBMenuCategory.LIST_ANIM_FULL:
+					startAnim(XPMBMenuModule.ANIM_HIDE_MENU_FULL);
+					break;
+				case XPMBMenuCategory.LIST_ANIM_HALF:
+					startAnim(XPMBMenuModule.ANIM_HIDE_MENU_HALF);
+					break;
+				case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
+					startAnim(XPMBMenuModule.ANIM_HIGHLIGHT_MENU_PRE);
+					break;
+				}
+				getMessageBus().postDelayed(new Runnable() {
+
+					@Override
+					public void run() {
+						rExecItem.setSubcategory(xmc);
+						new Thread(rExecItem).start();
+					}
+				}, 251);
+			} else {
+				Log.e(getClass().getSimpleName(),
+						"execCustItem():Module not found for ID '" + xmc.getSubmoduleID() + "'");
+			}
+		} else if (xmid instanceof XPMBMenuItem) {
+			XPMBMenuItem xmi = (XPMBMenuItem) xmid;
+			Intent cExInt = (Intent) xmi.getData();
+			if (getRootActivity().isActivityAvailable(cExInt)) {
+				getRootActivity().showLoadingAnim(true);
+				getRootActivity().postIntentStartWait(new FinishedListener() {
+					@Override
+					public void onFinished(Object data) {
+						((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0)).setLoadingAnimationVisible(false);
+					}
+				}, cExInt);
+			} else {
+				Toast tst = Toast.makeText(
+						getRootActivity().getWindow().getContext(),
+						getRootActivity().getString(R.string.strAppNotInstalled).replace("%s",
+								cExInt.getComponent().getPackageName()), Toast.LENGTH_SHORT);
+				tst.show();
+			}
+		}
+	}
+
+	private void execSelectedItem() {
+		execCustItem(((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSelectedSubitem());
+	}
+
+	@Override
+	public void sendClickEvent(Point clickedPoint) {
+		for (int h = intSelItem - 1; h <= intSelItem + (intMaxItemsOnScreenH - 2); h++) {
+			if ((h >= 0) && (h < alItems.getNumSubitems())) {
+				XPMBMenuItemDef xmi = alItems.getSubitem(h);
+				if (xmi.getComputedLocation().contains(clickedPoint.x, clickedPoint.y)) {
+					// centerOnItemH(i);
+					// processItem(getContainerCategory().getSubitem(i));
+					return;
+				}
+			}
+		}
+		XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(intSelItem);
+		for (int v = (xmc.getSelectedSubitem() - (intMaxItemsOnScreenV / 2)); v <= (xmc
+				.getSelectedSubitem() + (intMaxItemsOnScreenV / 2)); v++) {
+			if ((v >= 0) && v < xmc.getNumSubitems()) {
+				XPMBMenuItemDef xmi = xmc.getSubitem(v);
+				if (xmi.getComputedLocation().contains(clickedPoint.x, clickedPoint.y)) {
+					// centerOnItemV(i)
+					execCustItem(v);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void setDrawingConstraints(RectF constraints) {
+		super.setDrawingConstraints(constraints);
+		intMaxItemsOnScreenV = getMaxItemsOnScreen(UILayer.TYPE_VERTICAL, pxfd(85), 0, 0);
+		intMaxItemsOnScreenV--;
+		intMaxItemsOnScreenH = getMaxItemsOnScreen(UILayer.TYPE_HORIZONTAL, pxfd(85), 0, 0);
+		Log.v(getClass().getSimpleName(),
+				"setDrawingConstraints():Calculated max items on screen (vertical) are "
+						+ intMaxItemsOnScreenV + ".");
+		Log.v(getClass().getSimpleName(),
+				"setDrawingConstraints():Calculated max items on screen (horizontal) are "
+						+ intMaxItemsOnScreenH + ".");
 	}
 }

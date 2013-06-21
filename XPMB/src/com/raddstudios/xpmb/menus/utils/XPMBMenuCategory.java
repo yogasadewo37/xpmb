@@ -43,27 +43,23 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 		alSubitems = new ArrayList<XPMBMenuItemDef>();
 		pContainerPos = new Point();
 	}
-	
-	@Override
+
 	public void setSubitemsAlpha(float alpha) {
 		fSubAlpha = alpha;
 	}
 
-	@Override
 	public float getSubitemsAlpha() {
 		return fSubAlpha;
 	}
 
-	@Override
-	public void setSubitemsVisibility(boolean visible){
+	public void setSubitemsVisibility(boolean visible) {
 		bSubitemsVisible = visible;
 	}
-	
-	@Override
-	public boolean getSubitemsVisibility(){
+
+	public boolean getSubitemsVisibility() {
 		return bSubitemsVisible;
 	}
-	
+
 	public void addSubitem(XPMBMenuItemDef subitem) {
 		alSubitems.add(subitem);
 	}
@@ -84,11 +80,11 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 		return alSubitems.get(index);
 	}
 
-	public int getNumSubItems() {
+	public int getNumSubitems() {
 		return alSubitems.size();
 	}
 
-	public void setSelectedSubItem(int subitem) {
+	public void setSelectedSubitem(int subitem) {
 		intCurSubitem = subitem;
 	}
 

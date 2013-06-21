@@ -17,7 +17,9 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils;
+package com.raddstudios.xpmb.utils.UI;
+
+import com.raddstudios.xpmb.utils.XPMB_Activity;
 
 import android.annotation.SuppressLint;
 import android.os.Handler;
@@ -26,11 +28,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 @SuppressLint("ViewConstructor")
-public class XPMB_Layout {
+public class XPMB_Layout extends UILayer {
 
 	private XPMB_Activity mRoot = null;
 
 	public XPMB_Layout(XPMB_Activity root) {
+		super(root);
 		mRoot = root;
 	}
 

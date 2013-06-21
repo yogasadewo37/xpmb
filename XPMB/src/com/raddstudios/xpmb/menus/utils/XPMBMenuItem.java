@@ -28,7 +28,6 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	private String strLabelA = null, strLabelB = null, strIcon = null;
 	private Object oData = null;
 	private PointF pfScale = null;
-	private Point pSize = null;
 	private Rect rLoc = null, rMargins = null;
 	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha_s = 1.0f;
 	private boolean bTwoLines = false;
@@ -39,7 +38,6 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 		pfScale = new PointF(1.0f, 1.0f);
 		rLoc = new Rect();
 		rMargins = new Rect();
-		pSize = new Point();
 	}
 
 	public void setData(Object data) {
@@ -91,29 +89,8 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	}
 
 	@Override
-	public void setSubitemsAlpha(float alpha) {
-	}
-
-	@Override
-	public float getSubitemsAlpha() {
-		return 1.0f;
-	}
-
-	@Override
-	public void setSubitemsVisibility(boolean visible) {
-	}
-
-	@Override
-	public boolean getSubitemsVisibility() {
-		return false;
-	}
-
-	@Override
 	public void setPosition(Point position) {
-		rLoc.left = position.x;
-		rLoc.top = position.y;
-		rLoc.right = rLoc.left + pSize.x;
-		rLoc.bottom = rLoc.top + pSize.y;
+		rLoc.offsetTo(position.x, position.y);
 	}
 
 	@Override
@@ -138,11 +115,6 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	}
 
 	@Override
-	public Point getSize() {
-		return pSize;
-	}
-
-	@Override
 	public Rect getComputedLocation() {
 		return rLoc;
 	}
@@ -158,14 +130,17 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	}
 
 	@Override
+	public Point getSize() {
+		return new Point(rLoc.width(), rLoc.height());
+	}
+
+	@Override
 	public void setWidth(int width) {
-		pSize.x = width;
 		rLoc.right = rLoc.left + width;
 	}
 
 	@Override
 	public void setHeight(int height) {
-		pSize.y = height;
 		rLoc.bottom = rLoc.top + height;
 	}
 

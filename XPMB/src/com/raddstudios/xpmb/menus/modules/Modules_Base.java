@@ -23,210 +23,58 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.Gravity;
-import android.view.animation.DecelerateInterpolator;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.Animator.AnimatorListener;
-import com.nineoldandroids.animation.ValueAnimator;
-import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.menus.XPMBMenu_UILayer;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
-import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.UILayer;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 
 public class Modules_Base extends UILayer {
 
-	public class UIAnimatorWorker implements AnimatorUpdateListener, AnimatorListener {
+	public interface ListAnimator {
+		public void initializeItems();
 
-		public static final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
-				ANIM_MENU_CENTER_ON_ITEM = 2, ANIM_STARTPLAYING = 3, ANIM_STOPPLAYING = 4;
+		public void setNextItem(int nextItem);
 
-		private int pInitPosY = 0, intAnimType = -1, intAnimItem = -1, intNextItem = -1;
-		private int[] iaParams = null;
-		private float fScaling = 0.0f;
-		private boolean bUseScaling = false;
-		private Point[] apInitValues = null;
-		private ValueAnimator mOwner = null;
-
-		public UIAnimatorWorker(ValueAnimator parentAnimator) {
-			super();
-			mOwner = parentAnimator;
-		}
-
-		public void setParams(int[] params) {
-			iaParams = params;
-		}
-
-		public void setIconScaling(boolean useScaling, float scaling) {
-			bUseScaling = useScaling;
-			if (useScaling) {
-				fScaling = scaling;
-			} else {
-				fScaling = 1.0f;
-			}
-		}
-
-		private void setInitialValues() {
-			apInitValues = new Point[mContainer.getNumSubItems()];
-			for (int i = 0; i < mContainer.getNumSubItems(); i++) {
-				apInitValues[i] = mContainer.getSubitem(i).getPosition();
-			}
-		}
-
-		public void setAnimationType(int type) {
-			if (mOwner.isStarted()) {
-				mOwner.end();
-			}
-			intAnimType = type;
-			pInitPosY = mContainer.getSubitemsPos().y;
-
-			switch (type) {
-			case ANIM_MENU_MOVE_UP:
-				mOwner.setDuration(250);
-				intAnimItem = mContainer.getSelectedSubitem();
-				intNextItem = intAnimItem - 1;
-				break;
-			case ANIM_MENU_MOVE_DOWN:
-				mOwner.setDuration(250);
-				intAnimItem = mContainer.getSelectedSubitem();
-				intNextItem = intAnimItem + 1;
-				break;
-			case ANIM_MENU_CENTER_ON_ITEM:
-				mOwner.setDuration(250);
-				intAnimItem = mContainer.getSelectedSubitem();
-				intNextItem = iaParams[0];
-				break;
-			}
-			setInitialValues();
-		}
-
-		@Override
-		public void onAnimationUpdate(ValueAnimator arg0) {
-			float completion = (Float) arg0.getAnimatedValue();
-
-			int dispA = 0, marginA = 0, marginB = 0;
-			float alphaA = 0.0f, alphaB = 0.0f, alphaC = 0.0f, alphaD = 0.0f, scaleA = 1.0f, scaleB = 1.0f;
-
-			switch (intAnimType) {
-			case ANIM_MENU_MOVE_UP:
-			case ANIM_MENU_MOVE_DOWN:
-			case ANIM_MENU_CENTER_ON_ITEM:
-				dispA = (int) (((intNextItem - intAnimItem) * pxfd(-64)) * completion);
-
-				marginA = (int) (pxfd(16) * completion);
-				marginB = (pxfd(16) - marginA);
-				alphaA = 1.0f - completion;
-				alphaB = completion;
-				alphaC = 1.0f - (0.5f * completion);
-				alphaD = 0.5f + (0.5f * completion);
-				scaleA = 1.0f + ((fScaling - 1.0f) * completion);
-				scaleB = fScaling - ((fScaling - 1.0f) * completion);
-				mContainer.setSubitemsPosY(pInitPosY + dispA);
-
-				for (int y = 0; y < mContainer.getNumSubItems(); y++) {
-					XPMBMenuItemDef xmid = mContainer.getSubitem(y);
-
-					if (y == intAnimItem) {
-						xmid.setSeparatorAlpha(alphaA);
-						xmid.setLabelAlpha(alphaC);
-						xmid.setMarginTop(marginB);
-						xmid.setMarginBottom(marginB);
-						if (bUseScaling) {
-							xmid.setIconScaleX(scaleB);
-							xmid.setIconScaleY(scaleB);
-						}
-					} else if (y == intNextItem) {
-						xmid.setSeparatorAlpha(alphaB);
-						xmid.setLabelAlpha(alphaD);
-						xmid.setMarginTop(marginA);
-						xmid.setMarginBottom(marginA);
-						if (bUseScaling) {
-							xmid.setIconScaleX(scaleA);
-							xmid.setIconScaleY(scaleA);
-						}
-					}
-				}
-				break;
-			case ANIM_NONE:
-			default:
-				break;
-			}
-		}
-
-		@Override
-		public void onAnimationCancel(Animator arg0) {
-			apInitValues = null;
-			iaParams = null;
-		}
-
-		@Override
-		public void onAnimationEnd(Animator arg0) {
-			apInitValues = null;
-			iaParams = null;
-			switch (intAnimType) {
-			case ANIM_MENU_MOVE_UP:
-			case ANIM_MENU_MOVE_DOWN:
-			case ANIM_MENU_CENTER_ON_ITEM:
-				mContainer.setSubitemsPosY(pInitPosY + ((intNextItem - intAnimItem) * -pxfd(64)));
-			}
-		}
-
-		@Override
-		public void onAnimationRepeat(Animator arg0) {
-		}
-
-		@Override
-		public void onAnimationStart(Animator arg0) {
-		}
-	};
+		public void start();
+	}
 
 	private ObjectCollections mStor = null;
-	private XPMBMenu_UILayer mLayer = null;
+	private UILayer mLayer = null;
 	private XPMBMenuCategory mContainer = null;
 	private FinishedListener mListener = null;
-	private int intAnimator = 0;
+	private int intSubmenuType = 0, intMaxItemsOnScreen = 0;
+	private ListAnimator mAnimator = null;
 
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect(), tS = new Rect(), cP = new Rect(), rILoc = new Rect();
 
-	private ValueAnimator aUIAnimator = null;
-	private UIAnimatorWorker aUIAnimatorW = null;
-
 	public Modules_Base(XPMB_Activity rootActivity) {
 		super(rootActivity);
 		mStor = getRootActivity().getStorage();
-		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
-		aUIAnimator.setInterpolator(new DecelerateInterpolator());
-		aUIAnimator.setDuration(150);
-		aUIAnimatorW = new UIAnimatorWorker(aUIAnimator);
-		aUIAnimator.addUpdateListener(aUIAnimatorW);
-		aUIAnimator.addListener(aUIAnimatorW);
 	}
 
-	public void initialize(XPMBMenu_UILayer parentLayer, XPMBMenuCategory container,
+	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
 			FinishedListener listener) {
 		mLayer = parentLayer;
 		mContainer = container;
 		mListener = listener;
 		switch (container.getListAnimator()) {
 		case XPMBMenuCategory.LIST_ANIM_HALF:
-			mContainer.setSubitemsPosX(pxfd(53));
-			mContainer.setSubitemsPosY(pxfd(122));
+			mContainer.setSubitemsPosX(pxfd(62));
 			break;
 		case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
 			mContainer.setSubitemsPosX(pxfd(122));
-			mContainer.setSubitemsPosY(pxfd(122));
 			break;
 		}
 	}
@@ -251,14 +99,14 @@ public class Modules_Base extends UILayer {
 		int px_y = mContainer.getSubitemsPos().y, iAlpha = 255;
 
 		// Process subitems
-		for (int y = 0; y < mContainer.getNumSubItems(); y++) {
+		for (int y = 0; y < mContainer.getNumSubitems(); y++) {
 			XPMBMenuItemDef xmi_y = mContainer.getSubitem(y);
 
 			px_y += xmi_y.getMargins().top;
 			rILoc = xmi_y.getComputedLocation();
 			rILoc.offsetTo(mContainer.getSubitemsPos().x, px_y);
 			rILoc = getScaledRect(rILoc, xmi_y.getIconScale().x, xmi_y.getIconScale().y,
-					Gravity.CENTER_VERTICAL | Gravity.LEFT);
+					Gravity.TOP | Gravity.LEFT);
 
 			if (px_y > getDrawingConstraints().top - pxfd(64)
 					&& px_y < getDrawingConstraints().bottom + pxfd(64)) {
@@ -352,35 +200,86 @@ public class Modules_Base extends UILayer {
 		}
 	}
 
-	protected UIAnimatorWorker getAnimatorWorker() {
-		return aUIAnimatorW;
-	}
-
-	protected ValueAnimator getAnimator() {
-		return aUIAnimator;
-	}
-
 	public void loadIn() {
 	};
 
-	public void processItem(XPMBMenuItem item) {
+	protected void setListAnimator(ListAnimator animator) {
+		mAnimator = animator;
+	}
+
+	protected ListAnimator getListAnimator() {
+		return mAnimator;
+	}
+
+	public void setSubmenuType(int type) {
+		intSubmenuType = type;
 	};
 
-	public void processkeyUp(int keyCode) {
+	public int getSubmenuType() {
+		return intSubmenuType;
 	};
 
-	public void processkeyDown(int keyCode) {
-	};
+	public void moveUp() {
+		if (mContainer.getSelectedSubitem() == 0 || mContainer.getNumSubitems() == 0) {
+			return;
+		}
 
-	public void setListAnimator(int animator) {
-		intAnimator = animator;
-	};
+		mAnimator.setNextItem(mContainer.getSelectedSubitem() - 1);
+		mAnimator.start();
 
-	public int getListAnimator() {
-		return intAnimator;
-	};
+		mContainer.setSelectedSubitem(mContainer.getSelectedSubitem() - 1);
+	}
+
+	public void moveDown() {
+		if (mContainer.getSelectedSubitem() == mContainer.getNumSubitems() - 1
+				|| mContainer.getNumSubitems() == 0) {
+			return;
+		}
+
+		mAnimator.setNextItem(mContainer.getSelectedSubitem() + 1);
+		mAnimator.start();
+
+		mContainer.setSelectedSubitem(mContainer.getSelectedSubitem() + 1);
+	}
+
+	public void centerOnItem(int index) {
+		if (index < 0 || index >= mContainer.getNumSubitems()) {
+			return;
+		}
+
+		mAnimator.setNextItem(index);
+		mAnimator.start();
+
+		mContainer.setSelectedSubitem(index);
+	}
 
 	public boolean isInitialized() {
 		return false;
-	};
+	}
+
+	public void processItem(XPMBMenuItemDef item) {
+	}
+
+	@Override
+	public void sendClickEvent(Point clickedPoint) {
+		for (int i = getContainerCategory().getSelectedSubitem() - (intMaxItemsOnScreen / 2); i <= getContainerCategory()
+				.getSelectedSubitem() + (intMaxItemsOnScreen / 2); i++) {
+			if ((i >= 0) && (i < getContainerCategory().getNumSubitems())) {
+				XPMBMenuItemDef xmi = getContainerCategory().getSubitem(i);
+				if (xmi.getComputedLocation().contains(clickedPoint.x, clickedPoint.y)) {
+					centerOnItem(i);
+					processItem(getContainerCategory().getSubitem(i));
+				}
+			}
+		}
+	}
+
+	@Override
+	public void setDrawingConstraints(RectF constraints) {
+		super.setDrawingConstraints(constraints);
+		intMaxItemsOnScreen = getMaxItemsOnScreen(UILayer.TYPE_VERTICAL, pxfd(64), 0, 0);
+		Log.v(getClass().getSimpleName(),
+				"setDrawingConstraints():Calculated max items on screen (vertical) are "
+						+ intMaxItemsOnScreen + ".");
+	}
 }
