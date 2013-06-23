@@ -3,7 +3,7 @@
 
     <category
         icon="theme.icon|icon_setting"
-        label="Ajustes" >
+        label="@strCategorySettings" >
         <subitem
             exec="com.android.settings/.Settings"
             icon="theme.icon|icon_system_setting"
@@ -11,7 +11,7 @@
     </category>
     <category
         icon="theme.icon|icon_photo"
-        label="Fotos" >
+        label="@strCategoryPhoto" >
         <subitem
             action="android.media.action.IMAGE_CAPTURE"
             icon="theme.icon|icon_usbcamera"
@@ -20,7 +20,7 @@
     </category>
     <category
         icon="theme.icon|icon_music"
-        label="Música" >
+        label="@strCategryMusic" >
         <subcategory
             anim="highlight"
             module="com.xpmb.media.music"
@@ -29,28 +29,28 @@
     </category>
     <category
         icon="theme.icon|icon_video"
-        label="Videos" >
+        label="@strCategoryVideo" >
         <subcategory
             icon="theme.icon|icon_sd"
             label="Memoria externa" />
     </category>
     <category
         icon="theme.icon|icon_game"
-        label="Juegos" >
+        label="@strCategoryGame" >
         <subcategory
             anim="half"
             module="com.xpmb.emu.nes"
             icon="theme.icon|icon_savedata"
-            label="Nintendo Entertainment System" />
+            label="@strCategoryNES" />
         <subcategory
             anim="half"
             module="com.xpmb.emu.gba"
             icon="theme.icon|icon_savedata"
-            label="Gameboy Advance" />
+            label="@strCategoryGBA" />
     </category>
     <category
         icon="theme.icon|icon_network"
-        label="Web" >
+        label="@strCategoryWWW" >
         <subitem
             exec="com.android.browser/.BrowserActivity"
             icon="theme.icon|icon_browser"
@@ -62,7 +62,7 @@
     </category>
     <category
         icon="theme.icon|icon_user"
-        label="Aplicaciones" >
+        label="@strCategoryApps" >
         <subcategory
             anim="half"
             icon="theme.icon|icon_download"

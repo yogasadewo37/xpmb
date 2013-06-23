@@ -28,7 +28,9 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
+//import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBSideMenu.SideMenuItem;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
@@ -46,6 +48,36 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTING_LAST_ITEM = "appsmenu.lastitem";
+	
+	public SideMenuItem smiInfo = new SideMenuItem() {
+
+		@Override
+		public String getLabel() {
+			//return getRootActivity().getString(R.string.strSideMenuInformation);
+			return null;
+		}
+
+		@Override
+		public String getIconBitmapID() {
+			return null;
+		}
+
+		@Override
+		public boolean hasChildren() {
+			return false;
+		}
+
+		@Override
+		public SideMenuItem getChildren(int index) {
+			return null;
+		}
+
+		@Override
+		public void executeAction() {
+			// TODO Auto-generated method stub
+		}
+		
+	};
 
 	private class ProcessItemThread implements Runnable {
 
