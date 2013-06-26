@@ -1,8 +1,8 @@
-?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
     <string name="app_name">XPMB</string>
-    <string name="strIncorrectDevice">¡Your device's not a XPERIA Play!\r\nYou can't run this app.</string>
+    <string name="strIncorrectDevice">¡Your device\'s not a XPERIA Play!\r\nYou can\'t run this app.</string>
     <string name="strSideMenuRunGame">Start game</string>
     <string name="strSideMenuInfo">Information</string>
     <string name="strSideMenuCopyElement">Copy element</string>
@@ -12,7 +12,7 @@
     <string name="strSideMenuMoveItemUp">Move up</string>
     <string name="strSideMenuMoveItemDown">Move down</string>
     <string name="strSideMenuMoveCategoryLeft">Move left</string>
-    <string name="strSideMenuMoveCategoryRight">Move right</string>    
+    <string name="strSideMenuMoveCategoryRight">Move right</string>
     <string name="strCategorySettings">Settings</string>
     <string name="strCategoryPhoto">Photo</string>
     <string name="strCategoryVideo">Video</string>
@@ -31,5 +31,6 @@
     <string name="strAppNotInstalled">App \'%s\' not installed.\r\nPlease install it before continuing.</string>
     <string name="strEmuGBARom">Game Boy Advance ROM</string>
     <string name="strEmuNESRom">Nintendo Entertainment System ROM</string>
+    <string name="strVersion">Version</string>
 
 </resources>

@@ -3,7 +3,7 @@
 
     <category
         icon="theme.icon|icon_setting"
-        label="@strCategorySettings" >
+        label="@string/strCategorySettings" >
         <subitem
             exec="com.android.settings/.Settings"
             icon="theme.icon|icon_system_setting"
@@ -11,7 +11,7 @@
     </category>
     <category
         icon="theme.icon|icon_photo"
-        label="@strCategoryPhoto" >
+        label="@string/strCategoryPhoto" >
         <subitem
             action="android.media.action.IMAGE_CAPTURE"
             icon="theme.icon|icon_usbcamera"
@@ -20,37 +20,37 @@
     </category>
     <category
         icon="theme.icon|icon_music"
-        label="@strCategryMusic" >
+        label="@string/strCategoryMusic" >
         <subcategory
             anim="highlight"
-            module="com.xpmb.media.music"
             icon="theme.icon|icon_sd"
-            label="Memoria externa" />
+            label="Memoria externa"
+            module="com.xpmb.media.music" />
     </category>
     <category
         icon="theme.icon|icon_video"
-        label="@strCategoryVideo" >
+        label="@string/strCategoryVideo" >
         <subcategory
             icon="theme.icon|icon_sd"
             label="Memoria externa" />
     </category>
     <category
         icon="theme.icon|icon_game"
-        label="@strCategoryGame" >
+        label="@string/strCategoryGame" >
         <subcategory
             anim="half"
-            module="com.xpmb.emu.nes"
             icon="theme.icon|icon_savedata"
-            label="@strCategoryNES" />
+            label="@string/strCategoryNES"
+            module="com.xpmb.emu.nes" />
         <subcategory
             anim="half"
-            module="com.xpmb.emu.gba"
             icon="theme.icon|icon_savedata"
-            label="@strCategoryGBA" />
+            label="@string/strCategoryGBA"
+            module="com.xpmb.emu.gba" />
     </category>
     <category
         icon="theme.icon|icon_network"
-        label="@strCategoryWWW" >
+        label="@string/strCategoryWWW" >
         <subitem
             exec="com.android.browser/.BrowserActivity"
             icon="theme.icon|icon_browser"
@@ -62,13 +62,12 @@
     </category>
     <category
         icon="theme.icon|icon_user"
-        label="@strCategoryApps" >
+        label="@string/strCategoryApps" >
         <subcategory
             anim="half"
             icon="theme.icon|icon_download"
             label="Aplicaciones instaladas"
             module="com.xpmb.system.apps" />
-
     </category>
 
 </xpmbroot>

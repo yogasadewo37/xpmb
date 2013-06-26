@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:backports="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/playerc_l"
     android:layout_width="match_parent"
@@ -15,7 +14,7 @@
         android:layout_alignParentRight="true"
         android:layout_marginRight="4dp" />
 
-    <com.raddstudios.xpmb.utils.backports.XPMB_TextView
+    <TextView
         android:id="@+id/tvTotalLen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,7 +29,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         tools:ignore="HardcodedText" />
 
-    <com.raddstudios.xpmb.utils.backports.XPMB_TextView
+    <TextView
         android:id="@+id/tvCurPos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,7 +45,7 @@
         android:textColor="#0099EE"
         tools:ignore="HardcodedText" />
 
-    <com.raddstudios.xpmb.utils.backports.XPMB_ImageView
+    <ImageView
         android:id="@+id/ivPlayStatus"
         android:layout_width="35dp"
         android:layout_height="35dp"
@@ -54,8 +53,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="false"
         android:layout_alignParentTop="false"
-        android:layout_marginLeft="2dp" > <!-- android:src="@drawable/ui_status_media_play" -->
+        android:layout_marginLeft="2dp"
         tools:ignore="ContentDescription" />
-    </com.raddstudios.xpmb.utils.backports.XPMB_ImageView>
 
-</com.raddstudios.xpmb.utils.backports.XPMB_RelativeLayout>
+</RelativeLayout>

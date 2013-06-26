@@ -1,4 +1,4 @@
-?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
     <string name="app_name">XPMB</string>
@@ -12,7 +12,7 @@
     <string name="strSideMenuMoveItemUp">Mover hacia arriba</string>
     <string name="strSideMenuMoveItemDown">Mover hacia abajo</string>
     <string name="strSideMenuMoveCategoryLeft">Mover hacia la izquierda</string>
-    <string name="strSideMenuMoveCategoryRight">Mover hacia la derecha</string>    
+    <string name="strSideMenuMoveCategoryRight">Mover hacia la derecha</string>
     <string name="strCategorySettings">Ajustes</string>
     <string name="strCategoryPhoto">Foto</string>
     <string name="strCategoryVideo">Vídeo</string>
@@ -21,7 +21,7 @@
     <string name="strCategoryWWW">Web</string>
     <string name="strCategoryApps">Aplicaciones</string>
     <string name="strCategoryGBA">Game Boy Advance</string>
-    <string name="strCategoryNES">Nintendo Entertainment System</string>    
+    <string name="strCategoryNES">Nintendo Entertainment System</string>
     <string name="strBackKeyHint">Presione otra vez la tecla atrás/círculo para salir</string>
     <string name="strNoVideos">No hay videos.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
     <string name="strNoPictures">No hay imágenes.\r\nPuede importar contenido desde una PC.\r\nPara detalles, refiérase a la wiki en (uri de la wiki aquí)</string>
@@ -31,5 +31,6 @@
     <string name="strAppNotInstalled">Aún no ha instalado la aplicación \'%s\'.\r\nPor favor instálela antes de continuar.</string>
     <string name="strEmuGBARom">ROM de Game Boy Advance</string>
     <string name="strEmuNESRom">ROM de Nintendo Entertainment System</string>
+    <string name="strVersion">Versión</string>
 
 </resources>

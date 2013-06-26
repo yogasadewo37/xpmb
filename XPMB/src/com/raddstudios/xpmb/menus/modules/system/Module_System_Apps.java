@@ -28,9 +28,9 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
-//import com.raddstudios.xpmb.R;
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
-import com.raddstudios.xpmb.menus.XPMBSideMenu.SideMenuItem;
+import com.raddstudios.xpmb.menus.XPMBSideMenuItem;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
@@ -48,36 +48,21 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTING_LAST_ITEM = "appsmenu.lastitem";
-	
-	public SideMenuItem smiInfo = new SideMenuItem() {
 
+	private class SMInfo extends XPMBSideMenuItem {
 		@Override
 		public String getLabel() {
-			//return getRootActivity().getString(R.string.strSideMenuInformation);
-			return null;
+			return getRootActivity().getString(R.string.strSideMenuInfo);
 		}
-
+	}
+	
+	private class SMCopyItem extends XPMBSideMenuItem {
 		@Override
-		public String getIconBitmapID() {
-			return null;
+		public String getLabel(){
+			return getRootActivity().getString(R.string.strSideMenuCopyElement);			
 		}
-
-		@Override
-		public boolean hasChildren() {
-			return false;
-		}
-
-		@Override
-		public SideMenuItem getChildren(int index) {
-			return null;
-		}
-
-		@Override
-		public void executeAction() {
-			// TODO Auto-generated method stub
-		}
-		
-	};
+	}
+	
 
 	private class ProcessItemThread implements Runnable {
 
@@ -119,15 +104,19 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	}
 
 	private void reloadSettings() {
-		getContainerCategory().setSelectedSubitem((Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_LAST_ITEM, -1));
+		getContainerCategory()
+				.setSelectedSubitem(
+						(Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
+								SETTING_LAST_ITEM, -1));
 		Log.d(getClass().getSimpleName(),
-				"reloadSettings():<Selected Item>=" + String.valueOf(getContainerCategory().getSelectedSubitem()));
+				"reloadSettings():<Selected Item>="
+						+ String.valueOf(getContainerCategory().getSelectedSubitem()));
 	}
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
+		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM,
+				getContainerCategory().getSelectedSubitem());
 
 		getContainerCategory().clearSubitems();
 		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alIconKeys.size())
@@ -158,6 +147,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			if (rinf.activityInfo.packageName.equals(getRootActivity().getPackageName())) {
 				continue;
 			}
+			
 			String strAppLabel = rinf.loadLabel(pm).toString();
 			Intent strAppIntent = pm.getLaunchIntentForPackage(rinf.activityInfo.packageName);
 

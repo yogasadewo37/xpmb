@@ -17,38 +17,34 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.utils.backports;
+package com.raddstudios.xpmb.menus.utils;
 
-public interface XPMB_View {
+import com.raddstudios.xpmb.R;
+import com.raddstudios.xpmb.utils.XPMB_Activity;
 
-	public void setTopMargin(int top);
+public class XPMBMenuItemApp extends XPMBMenuItem {
 
-	public void setBottomMargin(int bottom);
+	private XPMB_Activity mRoot = null;
 
-	public void setLeftMargin(int left);
+	public XPMBMenuItemApp(String label, XPMB_Activity root) {
+		super(label);
+		mRoot = root;
+	}
 
-	public void setRightMargin(int right);
+	public void setVersion(String version) {
+		if (version != null) {
+			super.enableTwoLine(false);
+		} else {
+			super.enableTwoLine(true);
+			super.setLabelB(mRoot.getString(R.string.strVersion) + ":" + version);
+		}
+	}
 
-	public int getTopMargin();
-
-	public int getBottomMargin();
-
-	public int getLeftMargin();
-
-	public int getRightMargin();
-
-	public void setAlphaLevel(float value);
-
-	public float getAlphaLevel();
-
-	//TODO Fix for incorrect scaling behavior (temporal workaround)
-	public void resetScaleBase();
-	
-	public void setViewScaleX(float scale);
-
-	public float getViewScaleX();
-
-	public void setViewScaleY(float scale);
-
-	public float getViewScaleY();
+	public String getVersion() {
+		String v = super.getLabelB();
+		if (v != null) {
+			return v.substring(v.indexOf(':') + 1);
+		}
+		return super.getLabelB();
+	}
 }

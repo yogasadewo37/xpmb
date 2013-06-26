@@ -37,19 +37,6 @@ import com.raddstudios.xpmb.utils.XPMB_Activity;
 
 public class XPMBSideMenu extends Modules_Base {
 
-	public interface SideMenuItem {
-
-		public String getLabel();
-
-		public String getIconBitmapID();
-
-		public boolean hasChildren();
-
-		public SideMenuItem getChildren(int index);
-
-		public void executeAction();
-	}
-
 	private class SideMenuAnimator extends ValueAnimator implements AnimatorUpdateListener,
 			AnimatorListener {
 
@@ -139,7 +126,7 @@ public class XPMBSideMenu extends Modules_Base {
 
 	// TODO: Finish Side Menu code
 
-	private SideMenuItem[] alItems = null;
+	private XPMBSideMenuItem[] alItems = null;
 	private Rect rSelection = null, rCurItemD = null, rIcon = null;;
 	private int px_x = 0, px_y = 0, intSzy = 0, intSelItem = 0;
 	float fAlpha = 0.0f;
@@ -149,7 +136,7 @@ public class XPMBSideMenu extends Modules_Base {
 
 	public XPMBSideMenu(XPMB_Activity root) {
 		super(root);
-		alItems = new SideMenuItem[15];
+		alItems = new XPMBSideMenuItem[15];
 		rCurItemD = new Rect();
 		rIcon = new Rect();
 		bmBG = (Bitmap) root.getStorage().getObject(XPMB_Activity.GRAPH_ASSETS_COL_KEY,
@@ -203,7 +190,7 @@ public class XPMBSideMenu extends Modules_Base {
 		pParams.reset();
 	}
 
-	public void setItemSlot(int slot, SideMenuItem item) {
+	public void setItemSlot(int slot, XPMBSideMenuItem item) {
 		alItems[slot] = item;
 	}
 
@@ -243,10 +230,10 @@ public class XPMBSideMenu extends Modules_Base {
 		mAnimator.setAnimation(SideMenuAnimator.ANIM_SHOW_SIDEMENU);
 		mAnimator.start();
 	}
-	
+
 	public void hide() {
 		mAnimator.setAnimation(SideMenuAnimator.ANIM_HIDE_SIDEMENU);
-		mAnimator.start();		
+		mAnimator.start();
 	}
 
 	@Override
