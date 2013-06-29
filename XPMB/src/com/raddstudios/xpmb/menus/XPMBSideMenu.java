@@ -139,8 +139,7 @@ public class XPMBSideMenu extends Modules_Base {
 		alItems = new XPMBSideMenuItem[15];
 		rCurItemD = new Rect();
 		rIcon = new Rect();
-		bmBG = (Bitmap) root.getStorage().getObject(XPMB_Activity.GRAPH_ASSETS_COL_KEY,
-				"theme.icon|ui_sidemenu_bg");
+		bmBG = (Bitmap) root.getThemeManager().getAsset("theme.icon|ui_sidemenu_bg");
 		mAnimator = new SideMenuAnimator();
 	}
 
@@ -165,8 +164,7 @@ public class XPMBSideMenu extends Modules_Base {
 			rCurItemD.set(px_x, px_y, (int) getDrawingConstraints().right, px_y + intSzy);
 			if (alItems[i] != null) {
 				if (alItems[i].getIconBitmapID() != null) {
-					bmIco = (Bitmap) getRootActivity().getStorage().getObject(
-							XPMB_Activity.GRAPH_ASSETS_COL_KEY, alItems[i].getIconBitmapID());
+					bmIco = (Bitmap) getRootActivity().getThemeManager().getAsset(alItems[i].getIconBitmapID());
 					rIcon.offsetTo(rCurItemD.left + pxfd(2), rCurItemD.top + pxfd(2));
 
 					canvas.drawBitmap(bmIco, null, rIcon, pParams);

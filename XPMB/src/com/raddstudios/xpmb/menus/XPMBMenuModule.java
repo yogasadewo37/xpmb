@@ -19,6 +19,8 @@
 
 package com.raddstudios.xpmb.menus;
 
+import java.util.ArrayList;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.ComponentName;
@@ -34,6 +36,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.animation.DecelerateInterpolator;
@@ -67,6 +70,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 			bShowSelIcon = false;
 	private ExecItemThread rExecItem = null;
 	private Modules_Base curModule = null;
+	private ArrayList<Modules_Base> alModules = null;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
@@ -374,6 +378,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 		rTextBounds = new Rect();
 		tS = new Rect();
 		cP = new Rect();
+		alModules = new ArrayList<Modules_Base>();
 	}
 
 	@Override
@@ -381,8 +386,8 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 		Log.v(getClass().getSimpleName(), "doInit():Initializing XPMB Main Menu (XMB type) Module.");
 		doInit(getRootActivity().getResources().getXml(R.xml.xmb_layout));
 		getRootActivity().getDrawingLayerManager().addLayer(this);
-		bmSelIcon = flipBitmap((Bitmap) getRootActivity().getStorage().getObject(
-				XPMB_Activity.GRAPH_ASSETS_COL_KEY, "theme.icon|ui_backicon"));
+		bmSelIcon = flipBitmap((Bitmap) getRootActivity().getThemeManager().getAsset(
+				"theme.icon|ui_backicon"));
 		rSelIconRect = new Rect(0, 0, bmSelIcon.getWidth(), bmSelIcon.getHeight());
 		Log.v(getClass().getSimpleName(),
 				"doInit():Finished XPMB Main Menu (XMB type) Module initialization.");
@@ -482,7 +487,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 						cSubcategory.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 						cSubcategory.setWidth(pxfd(85));
 						cSubcategory.setHeight(pxfd(85));
-						cSubcategory.setSubmoduleIDFromString(xrpRes.getAttributeValue(null,
+						cSubcategory.setSubmoduleID(xrpRes.getAttributeValue(null,
 								"module"));
 						cSubcategory.setListAnimator(xrpRes.getAttributeValue(null, "anim"));
 						if (x != 0 && y != 0) {
@@ -539,9 +544,12 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 
 			if (px_x > pxfd(-85) && px_x < getDrawingConstraints().right + pxfd(85)) {
 				// Icon
-				Bitmap bmIcon_h = (Bitmap) getRootActivity().getStorage().getObject(
-						XPMB_Main.GRAPH_ASSETS_COL_KEY, xmi_x.getIconBitmapID(),
-						"theme.icon|icon_mbox_received");
+				Bitmap bmIcon_h = getRootActivity().getThemeManager().getAsset(
+						xmi_x.getIconBitmapID());
+				if (bmIcon_h == null) {
+					bmIcon_h = getRootActivity().getThemeManager().getAsset(
+							"theme.icon|icon_mbox_received");
+				}
 				iAlpha = (int) (255 * xmi_x.getIconAlpha() * fOpacity);
 
 				pParams.setAlpha(iAlpha);
@@ -621,9 +629,12 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 
 						canvas.saveLayerAlpha(rILoc.left, rILoc.top, rILoc.right, rILoc.bottom,
 								iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-						Bitmap bmIcon = (Bitmap) getRootActivity().getStorage().getObject(
-								XPMB_Main.GRAPH_ASSETS_COL_KEY, xmi_y.getIconBitmapID(),
-								"theme.icon|icon_mbox_received");
+						Bitmap bmIcon = getRootActivity().getThemeManager().getAsset(
+								xmi_y.getIconBitmapID());
+						if (bmIcon == null) {
+							bmIcon = getRootActivity().getThemeManager().getAsset(
+									"theme.icon|icon_mbox_received");
+						}
 						pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 						canvas.drawBitmap(bmIcon, null, rILoc, pParams);
 						pParams.reset();
@@ -857,19 +868,8 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 				.getSubitem(index);
 		if (xmid instanceof XPMBMenuCategory) {
 			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
-
-			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_MEDIA_MUSIC) {
-				curModule = new Module_Media_Music(getRootActivity());
-			}
-			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_EMU_GBA) {
-				curModule = new Module_Emu_GBA(getRootActivity());
-			}
-			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_EMU_NES) {
-				curModule = new Module_Emu_NES(getRootActivity());
-			}
-			if (xmc.getSubmoduleID() == XPMBMenuCategory.MODULE_SYSTEM_APPS) {
-				curModule = new Module_System_Apps(getRootActivity());
-			}
+			
+			curModule = getRootActivity().getModule(xmc.getSubmoduleID());
 
 			if (curModule != null) {
 				bLockedKeyPad = true;

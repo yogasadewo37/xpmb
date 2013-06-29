@@ -28,6 +28,13 @@ public class XPMBSideMenuItem {
 	public String getIconBitmapID() {
 		return null;
 	}
+	
+	public boolean isEnabled() {
+		return false;
+	}
+	
+	public void setEnabled(boolean enabled) {
+	}
 
 	public boolean hasChildren() {
 		return false;

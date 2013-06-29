@@ -23,7 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -32,6 +32,7 @@ import java.util.zip.ZipFile;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
@@ -53,11 +54,11 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 
 	private boolean bInit = false;
 	private String strEmuAct = null;
-	private ArrayList<String> alCoverKeys = null;
+	//private ArrayList<String> alCoverKeys = null;
 	private ProcessItemThread rProcessItem = null;
 
-	private final String SETTING_LAST_ITEM = "emu.nes.lastitem",
-			SETTING_EMU_ACT = "emu.nes.emuact";
+	private final String SETTINGS_BUNDLE_KEY = "module.emu.nes",
+			SETTING_LAST_ITEM = "emu.nes.lastitem", SETTING_EMU_ACT = "emu.nes.emuact";
 
 	private class ProcessItemThread implements Runnable {
 
@@ -101,7 +102,7 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 	public Module_Emu_NES(XPMB_Activity root) {
 		super(root);
 
-		alCoverKeys = new ArrayList<String>();
+		//alCoverKeys = new ArrayList<String>();
 		rProcessItem = new ProcessItemThread(this);
 	}
 
@@ -118,30 +119,25 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
-	private void reloadSettings() {
-		getContainerCategory()
-				.setSelectedSubitem(
-						(Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-								SETTING_LAST_ITEM, -1));
-		strEmuAct = (String) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_EMU_ACT,
-				"com.androidemu.nes/.EmulatorActivity");
-		Log.d(getClass().getSimpleName(),
-				"reloadSettings():<Selected Item>="
-						+ String.valueOf(getContainerCategory().getSelectedSubitem()));
+	@Override
+	protected void reloadSettings() {
+		Bundle settings = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		getContainerCategory().setSelectedSubitem(settings.getInt(SETTING_LAST_ITEM, -1));
+		strEmuAct = settings.getString(SETTING_EMU_ACT);
+		if (strEmuAct == null) {
+			strEmuAct = "com.androidemu.nes/.EmulatorActivity";
+		}
+		Log.d(getClass().getSimpleName(), "reloadSettings():<Selected Item>="
+				+ getContainerCategory().getSelectedSubitem());
 		Log.d(getClass().getSimpleName(), "reloadSettings():<NES Emulator Activity>=" + strEmuAct);
 	}
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM,
-				getContainerCategory().getSelectedSubitem());
-
+		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
+		saveData.putString(SETTING_EMU_ACT, strEmuAct);
 		getContainerCategory().clearSubitems();
-		Log.v(getClass().getSimpleName(), "Removing " + alCoverKeys.size() + " cached cover assets");
-		for (String ck : alCoverKeys) {
-			getStorage().removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
-		}
-		alCoverKeys.clear();
 	}
 
 	@Override

@@ -24,17 +24,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
-import java.util.Locale;
 import java.util.zip.ZipFile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.os.BatteryManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -44,45 +41,60 @@ import android.view.WindowManager;
 
 import com.raddstudios.xpmb.menus.XPMBMenuModule;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_GBA;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_NES;
+import com.raddstudios.xpmb.menus.modules.media.Module_Media_Music;
+import com.raddstudios.xpmb.menus.modules.system.Module_System_Apps;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.UI.ThemeLoader;
 
 public class XPMB_Main extends XPMB_Activity {
 
 	private XPMBMenuModule mMenu = null;
 	private XPMBUIModule mBaseLayer = null;
 	private boolean bLockedKeys = false, firstInitDone = false;
-	AudioManager amVolControl = null;
+	private AudioManager amVolControl = null;
 
-	@SuppressWarnings("unchecked")
+	private final String SETTINGS_BUNDLE_KEY = "main.global", SETTING_NO_TITLE = "notitle",
+			SETTING_SHOW_SYSWALLPAPER = "usesystemwallpaper", SETTING_KEEP_SCREEN = "keppscreenon";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		Log.v(getClass().getSimpleName(), "onCreate():Initializing XPMB...");
-		Log.d(getClass().getSimpleName(), "onCreate():Reported Android version is ["
-				+ Build.VERSION.RELEASE + "]");
-		Log.d(getClass().getSimpleName(), "onCreate():Reported locale is ["
-				+ Locale.getDefault().getDisplayLanguage() + "]");
-		Log.d(getClass().getSimpleName(), "onCreate():Reported board name is [" + Build.BOARD + "]");
-
-		if (!isExtStorageRW()) {
-			Log.e(getClass().getSimpleName(),
-					"onCreate():Error initializing XPMB. External storage is not available.");
-			finish();
-		}
+		// Call this always after super.onCreate() and before
+		// setContentView()!!!
+		reloadSettings();
+		
+		setContentView(getRootView());
 
 		// Setup services
 		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
 
-		// Setup window params
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
-		// ^^ These 2 or 3 should be optional
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		setContentView(getRootView());
+		initializeStorage();
+		initializeThemeManager();
 
+		mBaseLayer = new XPMBUIModule(this);
+		getDrawingLayerManager().addLayer(mBaseLayer);
+		mMenu = new XPMBMenuModule(this);
+	}
+
+	private void reloadSettings() {
+		Bundle settings = getSettingBundle(SETTINGS_BUNDLE_KEY);
+		// Setup window params
+		if (settings.getBoolean(SETTING_NO_TITLE)) {
+			requestWindowFeature(Window.FEATURE_NO_TITLE);
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+		if (settings.getBoolean(SETTING_SHOW_SYSWALLPAPER)) {
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+		}
+		if (settings.getBoolean(SETTING_KEEP_SCREEN)) {
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		}
+	}
+
+	private void initializeStorage() {
 		File fRootStoragePath = new File(Environment.getExternalStorageDirectory().getPath()
 				+ "/XPMB");
 		if (!fRootStoragePath.exists()) {
@@ -90,7 +102,11 @@ public class XPMB_Main extends XPMB_Activity {
 					"onCreate():Root storage path not found. Creating directory.");
 			fRootStoragePath.mkdirs();
 		}
-		File defTheme = new File(fRootStoragePath.getAbsolutePath() + "/themes/XPMB.zip");
+	}
+
+	private void initializeThemeManager() {
+		File defTheme = new File(Environment.getExternalStorageDirectory().getPath()
+				+ "/XPMB/themes/XPMB.zip");
 		if (!defTheme.exists()) {
 			if (!defTheme.getParentFile().exists()) {
 				Log.w(getClass().getSimpleName(),
@@ -99,7 +115,7 @@ public class XPMB_Main extends XPMB_Activity {
 			}
 			long t = System.currentTimeMillis();
 			Log.w(getClass().getSimpleName(),
-					"onCreate():Default theme file not found. Creating default theme into '"
+					"onCreate():Default theme file not found. Dumping default theme into '"
 							+ defTheme.getAbsolutePath() + "'...");
 
 			FileOutputStream oFile = null;
@@ -122,26 +138,14 @@ public class XPMB_Main extends XPMB_Activity {
 								+ (System.currentTimeMillis() - t) + "ms");
 			}
 		}
-
-		if (firstInitDone && mMenu != null) {
-			Log.v(getClass().getSimpleName(), "onCreate():Already initialized. Skipping process.");
-			return;
-		}
-
-		getStorage().createCollection(GRAPH_ASSETS_COL_KEY);
-		getStorage().createCollection(SETTINGS_COL_KEY);
 		try {
-			new ThemeLoader((Hashtable<String, Bitmap>) getStorage().getCollection(
-					XPMB_Main.GRAPH_ASSETS_COL_KEY)).reloadTheme(new ZipFile(new File(Environment
-					.getExternalStorageDirectory().getPath() + "/XPMB/themes/XPMB.zip"),
-					ZipFile.OPEN_READ));
+			getThemeManager().reloadTheme(
+					new ZipFile(new File(Environment.getExternalStorageDirectory().getPath()
+							+ "/XPMB/themes/XPMB.zip"), ZipFile.OPEN_READ));
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
 					"onCreate():Error loading theme file. Now expect NullPointerExceptions");
 		}
-		mBaseLayer = new XPMBUIModule(this);
-		getDrawingLayerManager().addLayer(mBaseLayer);
-		mMenu = new XPMBMenuModule(this);
 	}
 
 	// TODO: Optimize onResume() to speed up resuming process.
@@ -226,7 +230,7 @@ public class XPMB_Main extends XPMB_Activity {
 			mMenu.doCleanup();
 			mMenu.requestDestroy();
 		}
-		finish();
+		super.requestActivityEnd();
 	}
 
 	@Override

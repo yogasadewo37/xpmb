@@ -32,7 +32,6 @@ import android.graphics.RectF;
 import android.text.format.Time;
 import android.view.Gravity;
 
-import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 
@@ -57,20 +56,24 @@ public class XPMBUIModule extends UILayer {
 				.getHeight()));
 		pPaint = new Paint();
 		tClock = new Time(Time.getCurrentTimezone());
-		Bitmap drwAnimSrc = (Bitmap) root.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-				"theme.icon|ui_load_anim");
-		intLoadAnimFrames = drwAnimSrc.getWidth() / drwAnimSrc.getHeight();
 		tUpdateAnims = new Timer();
 		tUpdateAnims.scheduleAtFixedRate(ttUpdateLoadAnim, 0, 30);
 		tUpdateAnims.scheduleAtFixedRate(ttUpdateDateTime, 0, 10000);
+	}
+	
+	public void initialize() {
+		setDrawingConstraints(new RectF(0, 0, mRoot.getRootView().getWidth(), mRoot.getRootView()
+				.getHeight()));
+		Bitmap drwAnimSrc = (Bitmap) mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
+		intLoadAnimFrames = drwAnimSrc.getWidth() / drwAnimSrc.getHeight();
+		
 	}
 
 	@Override
 	public void drawTo(Canvas canvas) {
 
 		if (bBatteryIndicator) {
-			Bitmap bmBatt = (Bitmap) mRoot.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-					strBatteryIcon);
+			Bitmap bmBatt = (Bitmap) mRoot.getThemeManager().getAsset(strBatteryIcon);
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 
 			canvas.drawBitmap(bmBatt, null, bmRect, pPaint);
@@ -88,8 +91,7 @@ public class XPMBUIModule extends UILayer {
 			pPaint.reset();
 		}
 		if (bLoadingAnim) {
-			Bitmap bmAnim = (Bitmap) mRoot.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-					"theme.icon|ui_load_anim");
+			Bitmap bmAnim = (Bitmap) mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
 			int intAnim_x = (int) rConstraints.right - pxfd(37), intAnim_y = (int) rConstraints.bottom
 					- pxfd(37), intAnim_bx = bmAnim.getHeight() * intLoadAnimCurFrame;
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
@@ -103,8 +105,7 @@ public class XPMBUIModule extends UILayer {
 	@Override
 	public void setDrawingConstraints(RectF constraints) {
 		rConstraints = constraints;
-		Bitmap bm_batt = (Bitmap) mRoot.getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-				strBatteryIcon);
+		Bitmap bm_batt = (Bitmap) mRoot.getThemeManager().getAsset(strBatteryIcon);
 		Rect bm_rect = new Rect(0, 0, bm_batt.getWidth(), bm_batt.getHeight()), br = new Rect(
 				(int) rConstraints.right - pxfd(37), (int) rConstraints.top,
 				(int) rConstraints.right - pxfd(37) + pxfd(32), (int) rConstraints.top + pxfd(32));

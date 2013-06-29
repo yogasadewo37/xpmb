@@ -19,13 +19,15 @@
 
 package com.raddstudios.xpmb.menus.modules.system;
 
-import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.raddstudios.xpmb.R;
@@ -44,10 +46,11 @@ import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V1;
 public class Module_System_Apps extends Modules_Base implements FinishedListener {
 
 	private boolean bInit = false;
-	private ArrayList<String> alIconKeys = null;
+	private Hashtable<String, Bitmap> alIcons = null;
 	private ProcessItemThread rProcessItem = null;
 
-	private final String SETTING_LAST_ITEM = "appsmenu.lastitem";
+	private final String SETTINGS_BUNDLE_KEY = "module.system.apps",
+			SETTING_LAST_ITEM = "lastitem";
 
 	private class SMInfo extends XPMBSideMenuItem {
 		@Override
@@ -55,14 +58,13 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			return getRootActivity().getString(R.string.strSideMenuInfo);
 		}
 	}
-	
+
 	private class SMCopyItem extends XPMBSideMenuItem {
 		@Override
-		public String getLabel(){
-			return getRootActivity().getString(R.string.strSideMenuCopyElement);			
+		public String getLabel() {
+			return getRootActivity().getString(R.string.strSideMenuCopyElement);
 		}
 	}
-	
 
 	private class ProcessItemThread implements Runnable {
 
@@ -88,7 +90,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 	public Module_System_Apps(XPMB_Activity root) {
 		super(root);
-		alIconKeys = new ArrayList<String>();
+		alIcons = new Hashtable<String, Bitmap>();
 		rProcessItem = new ProcessItemThread(this);
 	}
 
@@ -103,11 +105,10 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
-	private void reloadSettings() {
-		getContainerCategory()
-				.setSelectedSubitem(
-						(Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-								SETTING_LAST_ITEM, -1));
+	@Override
+	protected void reloadSettings() {
+		Bundle settings = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		getContainerCategory().setSelectedSubitem(settings.getInt(SETTING_LAST_ITEM, -1));
 		Log.d(getClass().getSimpleName(),
 				"reloadSettings():<Selected Item>="
 						+ String.valueOf(getContainerCategory().getSelectedSubitem()));
@@ -115,16 +116,10 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM,
-				getContainerCategory().getSelectedSubitem());
+		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 
 		getContainerCategory().clearSubitems();
-		Log.v(getClass().getSimpleName(), "Removing " + String.valueOf(alIconKeys.size())
-				+ " cached icon assets");
-		for (String ck : alIconKeys) {
-			getStorage().removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
-		}
-		alIconKeys.clear();
 	}
 
 	@Override
@@ -147,7 +142,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			if (rinf.activityInfo.packageName.equals(getRootActivity().getPackageName())) {
 				continue;
 			}
-			
+
 			String strAppLabel = rinf.loadLabel(pm).toString();
 			Intent strAppIntent = pm.getLaunchIntentForPackage(rinf.activityInfo.packageName);
 
@@ -156,16 +151,11 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 			XPMBMenuItem xmi = new XPMBMenuItem(strAppLabel);
 			String strIcon = "module.system.apps.icon|" + strAppLabel;
-			if (getStorage().getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon) == null) {
-				long dt = System.currentTimeMillis();
-				getStorage().putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, strIcon,
-						((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
-				Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '"
-						+ strAppLabel + "' done. Took " + dt + "ms.");
-			}
-			if (!alIconKeys.contains(strIcon)) {
-				alIconKeys.add(strIcon);
-			}
+			long dt = System.currentTimeMillis();
+			alIcons.put(strIcon, ((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
+			Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '" + strAppLabel
+					+ "' done. Took " + dt + "ms.");
+
 			xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 			xmi.setIconBitmapID(strIcon);
 			xmi.setData(strAppIntent);

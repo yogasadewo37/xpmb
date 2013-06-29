@@ -36,10 +36,21 @@ public class ThemeLoader {
 
 	Hashtable<String, Bitmap> hAssets = null;
 
-	public ThemeLoader(Hashtable<String, Bitmap> dest) {
-		hAssets = dest;		
+	public ThemeLoader() {
+		hAssets = new Hashtable<String, Bitmap>();		
+	}
+	
+	public Bitmap getAsset(String key) {
+		return hAssets.get(key);
 	}
 
+	public Bitmap getAsset(String key, String defValue) {
+		if (hAssets.contains(key)) {
+			return hAssets.get(key);
+		} else {
+			return hAssets.get(defValue);
+		}
+	}
 	public void reloadTheme(ZipFile container) {
 		long startT = System.currentTimeMillis();
 		Hashtable<String, String> hCachedIcons = new Hashtable<String, String>();

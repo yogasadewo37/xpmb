@@ -26,11 +26,14 @@ import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.menus.XPMBSideMenuItem;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
@@ -47,12 +50,12 @@ public class Module_Media_Music extends Modules_Base {
 	private MediaPlayerControl mpc = null;
 	private boolean bInit = false, bIsPlaying = false;
 	private int intLastPlayed = -1;
-	//private ArrayList<String> alCoverKeys = null;
+	// private ArrayList<String> alCoverKeys = null;
 	private ProcessItemThread rProcessItem = null;
 
-	private final String SETTING_LAST_ITEM = "mediaplayer.lastitem",
-			SETTING_LAST_PLAYED = "mediaplayer.lastplayed",
-			SETTING_IS_PLAYING = "mediaplayer.isplaying";
+	private final String SETTINGS_BUNDLE_KEY = "module.media.music",
+			SETTING_LAST_ITEM = "lastitem", SETTING_LAST_PLAYED = "lastplayed",
+			SETTING_IS_PLAYING = "isplaying";
 
 	private class ProcessItemThread implements Runnable {
 
@@ -71,6 +74,13 @@ public class Module_Media_Music extends Modules_Base {
 							+ "'");
 			mpc.play();
 			bIsPlaying = true;
+		}
+	}
+
+	private class SMInfo extends XPMBSideMenuItem {
+		@Override
+		public String getLabel() {
+			return getRootActivity().getString(R.string.strSideMenuInfo);
 		}
 	}
 
@@ -105,15 +115,15 @@ public class Module_Media_Music extends Modules_Base {
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
 
-	private void reloadSettings() {
-		getContainerCategory().setSelectedSubitem((Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_LAST_ITEM, -1));
-		intLastPlayed = (Integer) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_LAST_PLAYED, -1);
-		bIsPlaying = (Boolean) getStorage().getObject(XPMB_Main.SETTINGS_COL_KEY,
-				SETTING_IS_PLAYING, false);
+	@Override
+	protected void reloadSettings() {
+		Bundle settings = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		getContainerCategory().setSelectedSubitem(settings.getInt(SETTING_LAST_ITEM, -1));
+		intLastPlayed = settings.getInt(SETTING_LAST_PLAYED, -1);
+		bIsPlaying = settings.getBoolean(SETTING_IS_PLAYING, false);
 		Log.d(getClass().getSimpleName(),
-				"reloadSettings():<Selected Item>=" + String.valueOf(getContainerCategory().getSelectedSubitem()));
+				"reloadSettings():<Selected Item>="
+						+ String.valueOf(getContainerCategory().getSelectedSubitem()));
 		Log.d(getClass().getSimpleName(),
 				"reloadSettings():<Last Played Item>=" + String.valueOf(intLastPlayed));
 		Log.d(getClass().getSimpleName(),
@@ -122,15 +132,11 @@ public class Module_Media_Music extends Modules_Base {
 
 	@Override
 	public void deInitialize() {
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_LAST_PLAYED, intLastPlayed);
-		getStorage().putObject(XPMB_Main.SETTINGS_COL_KEY, SETTING_IS_PLAYING, bIsPlaying);
-
+		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
+		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
+		saveData.putInt(SETTING_LAST_PLAYED, intLastPlayed);
+		saveData.putBoolean(SETTING_IS_PLAYING, bIsPlaying);
 		getContainerCategory().clearSubitems();
-		// for (String ck : alCoverKeys) {
-		// mStor.removeObject(XPMB_Main.GRAPH_ASSETS_COL_KEY, ck);
-		// }
-		// alCoverKeys.clear();
 	}
 
 	public File getImageFileFromUri(Uri uri) {
@@ -242,6 +248,7 @@ public class Module_Media_Music extends Modules_Base {
 		}
 		rProcessItem.setItem(item);
 		new Thread(rProcessItem).start();
+		intLastPlayed = getContainerCategory().getSelectedSubitem();
 	}
 
 	@Override
@@ -291,7 +298,6 @@ public class Module_Media_Music extends Modules_Base {
 			} else {
 				processItem(getContainerCategory().getSubitem(
 						getContainerCategory().getSelectedSubitem()));
-				intLastPlayed = getContainerCategory().getSelectedSubitem();
 			}
 			break;
 		}

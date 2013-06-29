@@ -21,19 +21,18 @@ package com.raddstudios.xpmb.menus.utils;
 
 import java.util.ArrayList;
 
+import com.raddstudios.xpmb.XPMB_Main;
+
 import android.graphics.Point;
 
 public class XPMBMenuCategory extends XPMBMenuItem {
 
 	public static final int LIST_ANIM_NONE = 0, LIST_ANIM_FULL = 4, LIST_ANIM_HALF = 2,
 			LIST_ANIM_HIGHLIGHT = 3;
-	public static final int MODULE_SYSTEM_DUMMY = 0, MODULE_MEDIA_MUSIC = 1,
-			MODULE_MEDIA_PICTURES = 2, MODULE_MEDIA_VIDEOS = 3, MODULE_SYSTEM_APPS = 4,
-			MODULE_EMU_GBA = 5, MODULE_EMU_NES = 6, MODULE_EMU_SNES = 7;
 
 	private ArrayList<XPMBMenuItemDef> alSubitems = null;
-	private int intCurSubitem = 0, intListAnimator = LIST_ANIM_NONE,
-			intSubmodule = MODULE_SYSTEM_DUMMY;
+	private int intCurSubitem = 0, intListAnimator = LIST_ANIM_NONE;
+	private String strSubmodule = XPMB_Main.MODULE_SYSTEM_DUMMY;
 	private float fSubAlpha = 1.0f;
 	private Point pContainerPos = null;
 	private boolean bSubitemsVisible = false;
@@ -100,28 +99,12 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 		return alSubitems.indexOf(value);
 	}
 
-	public void setSubmoduleIDFromString(String type) {
-		if (type == null) {
-			intSubmodule = MODULE_SYSTEM_DUMMY;
-		} else if (type.equalsIgnoreCase("com.xpmb.media.music")) {
-			intSubmodule = MODULE_MEDIA_MUSIC;
-		} else if (type.equalsIgnoreCase("com.xpmb.media.pictures")) {
-			intSubmodule = MODULE_MEDIA_PICTURES;
-		} else if (type.equalsIgnoreCase("com.xpmb.media.videos")) {
-			intSubmodule = MODULE_MEDIA_VIDEOS;
-		} else if (type.equalsIgnoreCase("com.xpmb.emu.nes")) {
-			intSubmodule = MODULE_EMU_NES;
-		} else if (type.equalsIgnoreCase("com.xpmb.emu.snes")) {
-			intSubmodule = MODULE_EMU_SNES;
-		} else if (type.equalsIgnoreCase("com.xpmb.emu.gba")) {
-			intSubmodule = MODULE_EMU_GBA;
-		} else if (type.equalsIgnoreCase("com.xpmb.system.apps")) {
-			intSubmodule = MODULE_SYSTEM_APPS;
-		}
+	public void setSubmoduleID(String id) {
+		strSubmodule = id;
 	}
 
-	public int getSubmoduleID() {
-		return intSubmodule;
+	public String getSubmoduleID() {
+		return strSubmodule;
 	}
 
 	public void setListAnimator(String animator) {

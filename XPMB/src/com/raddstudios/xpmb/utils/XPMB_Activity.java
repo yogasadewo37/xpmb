@@ -19,11 +19,8 @@
 
 package com.raddstudios.xpmb.utils;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
-
-import com.raddstudios.xpmb.menus.XPMBUIModule;
-import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager;
+import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -32,6 +29,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -42,6 +40,15 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 
+import com.raddstudios.xpmb.menus.XPMBUIModule;
+import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_GBA;
+import com.raddstudios.xpmb.menus.modules.games.Module_Emu_NES;
+import com.raddstudios.xpmb.menus.modules.media.Module_Media_Music;
+import com.raddstudios.xpmb.menus.modules.system.Module_System_Apps;
+import com.raddstudios.xpmb.utils.UI.ThemeLoader;
+import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager;
+
 @SuppressLint("Registered")
 public class XPMB_Activity extends Activity {
 
@@ -51,9 +58,18 @@ public class XPMB_Activity extends Activity {
 			KEYCODE_TRIANGLE = 100, KEYCODE_SELECT = 109, KEYCODE_START = 108, KEYCODE_MENU = 82,
 			KEYCODE_SHOULDER_LEFT = 102, KEYCODE_SHOULDER_RIGHT = 103, KEYCODE_VOLUME_DOWN = 25,
 			KEYCODE_VOLUME_UP = 24;
-	public static final String GRAPH_ASSETS_COL_KEY = "com.raddstudios.graphassets",
-			SETTINGS_COL_KEY = "com.raddstudios.settings";
-	
+	public static final String SETTINGS_KEY_SYSTEM = "com.raddstudios.settings.global";
+
+	public static final String MODULE_SYSTEM_DUMMY = "module.system.dummy",
+			MODULE_MEDIA_MUSIC = "module.media.music",
+			MODULE_MEDIA_PICTURES = "module.media.pictures",
+			MODULE_MEDIA_VIDEOS = "module.media.video", MODULE_SYSTEM_APPS = "module.media.apps",
+			MODULE_EMU_GBA = "module.emu.gba", MODULE_EMU_NES = "module.emu.nes",
+			MODULE_EMU_SNES = "module.emu.snes";
+
+	private final String APP_SETTINGS_BUNDLE_KEY = "com.raddstudios",
+			SETTINGS_SYSTEM_INITIALIZED = "system.initialized";
+
 	public interface FinishedListener {
 		public void onFinished(Object data);
 	}
@@ -76,6 +92,7 @@ public class XPMB_Activity extends Activity {
 			mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 			mMediaPlayer.setOnPreparedListener(this);
 			bInit = true;
+			Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 		}
 
 		public void setOnCompletionListener(OnCompletionListener listener) {
@@ -166,95 +183,13 @@ public class XPMB_Activity extends Activity {
 		}
 	}
 
-	public final class ObjectCollections {
-		private Hashtable<String, Hashtable<String, Object>> mCollection = null;
-		private Hashtable<String, ArrayList<Object>> mList = null;
-
-		public ObjectCollections() {
-			mCollection = new Hashtable<String, Hashtable<String, Object>>();
-			mList = new Hashtable<String, ArrayList<Object>>();
-		}
-
-		public void createList(String name) {
-			mList.put(name, new ArrayList<Object>());
-		}
-
-		public void createCollection(String name) {
-			mCollection.put(name, new Hashtable<String, Object>());
-		}
-
-		public void removeList(String name) {
-			ArrayList<Object> cArray = mList.get(name);
-			if (cArray != null) {
-				cArray.clear();
-			}
-			mList.remove(name);
-		}
-
-		public void removeCollection(String name) {
-			Hashtable<String, Object> cHash = mCollection.get(name);
-			if (cHash != null) {
-				cHash.clear();
-			}
-			mCollection.remove(name);
-		}
-
-		public ArrayList<?> getList(String name) {
-			return mList.get(name);
-		}
-
-		public Hashtable<String, ?> getCollection(String name) {
-			return mCollection.get(name);
-		}
-
-		public void putObject(String collection, String key, Object value) {
-			Hashtable<String, Object> cHash = mCollection.get(collection);
-			if (cHash != null) {
-				cHash.put(key, value);
-			}
-		}
-
-		public Object getObject(String collection, String key) {
-			return getObject(collection, key, null);
-		}
-
-		public Object getObject(String collection, String key, Object defValue) {
-			Hashtable<String, Object> cHash = mCollection.get(collection);
-			if (cHash != null) {
-				if (cHash.get(key) != null) {
-					return cHash.get(key);
-				} else {
-					return defValue;
-				}
-			}
-			return defValue;
-		}
-
-		public void copyObject(String srcCollection, String srcKey, String destCollection,
-				String destKey) {
-			Object itm = mCollection.get(srcCollection).get(srcKey);
-			mCollection.get(destCollection).put(destKey, itm);
-		}
-
-		public Object removeObject(String collection, String key) {
-			Hashtable<String, Object> cHash = mCollection.get(collection);
-			if (cHash != null) {
-				return cHash.remove(key);
-			}
-			return null;
-		}
-
-		public void release() {
-			mCollection.clear();
-			mList.clear();
-		}
-	}
-
 	private MediaPlayerControl mpMedia = null;
-	private ObjectCollections ocCollections = null;
 	private RelativeLayout rlRootView = null;
 	private XPMB_UILayerManager xuLayerManager = null;
 	private Handler hMessageBus = null;
+	private ThemeLoader mTheme = null;
+	private Bundle mSettings = null;
+	private Hashtable<String, Modules_Base> alModules = null;
 
 	private FinishedListener cIntentWaitListener = null;
 
@@ -265,20 +200,50 @@ public class XPMB_Activity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		Log.v(getClass().getSimpleName(), "onCreate():Initializing XPMB...");
+		Log.d(getClass().getSimpleName(), "onCreate():Reported Android version is ["
+				+ Build.VERSION.RELEASE + "]");
+		Log.d(getClass().getSimpleName(), "onCreate():Reported locale is ["
+				+ Locale.getDefault().getDisplayLanguage() + "]");
+		Log.d(getClass().getSimpleName(), "onCreate():Reported board name is [" + Build.BOARD + "]");
+
+		if (!isExtStorageRW()) {
+			Log.e(getClass().getSimpleName(),
+					"onCreate():Error initializing XPMB. External storage is not available.");
+			finish();
+		}
 		mpMedia = new MediaPlayerControl();
-		ocCollections = new ObjectCollections();
 		rlRootView = new RelativeLayout(getBaseContext());
 		rlRootView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
 		hMessageBus = new Handler(Looper.getMainLooper());
 		xuLayerManager = new XPMB_UILayerManager(this);
+		mTheme = new ThemeLoader();
+		if (savedInstanceState == null) {
+			mSettings = new Bundle();
+		} else {
+			mSettings = savedInstanceState.getBundle(APP_SETTINGS_BUNDLE_KEY);
+		}
+		alModules = new Hashtable<String, Modules_Base>();
+		initializeModules();
+	}
+	
+	@Override
+	public void onResume() {
+		
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		savedInstanceState.putBundle(APP_SETTINGS_BUNDLE_KEY, mSettings);
+		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		mpMedia.release();
-		ocCollections.release();
 	}
 
 	public XPMB_UILayerManager getDrawingLayerManager() {
@@ -293,6 +258,28 @@ public class XPMB_Activity extends Activity {
 		return hMessageBus;
 	}
 
+	public ThemeLoader getThemeManager() {
+		return mTheme;
+	}
+
+	private void initializeModules() {
+		alModules.put(MODULE_MEDIA_MUSIC, new Module_Media_Music(this));
+		alModules.put(MODULE_EMU_GBA, new Module_Emu_GBA(this));
+		alModules.put(MODULE_EMU_NES, new Module_Emu_NES(this));
+		alModules.put(MODULE_SYSTEM_APPS, new Module_System_Apps(this));
+	}
+
+	public Modules_Base getModule(String id) {
+		return alModules.get(id);
+	}
+
+	public Bundle getSettingBundle(String key) {
+		if (!mSettings.containsKey(key)) {
+			mSettings.putBundle(key, new Bundle());
+		}
+		return mSettings.getBundle(key);
+	}
+
 	public void showLoadingAnim(boolean visible) {
 		((XPMBUIModule) xuLayerManager.getLayer(0)).setLoadingAnimationVisible(visible);
 	}
@@ -301,9 +288,10 @@ public class XPMB_Activity extends Activity {
 	}
 
 	public void requestActivityEnd() {
+		finish();
 	}
-	
-	public boolean isExtStorageRW(){
+
+	public boolean isExtStorageRW() {
 		boolean mExternalStorageAvailable = false;
 		boolean mExternalStorageWriteable = false;
 		String state = Environment.getExternalStorageState();
@@ -316,7 +304,7 @@ public class XPMB_Activity extends Activity {
 		} else {
 			mExternalStorageAvailable = mExternalStorageWriteable = false;
 		}
-		
+
 		return (mExternalStorageAvailable && mExternalStorageWriteable);
 	}
 
@@ -342,10 +330,6 @@ public class XPMB_Activity extends Activity {
 		if (cIntentWaitListener != null) {
 			cIntentWaitListener.onFinished(data);
 		}
-	}
-
-	public ObjectCollections getStorage() {
-		return ocCollections;
 	}
 
 	public MediaPlayerControl getPlayerControl() {

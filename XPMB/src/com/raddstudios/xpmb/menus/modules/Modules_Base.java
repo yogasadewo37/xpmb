@@ -28,16 +28,15 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 
-import com.raddstudios.xpmb.XPMB_Main;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
-import com.raddstudios.xpmb.utils.XPMB_Activity.ObjectCollections;
 
 public class Modules_Base extends UILayer {
 
@@ -49,7 +48,6 @@ public class Modules_Base extends UILayer {
 		public void start();
 	}
 
-	private ObjectCollections mStor = null;
 	private UILayer mLayer = null;
 	private XPMBMenuCategory mContainer = null;
 	private FinishedListener mListener = null;
@@ -61,7 +59,6 @@ public class Modules_Base extends UILayer {
 
 	public Modules_Base(XPMB_Activity rootActivity) {
 		super(rootActivity);
-		mStor = getRootActivity().getStorage();
 	}
 
 	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
@@ -79,15 +76,17 @@ public class Modules_Base extends UILayer {
 		}
 	}
 
+	public void saveSettings() {
+	}
+	
+	protected void reloadSettings() {
+	}
+	
 	public void deInitialize() {
-	};
+	}
 
 	protected XPMBMenuCategory getContainerCategory() {
 		return mContainer;
-	}
-
-	protected ObjectCollections getStorage() {
-		return mStor;
 	}
 
 	protected FinishedListener getFinishedListener() {
@@ -137,9 +136,8 @@ public class Modules_Base extends UILayer {
 
 					canvas.saveLayerAlpha(rILoc.left, rILoc.top, rILoc.right, rILoc.bottom, iAlpha,
 							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-					Bitmap bmIcon = (Bitmap) getRootActivity().getStorage().getObject(
-							XPMB_Main.GRAPH_ASSETS_COL_KEY, xmi_y.getIconBitmapID(),
-							"theme.icon|icon_mbox_received");
+					Bitmap bmIcon = getRootActivity().getThemeManager().getAsset(
+							xmi_y.getIconBitmapID(), "theme.icon|icon_mbox_received");
 					pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 					canvas.drawBitmap(bmIcon, null, rILoc, pParams);
 					pParams.reset();
