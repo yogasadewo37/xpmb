@@ -28,140 +28,6 @@ import android.content.res.XmlResourceParser;
 
 public class ROMInfo {
 
-	public class ROMInfoNode_ROM {
-		private String strROMName = null, strROMCRC = null, strROMMD5 = null,
-				strROMSHA1 = null, strROMStatus = null;
-		private int intROMSize = 0;
-
-		public ROMInfoNode_ROM(String name, int size, String crc, String md5,
-				String sha1, String status) {
-			strROMName = name;
-			intROMSize = size;
-			strROMCRC = crc;
-			strROMMD5 = md5;
-			strROMSHA1 = sha1;
-			strROMStatus = status;
-		}
-
-		public String getROMName() {
-			return strROMName;
-		}
-
-		public int getROMSize() {
-			return intROMSize;
-		}
-
-		public String getROMCRC() {
-			return strROMCRC;
-		}
-
-		public String getROMMD5() {
-			return strROMMD5;
-		}
-
-		public String getROMSHA1() {
-			return strROMSHA1;
-		}
-
-		public String getROMStatus() {
-			return strROMStatus;
-		}
-	}
-
-	public class ROMInfoNode_Release {
-		private String strReleaseName = null, strReleaseRegion = null;
-
-		public ROMInfoNode_Release(String name, String region) {
-			strReleaseName = name;
-			strReleaseRegion = region;
-		}
-
-		public String getReleaseName() {
-			return strReleaseName;
-		}
-
-		public String getReleaseRegion() {
-			return strReleaseRegion;
-		}
-	}
-
-	public class ROMInfoNode {
-		String strGameName = null, strGameCloneOf = null,
-				strGameDescription = null;
-		ROMInfoNode_ROM rinROMData = null;
-		Object[] aReleaseList = null;
-
-		public ROMInfoNode(String name, String cloneOf, String description,
-				ArrayList<ROMInfoNode_Release> releases, ROMInfoNode_ROM romData) {
-			strGameName = name;
-			strGameCloneOf = cloneOf;
-			strGameDescription = description;
-			aReleaseList = releases.toArray();
-			rinROMData = romData;
-		}
-
-		public String getGameName() {
-			return strGameName;
-		}
-
-		public String getGameDescription() {
-			return strGameDescription;
-		}
-
-		public int getNumReleases() {
-			return aReleaseList.length;
-		}
-
-		public ROMInfoNode_Release getReleaseData(int index) {
-			return (ROMInfoNode_Release) aReleaseList[index];
-		}
-
-		public ROMInfoNode_ROM getROMData() {
-			return rinROMData;
-		}
-
-	}
-
-	public class ROMInfoHeader {
-		private String strHeaderName = null, strHeaderDescription = null,
-				strHeaderVersion = null, strHeaderDate = null,
-				strHeaderAuthor = null, strHeaderUrl = null;
-
-		public ROMInfoHeader(String name, String description, String version,
-				String date, String author, String url) {
-			strHeaderName = name;
-			strHeaderDescription = description;
-			strHeaderVersion = version;
-			strHeaderDate = date;
-			strHeaderAuthor = author;
-			strHeaderUrl = url;
-		}
-
-		public String getHeaderName() {
-			return strHeaderName;
-		}
-
-		public String getHeaderDescription() {
-			return strHeaderDescription;
-		}
-
-		public String getHeaderVersion() {
-			return strHeaderVersion;
-		}
-
-		public String getHeaderDate() {
-			return strHeaderDate;
-		}
-
-		public String getHeaderAuthor() {
-			return strHeaderAuthor;
-		}
-
-		public String getHeaderUrl() {
-			return strHeaderUrl;
-		}
-	}
-
 	public static final int TYPE_CRC = 0, TYPE_MD5 = 1, TYPE_SHA1 = 2;
 
 	private Hashtable<String, ROMInfoNode> htItems = null;
@@ -227,17 +93,14 @@ public class ROMInfo {
 							gd = src.getText();
 						}
 						if (cName.equals("release")) {
-							gr.add(new ROMInfoNode_Release(src
-									.getAttributeValue(null, "name"), src
+							gr.add(new ROMInfoNode_Release(src.getAttributeValue(null, "name"), src
 									.getAttributeValue(null, "region")));
 						}
 						if (cName.equals("rom")) {
-							grr = new ROMInfoNode_ROM(src.getAttributeValue(
-									null, "name"), src.getAttributeIntValue(
-									null, "size", 0), src.getAttributeValue(
-									null, "crc"), src.getAttributeValue(null,
-									"md5"),
-									src.getAttributeValue(null, "sha1"),
+							grr = new ROMInfoNode_ROM(src.getAttributeValue(null, "name"),
+									src.getAttributeIntValue(null, "size", 0),
+									src.getAttributeValue(null, "crc"), src.getAttributeValue(null,
+											"md5"), src.getAttributeValue(null, "sha1"),
 									src.getAttributeValue(null, "status"));
 						}
 					}
@@ -247,20 +110,14 @@ public class ROMInfo {
 					if (cName.equals("game")) {
 						switch (intCheckType) {
 						case TYPE_MD5:
-							htItems.put(
-									grr.getROMMD5(),
-									new ROMInfoNode(gn, gc, gd, gr, grr));
+							htItems.put(grr.getROMMD5(), new ROMInfoNode(gn, gc, gd, gr, grr));
 							break;
 						case TYPE_SHA1:
-							htItems.put(
-									grr.getROMSHA1(),
-									new ROMInfoNode(gn, gc, gd,	gr, grr));
+							htItems.put(grr.getROMSHA1(), new ROMInfoNode(gn, gc, gd, gr, grr));
 							break;
 						case TYPE_CRC:
 						default:
-							htItems.put(
-									grr.getROMCRC(),
-									new ROMInfoNode(gn, gc, gd, gr, grr));
+							htItems.put(grr.getROMCRC(), new ROMInfoNode(gn, gc, gd, gr, grr));
 							break;
 						}
 						gn = null;
@@ -294,17 +151,17 @@ public class ROMInfo {
 	public int getCheckType() {
 		return intCheckType;
 	}
-	
-	public ROMInfoHeader getHeader(){
+
+	public ROMInfoHeader getHeader() {
 		return mHeader;
 	}
 
-	public int getNumNodes(){
+	public int getNumNodes() {
 		return htItems.size();
 	}
-	
-	public ROMInfoNode getNode(String key){
+
+	public ROMInfoNode getNode(String key) {
 		return htItems.get(key);
 	}
-	
+
 }

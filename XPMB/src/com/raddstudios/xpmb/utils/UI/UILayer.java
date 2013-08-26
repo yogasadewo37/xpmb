@@ -25,26 +25,39 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 
-import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager.UILayer_I;
 
 public class UILayer implements UILayer_I {
 
 	public static final int TYPE_VERTICAL = 0, TYPE_HORIZONTAL = 1;
 
-	private XPMB_Activity mRoot = null;
+	private XPMBActivity mRoot = null;
 	private RectF rConstraints = null;
 	private float fOpacity = 1.0f;
 
-	public UILayer(XPMB_Activity root) {
+	public UILayer(XPMBActivity root) {
 		mRoot = root;
 		rConstraints = new RectF();
 	}
-
+	
+	@Override
+	public void initialize(){
+	}
+		
+	@Override
+	public void dispose(){
+	}
+	
+	protected Handler getMessageBus(){
+		return mRoot.getMessageBus();
+	}
+	
 	@Override
 	public void drawTo(Canvas canvas) {
 	}
@@ -62,7 +75,7 @@ public class UILayer implements UILayer_I {
 				.getResources().getDisplayMetrics());
 	}
 
-	protected XPMB_Activity getRootActivity() {
+	protected XPMBActivity getRootActivity() {
 		return mRoot;
 	}
 

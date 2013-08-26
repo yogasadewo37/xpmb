@@ -17,38 +17,41 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus;
+package com.raddstudios.xpmb.menus.modules.games;
 
-public class XPMBSideMenuItem {
+import android.os.Bundle;
 
-	public int getIndex(){
-		return -1;
-	}
-	
-	public String getLabel() {
-		return null;
-	}
+public class ROMInfoNode_Release {
 
-	public String getIconBitmapID() {
-		return null;
-	}
-	
-	public boolean isEnabled() {
-		return false;
-	}
-	
-	public void setEnabled(boolean enabled) {
+	private final String BD_STRRELEASENAME = "strReleaseName",
+			BD_STRRELEASEREGION = "strReleaseRegion";
+
+	private String strReleaseName = null, strReleaseRegion = null;
+
+	public ROMInfoNode_Release(String name, String region) {
+		strReleaseName = name;
+		strReleaseRegion = region;
 	}
 
-	public boolean hasChildren() {
-		return false;
+	public ROMInfoNode_Release(Bundle source) {
+		strReleaseName = source.getString(BD_STRRELEASENAME);
+		strReleaseRegion = source.getString(BD_STRRELEASEREGION);
 	}
 
-	public XPMBSideMenuItem getChildren(int index) {
-		return null;
+	public String getReleaseName() {
+		return strReleaseName;
 	}
 
-	public void executeAction() {
+	public String getReleaseRegion() {
+		return strReleaseRegion;
 	}
 
+	public Bundle storeInBundle() {
+		Bundle o = new Bundle();
+
+		o.putString(BD_STRRELEASENAME, strReleaseName);
+		o.putString(BD_STRRELEASEREGION, strReleaseRegion);
+
+		return o;
+	}
 }

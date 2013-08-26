@@ -19,63 +19,87 @@
 
 package com.raddstudios.xpmb.menus.modules.system;
 
-import java.util.Hashtable;
 import java.util.List;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.XPMBSideMenuItem;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemApp;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V1;
 
 public class Module_System_Apps extends Modules_Base implements FinishedListener {
 
-	private boolean bInit = false;
-	private Hashtable<String, Bitmap> alIcons = null;
+	private boolean bInit = false, bLoaded = false;
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTINGS_BUNDLE_KEY = "module.system.apps",
 			SETTING_LAST_ITEM = "lastitem";
 
+	@Override
+	public String getModuleID() {
+		return "com.xpmb.system.apps";
+	}
+
 	private class SMInfo extends XPMBSideMenuItem {
+		@Override
+		public int getIndex() {
+			return 7;
+		}
+
 		@Override
 		public String getLabel() {
 			return getRootActivity().getString(R.string.strSideMenuInfo);
+		}
+
+		@Override
+		public void executeAction() {
 		}
 	}
 
 	private class SMCopyItem extends XPMBSideMenuItem {
 		@Override
+		public int getIndex() {
+			return 14;
+		}
+
+		@Override
 		public String getLabel() {
 			return getRootActivity().getString(R.string.strSideMenuCopyElement);
+		}
+
+		@Override
+		public void executeAction() {
+			Bundle item = getContainerCategory().getSubitem(
+					getContainerCategory().getSelectedSubitem()).storeInBundle();
+			getRootActivity().getSettingBundle(XPMBActivity.SETTINGS_BUNDLE_GLOBAL).putBundle(
+					XPMBActivity.SETTINGS_GLOBAL_COPIED_MENUITEM, item);
 		}
 	}
 
 	private class ProcessItemThread implements Runnable {
 
-		private XPMBMenuItemDef f_item = null;
+		private XPMBMenuItemApp f_item = null;
 		private FinishedListener mOwner = null;
 
 		public ProcessItemThread(FinishedListener owner) {
 			mOwner = owner;
 		}
 
-		public void setItem(XPMBMenuItemDef item) {
+		public void setItem(XPMBMenuItemApp item) {
 			f_item = item;
 		}
 
@@ -84,23 +108,20 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			Log.v(getClass().getSimpleName(), "processItem():Starting app's main activity...");
 			((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
 					.setLoadingAnimationVisible(true);
-			getRootActivity().postIntentStartWait(mOwner, (Intent) f_item.getData());
+			getRootActivity().postIntentStartWait(mOwner, f_item.getIntent());
 		}
 	}
 
-	public Module_System_Apps(XPMB_Activity root) {
+	public Module_System_Apps(XPMBActivity root) {
 		super(root);
-		alIcons = new Hashtable<String, Bitmap>();
 		rProcessItem = new ProcessItemThread(this);
 	}
 
 	@Override
-	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
-			FinishedListener listener) {
-		super.initialize(parentLayer, container, listener);
+	public void initialize(UILayer parentLayer, FinishedListener listener) {
+		super.initialize(parentLayer, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		reloadSettings();
-		super.setListAnimator(new SubmenuAnimator_V1(container, this));
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
@@ -115,7 +136,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	}
 
 	@Override
-	public void deInitialize() {
+	public void dispose() {
 		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
 		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 
@@ -123,13 +144,19 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	}
 
 	@Override
-	public void loadIn() {
+	public void loadIn(XPMBMenuCategory dest) {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		if (bLoaded) {
+			Log.i(getClass().getSimpleName(), "loadIn():Module already loaded. Skipping process.");
+			return;
+		}
 
+		super.loadIn(dest);
+		super.setListAnimator(new SubmenuAnimator_V1(dest, this));
 		long t = System.currentTimeMillis();
 		PackageManager pm = getRootActivity().getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
@@ -149,22 +176,19 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			Log.i(getClass().getSimpleName(), "loadIn():Found app with name '" + strAppLabel
 					+ "' ID #" + y);
 
-			XPMBMenuItem xmi = new XPMBMenuItem(strAppLabel);
+			XPMBMenuItemApp xmi = new XPMBMenuItemApp(strAppLabel);
 			String strIcon = "module.system.apps.icon|" + strAppLabel;
 			long dt = System.currentTimeMillis();
-			alIcons.put(strIcon, ((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
+			getRootActivity().getThemeManager().addCustomAsset(strIcon,
+					((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
 			Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '" + strAppLabel
 					+ "' done. Took " + dt + "ms.");
 
 			xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 			xmi.setIconBitmapID(strIcon);
-			xmi.setData(strAppIntent);
+			xmi.setIntent(strAppIntent);
 			xmi.setWidth(pxfd(64));
 			xmi.setHeight(pxfd(64));
-
-			Log.v(getClass().getSimpleName(),
-					"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
-							+ xmi.getPosition().y + "].");
 
 			getContainerCategory().addSubitem(xmi);
 			y++;
@@ -172,6 +196,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 					+ ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 		}
 		getListAnimator().initializeItems();
+		bLoaded = true;
 		Log.i(getClass().getSimpleName(), "loadIn():App list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
 	}
@@ -192,7 +217,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			return;
 		}
 
-		rProcessItem.setItem(item);
+		rProcessItem.setItem((XPMBMenuItemApp) item);
 		new Thread(rProcessItem).run();
 	}
 
@@ -205,19 +230,24 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	public void sendKeyDown(int keyCode) {
 
 		switch (keyCode) {
-		case XPMB_Main.KEYCODE_UP:
+		case XPMBActivity.KEYCODE_UP:
 			moveUp();
 			break;
-		case XPMB_Main.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_DOWN:
 			moveDown();
 			break;
-		case XPMB_Main.KEYCODE_LEFT:
-		case XPMB_Main.KEYCODE_CIRCLE:
-			getFinishedListener().onFinished(null);
+		case XPMBActivity.KEYCODE_LEFT:
+		case XPMBActivity.KEYCODE_CIRCLE:
+			getFinishedListener().onFinished(this);
 			break;
-		case XPMB_Main.KEYCODE_CROSS:
+		case XPMBActivity.KEYCODE_CROSS:
 			processItem((XPMBMenuItem) getContainerCategory().getSubitem(
 					getContainerCategory().getSelectedSubitem()));
+			break;
+		case XPMBActivity.KEYCODE_TRIANGLE:
+			getRootActivity().setupSideMenu(
+					new XPMBSideMenuItem[] { new SMInfo(), new SMCopyItem() }, 7);
+			getRootActivity().showSideMenu(this);
 			break;
 		}
 	}

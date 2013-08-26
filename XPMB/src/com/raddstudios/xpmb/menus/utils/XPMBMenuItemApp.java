@@ -19,32 +19,68 @@
 
 package com.raddstudios.xpmb.menus.utils;
 
-import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
 
 public class XPMBMenuItemApp extends XPMBMenuItem {
 
-	private XPMB_Activity mRoot = null;
+	public static final String TYPE_DESC = "menuitem.system.app";
+	
+	private Intent mIntent = null;
 
-	public XPMBMenuItemApp(String label, XPMB_Activity root) {
+	private final String BD_MINTENT = "mIntent";
+
+	public XPMBMenuItemApp(String label) {
 		super(label);
-		mRoot = root;
+		super.setTypeDescriptor(TYPE_DESC);
+	}
+
+	public XPMBMenuItemApp(Bundle source) {
+		super(source);
+
+		mIntent = getIntentFromBundle(source, BD_MINTENT);
+	}
+
+	public Intent getIntent() {
+		Intent o = null;
+		return o;
+	}
+	
+	@Override
+	public Bundle storeInBundle() {
+		Bundle s = super.storeInBundle();
+		storeIntentInBundle(s, mIntent, BD_MINTENT);
+		return s;
+	}
+
+	private void storeIntentInBundle(Bundle dest, Intent src, String baseKey) {
+		dest.putString(baseKey + "_datauri", src.toUri(Intent.URI_INTENT_SCHEME));
+	}
+
+	private Intent getIntentFromBundle(Bundle src, String baseKey) {
+		Intent o = new Intent();
+
+		Uri data = Uri.parse(src.getString(baseKey + "_datauri"));
+		o.setData(data);
+
+		return o;
+	}
+
+	public void setIntent(Intent dest) {
+		mIntent = dest;
 	}
 
 	public void setVersion(String version) {
-		if (version != null) {
+		if (version == null) {
 			super.enableTwoLine(false);
 		} else {
 			super.enableTwoLine(true);
-			super.setLabelB(mRoot.getString(R.string.strVersion) + ":" + version);
+			super.setLabelB(version);
 		}
 	}
 
 	public String getVersion() {
-		String v = super.getLabelB();
-		if (v != null) {
-			return v.substring(v.indexOf(':') + 1);
-		}
 		return super.getLabelB();
 	}
 }

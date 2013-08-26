@@ -22,30 +22,131 @@ package com.raddstudios.xpmb.menus.utils;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.os.Bundle;
 
 public class XPMBMenuItem implements XPMBMenuItemDef {
 
-	private String strLabelA = null, strLabelB = null, strIcon = null;
-	private Object oData = null;
+	private String strLabelA = null, strLabelB = null, strIcon = null, strTypeDescriptor = null;
 	private PointF pfScale = null;
 	private Rect rLoc = null, rMargins = null;
 	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha_s = 1.0f;
 	private boolean bTwoLines = false;
-	private int iIconType = 0;
+	private int intIconType = 0;
+
+	public static final String TYPE_DESC = "menuitem.generic";
+
+	private final String BD_STRLABELA = "strLabelA", BD_STRLABELB = "strLabelB",
+			BD_STRICON = "strIcon", BD_PFSCALE = "pfScale", BD_RLOC = "rLoc",
+			BD_RMARGINS = "rMargins", BD_FALPHAI = "fAlpha_i", BD_FALPHAL = "fAlpha_l",
+			BD_FALPHAS = "fALpha_s", BD_BTWOLINES = "bTwoLines", BD_INTICONTYPE = "intIconType",
+			BD_STRTYPEDESC = "strTypeDescriptor";
 
 	public XPMBMenuItem(String label) {
 		strLabelA = label;
 		pfScale = new PointF(1.0f, 1.0f);
 		rLoc = new Rect();
 		rMargins = new Rect();
+		strTypeDescriptor = TYPE_DESC;
 	}
 
-	public void setData(Object data) {
-		oData = data;
+	public XPMBMenuItem(Bundle src) {
+		strLabelA = src.getString(BD_STRLABELA);
+		strLabelB = src.getString(BD_STRLABELB);
+		strIcon = src.getString(BD_STRICON);
+		pfScale = getPointFFromBundle(src, BD_PFSCALE);
+		rLoc = getRectFromBundle(src, BD_RLOC);
+		rMargins = getRectFromBundle(src, BD_RMARGINS);
+		fAlpha_i = src.getFloat(BD_FALPHAI);
+		fAlpha_l = src.getFloat(BD_FALPHAL);
+		fAlpha_s = src.getFloat(BD_FALPHAS);
+		bTwoLines = src.getBoolean(BD_BTWOLINES);
+		intIconType = src.getInt(BD_INTICONTYPE);
+		strTypeDescriptor = src.getString(BD_STRTYPEDESC);
 	}
 
-	public Object getData() {
-		return oData;
+	@Override
+	public String getTypeDescriptor() {
+		return strTypeDescriptor;
+	}
+
+	protected void setTypeDescriptor(String type) {
+		strTypeDescriptor = type;
+	}
+
+	public Bundle storeInBundle() {
+		Bundle o = new Bundle();
+
+		o.putString(BD_STRLABELA, strLabelA);
+		o.putString(BD_STRLABELB, strLabelB);
+		o.putString(BD_STRICON, strIcon);
+		storePointFInBundle(o, pfScale, BD_PFSCALE);
+		storeRectInBundle(o, rLoc, BD_RLOC);
+		storeRectInBundle(o, rMargins, BD_RMARGINS);
+		o.putFloat(BD_FALPHAI, fAlpha_i);
+		o.putFloat(BD_FALPHAL, fAlpha_l);
+		o.putFloat(BD_FALPHAS, fAlpha_s);
+		o.putBoolean(BD_BTWOLINES, bTwoLines);
+		o.putInt(BD_INTICONTYPE, intIconType);
+		o.putString(BD_STRTYPEDESC, strTypeDescriptor);
+
+		return o;
+	}
+
+	protected void storePointInBundle(Bundle dest, Point src, String baseKey) {
+		dest.putInt(baseKey + "_x", src.x);
+		dest.putInt(baseKey + "_y", src.y);
+	}
+
+	protected Point getPointFromBundle(Bundle src, String baseKey) {
+		Point o = new Point();
+		o.x = src.getInt(baseKey + "_x");
+		o.y = src.getInt(baseKey + "_y");
+		return o;
+	}
+
+	protected void storePointFInBundle(Bundle dest, PointF src, String baseKey) {
+		dest.putFloat(baseKey + "_x", src.x);
+		dest.putFloat(baseKey + "_y", src.y);
+	}
+
+	protected PointF getPointFFromBundle(Bundle src, String baseKey) {
+		PointF o = new PointF();
+		o.x = src.getFloat(baseKey + "_x");
+		o.y = src.getFloat(baseKey + "_y");
+		return o;
+	}
+
+	protected void storeRectInBundle(Bundle dest, Rect src, String baseKey) {
+		dest.putInt(baseKey + "_l", src.left);
+		dest.putInt(baseKey + "_t", src.top);
+		dest.putInt(baseKey + "_r", src.right);
+		dest.putInt(baseKey + "_b", src.bottom);
+	}
+
+	protected Rect getRectFromBundle(Bundle src, String baseKey) {
+		Rect o = new Rect();
+		o.left = src.getInt(baseKey + "_l");
+		o.top = src.getInt(baseKey + "_t");
+		o.right = src.getInt(baseKey + "_r");
+		o.bottom = src.getInt(baseKey + "_b");
+		return o;
+	}
+
+	protected void storeRectFInBundle(Bundle dest, RectF src, String baseKey) {
+		dest.putFloat(baseKey + "_l", src.left);
+		dest.putFloat(baseKey + "_t", src.top);
+		dest.putFloat(baseKey + "_r", src.right);
+		dest.putFloat(baseKey + "_b", src.bottom);
+	}
+
+	protected RectF getRectFFromBundle(Bundle src, String baseKey) {
+		RectF o = new RectF();
+		o.left = src.getFloat(baseKey + "_l");
+		o.top = src.getFloat(baseKey + "_t");
+		o.right = src.getFloat(baseKey + "_r");
+		o.bottom = src.getFloat(baseKey + "_b");
+		return o;
 	}
 
 	@Override
@@ -211,11 +312,11 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 
 	@Override
 	public void setIconType(int type) {
-		iIconType = type;
+		intIconType = type;
 	}
 
 	@Override
 	public int getIconType() {
-		return iIconType;
+		return intIconType;
 	}
 }

@@ -19,8 +19,6 @@
 
 package com.raddstudios.xpmb.menus;
 
-import java.util.ArrayList;
-
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.ComponentName;
@@ -47,30 +45,23 @@ import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
-import com.raddstudios.xpmb.menus.modules.games.Module_Emu_GBA;
-import com.raddstudios.xpmb.menus.modules.games.Module_Emu_NES;
-import com.raddstudios.xpmb.menus.modules.media.Module_Media_Music;
-import com.raddstudios.xpmb.menus.modules.system.Module_System_Apps;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemApp;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemMusic;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemROM;
 import com.raddstudios.xpmb.utils.UI.UILayer;
-import com.raddstudios.xpmb.utils.UI.XPMB_Layout;
 
-public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
+public class XPMBMenuModule extends UILayer implements FinishedListener {
 
 	private XPMBMenuCategory alItems = null;
-	private int intSelItem = 0, intMaxItemsOnScreenH = 0, intMaxItemsOnScreenV = 0;
+	private int intMaxItemsOnScreenH = 0, intMaxItemsOnScreenV = 0;
 	private float fOpacity = 1.0f, fSelIconAlpha = 0.0f;
-	private boolean mInit = false, firstBackPress = false, bLockedKeyPad = false,
-			bShowSelIcon = false;
-	private ExecItemThread rExecItem = null;
-	private Modules_Base curModule = null;
-	private ArrayList<Modules_Base> alModules = null;
+	private boolean mInit = false, firstBackPress = false, bShowSelIcon = false;
 
 	private ValueAnimator aUIAnimator = null;
 	private UIAnimatorWorker aUIAnimatorW = null;
@@ -84,6 +75,49 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 			ANIM_HIDE_MENU_FULL = 5, ANIM_MENU_MOVE_LEFT = 6, ANIM_MENU_MOVE_RIGHT = 7,
 			ANIM_SHOW_MENU_HALF = 8, ANIM_SHOW_MENU_FULL = 9, ANIM_HIGHLIGHT_MENU_PRE = 10,
 			ANIM_HIGHLIGHT_MENU_POS = 11;
+
+	private class SMPasteItem extends XPMBSideMenuItem {
+		@Override
+		public int getIndex() {
+			return 7;
+		}
+
+		@Override
+		public String getLabel() {
+			return getRootActivity().getString(R.string.strSideMenuPasteElement);
+		}
+
+		@Override
+		public void executeAction() {
+			Bundle bGlobal = getRootActivity()
+					.getSettingBundle(XPMBActivity.SETTINGS_BUNDLE_GLOBAL);
+			Bundle item = bGlobal.getBundle(XPMBActivity.SETTINGS_GLOBAL_COPIED_MENUITEM);
+			if (item != null) {
+				XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(alItems
+						.getSelectedSubitem());
+				XPMBMenuItemDef xmi = null;
+				String desc = item.getString("strTypeDescriptor");
+				if (desc.equals(XPMBMenuItem.TYPE_DESC)) {
+					xmi = new XPMBMenuItem(item);
+				}
+				if (desc.equals(XPMBMenuItemApp.TYPE_DESC)) {
+					xmi = new XPMBMenuItemApp(item);
+				}
+				if (desc.equals(XPMBMenuItemMusic.TYPE_DESC)) {
+					xmi = new XPMBMenuItemMusic(item);
+				}
+				if (desc.equals(XPMBMenuItemROM.TYPE_DESC)) {
+					xmi = new XPMBMenuItemROM(item);
+				}
+				if (xmi != null) {
+					xmc.addSubitem(xmc.getSelectedSubitem() + 1, xmi);
+				} else {
+					Log.e(getClass().getSimpleName(),
+							"executeAction():Item type descriptor not recognized: '" + desc + "'");
+				}
+			}
+		}
+	}
 
 	private class UIAnimatorWorker implements AnimatorUpdateListener, AnimatorListener {
 
@@ -112,48 +146,50 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 			switch (type) {
 			case ANIM_MENU_MOVE_LEFT:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				intNextItem = intAnimItem - 1;
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_MENU_MOVE_RIGHT:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				intNextItem = intAnimItem + 1;
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_MENU_MOVE_UP:
 				mOwner.setDuration(250);
-				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
 						.getSelectedSubitem();
 				intNextItem = intAnimItem - 1;
-				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSubitemsPos().y;
+				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
+						.getSubitemsPos().y;
 				break;
 			case ANIM_MENU_MOVE_DOWN:
 				mOwner.setDuration(250);
-				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+				intAnimItem = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
 						.getSelectedSubitem();
 				intNextItem = intAnimItem + 1;
-				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSubitemsPos().y;
+				pInitPosY = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
+						.getSubitemsPos().y;
 				break;
 			case ANIM_HIDE_MENU_HALF:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_SHOW_MENU_HALF:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_HIGHLIGHT_MENU_PRE:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			case ANIM_HIGHLIGHT_MENU_POS:
 				mOwner.setDuration(250);
-				intAnimItem = intSelItem;
+				intAnimItem = alItems.getSelectedSubitem();
 				pInitPosX = alItems.getSubitemsPos().x;
 				break;
 			}
@@ -214,7 +250,8 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 				}
 				dispA = (int) (((intNextItem - intAnimItem) * pxfd(-85)) * completion);
 
-				XPMBMenuCategory axmc = (XPMBMenuCategory) alItems.getSubitem(intSelItem);
+				XPMBMenuCategory axmc = (XPMBMenuCategory) alItems.getSubitem(alItems
+						.getSelectedSubitem());
 
 				axmc.setSubitemsPosY(pInitPosY + dispA);
 				for (int y = 0; y < axmc.getNumSubitems(); y++) {
@@ -332,8 +369,8 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 			switch (intAnimType) {
 			case ANIM_MENU_MOVE_UP:
 			case ANIM_MENU_MOVE_DOWN:
-				((XPMBMenuCategory) alItems.getSubitem(intSelItem)).setSubitemsPosY(pInitPosY
-						+ ((intNextItem - intAnimItem) * pxfd(-85)));
+				((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
+						.setSubitemsPosY(pInitPosY + ((intNextItem - intAnimItem) * pxfd(-85)));
 				break;
 			case ANIM_MENU_MOVE_RIGHT:
 			case ANIM_MENU_MOVE_LEFT:
@@ -365,7 +402,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 		}
 	};
 
-	public XPMBMenuModule(XPMB_Activity root) {
+	public XPMBMenuModule(XPMBActivity root) {
 		super(root);
 
 		aUIAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
@@ -374,18 +411,15 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 		aUIAnimatorW = new UIAnimatorWorker(aUIAnimator);
 		aUIAnimator.addUpdateListener(aUIAnimatorW);
 		aUIAnimator.addListener(aUIAnimatorW);
-		rExecItem = new ExecItemThread(this);
 		rTextBounds = new Rect();
 		tS = new Rect();
 		cP = new Rect();
-		alModules = new ArrayList<Modules_Base>();
 	}
 
 	@Override
-	public void doInit() {
+	public void initialize() {
 		Log.v(getClass().getSimpleName(), "doInit():Initializing XPMB Main Menu (XMB type) Module.");
 		doInit(getRootActivity().getResources().getXml(R.xml.xmb_layout));
-		getRootActivity().getDrawingLayerManager().addLayer(this);
 		bmSelIcon = flipBitmap((Bitmap) getRootActivity().getThemeManager().getAsset(
 				"theme.icon|ui_backicon"));
 		rSelIconRect = new Rect(0, 0, bmSelIcon.getWidth(), bmSelIcon.getHeight());
@@ -415,7 +449,15 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 					if (cName.equals("category")) {
 
 						// Category Data
-						cItem = new XPMBMenuCategory(xrpRes.getAttributeValue(null, "label"));
+						String label = xrpRes.getAttributeValue(null, "label");
+						if (label.startsWith("$")) {
+							cItem = new XPMBMenuCategory(getRootActivity().getString(
+									getRootActivity().getResources().getIdentifier(
+											label.substring(1), "string",
+											getRootActivity().getPackageName())));
+						} else {
+							cItem = new XPMBMenuCategory(label);
+						}
 						String cAtt = xrpRes.getAttributeValue(null, "icon");
 						if (cAtt != null) {
 							cItem.setIconBitmapID(cAtt);
@@ -436,20 +478,29 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 							cItem.setLabelAlpha(0.0f);
 						}
 					}
-					if (cName.equals("subitem")) {
+					if (cName.equals("subitem.link")) {
 
 						// Item Data
-						XPMBMenuItem cSubitem = new XPMBMenuItem(xrpRes.getAttributeValue(null,
-								"label"));
+						XPMBMenuItemApp cSublink = null;
+
+						String label = xrpRes.getAttributeValue(null, "label");
+						if (label.startsWith("$")) {
+							cSublink = new XPMBMenuItemApp(getRootActivity().getString(
+									getRootActivity().getResources().getIdentifier(
+											label.substring(1), "string",
+											getRootActivity().getPackageName())));
+						} else {
+							cSublink = new XPMBMenuItemApp(label);
+						}
 						String cAtt = xrpRes.getAttributeValue(null, "icon");
 						if (cAtt != null) {
-							cSubitem.setIconBitmapID(cAtt);
+							cSublink.setIconBitmapID(cAtt);
 						} else {
-							cSubitem.setIconBitmapID("theme.icon|icon_onlinemanual");
+							cSublink.setIconBitmapID("theme.icon|icon_onlinemanual");
 						}
-						cSubitem.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
-						cSubitem.setWidth(pxfd(85));
-						cSubitem.setHeight(pxfd(85));
+						cSublink.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
+						cSublink.setWidth(pxfd(85));
+						cSublink.setHeight(pxfd(85));
 						String cAct = xrpRes.getAttributeValue(null, "action"), cComp = xrpRes
 								.getAttributeValue(null, "exec");
 						if (cAct == null) {
@@ -459,7 +510,42 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 						if (cComp != null) {
 							cIntent.setComponent(ComponentName.unflattenFromString(cComp));
 						}
-						cSubitem.setData(cIntent);
+						cSublink.setIntent(cIntent);
+						if (x != 0 && y != 0) {
+							cSublink.setLabelAlpha(0.0f);
+						}
+						if (x == 0 && y != 0) {
+							cSublink.setLabelAlpha(0.7f);
+						}
+						if (y == 0) {
+							cSublink.setMarginTop(pxfd(85));
+						}
+
+						cItem.addSubitem(cSublink);
+						++y;
+					}
+					if (cName.equals("subitem.dummy")) {
+						XPMBMenuItem cSubitem = null;
+
+						String label = xrpRes.getAttributeValue(null, "label");
+						if (label.startsWith("$")) {
+							cSubitem = new XPMBMenuItemApp(getRootActivity().getString(
+									getRootActivity().getResources().getIdentifier(
+											label.substring(1), "string",
+											getRootActivity().getPackageName())));
+						} else {
+							cSubitem = new XPMBMenuItem(label);
+						}
+						String cAtt = xrpRes.getAttributeValue(null, "icon");
+						if (cAtt != null) {
+							cSubitem.setIconBitmapID(cAtt);
+						} else {
+							cSubitem.setIconBitmapID("theme.icon|icon_onlinemanual");
+						}
+						cSubitem.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
+						cSubitem.setWidth(pxfd(85));
+						cSubitem.setHeight(pxfd(85));
+
 						if (x != 0 && y != 0) {
 							cSubitem.setLabelAlpha(0.0f);
 						}
@@ -469,15 +555,20 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 						if (y == 0) {
 							cSubitem.setMarginTop(pxfd(85));
 						}
-
-						cItem.addSubitem(cSubitem);
-						++y;
 					}
 					if (cName.equals("subcategory")) {
 
 						// Subcategory Data
-						XPMBMenuCategory cSubcategory = new XPMBMenuCategory(
-								xrpRes.getAttributeValue(null, "label"));
+						XPMBMenuCategory cSubcategory = null;
+						String label = xrpRes.getAttributeValue(null, "label");
+						if (label.startsWith("$")) {
+							cSubcategory = new XPMBMenuCategory(getRootActivity().getString(
+									getRootActivity().getResources().getIdentifier(
+											label.substring(1), "string",
+											getRootActivity().getPackageName())));
+						} else {
+							cSubcategory = new XPMBMenuCategory(label);
+						}
 						String cAtt = xrpRes.getAttributeValue(null, "icon");
 						if (cAtt != null) {
 							cSubcategory.setIconBitmapID(cAtt);
@@ -487,8 +578,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 						cSubcategory.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 						cSubcategory.setWidth(pxfd(85));
 						cSubcategory.setHeight(pxfd(85));
-						cSubcategory.setSubmoduleID(xrpRes.getAttributeValue(null,
-								"module"));
+						cSubcategory.setSubmoduleID(xrpRes.getAttributeValue(null, "module"));
 						cSubcategory.setListAnimator(xrpRes.getAttributeValue(null, "anim"));
 						if (x != 0 && y != 0) {
 							cSubcategory.setLabelAlpha(0.0f);
@@ -594,7 +684,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 				rILoc = getScaledRect(rILoc, xmi_y.getIconScale().x, xmi_y.getIconScale().y,
 						Gravity.CENTER_VERTICAL | Gravity.LEFT);
 
-				if (x == intSelItem && y == xmi_x.getSelectedSubitem()) {
+				if (x == alItems.getSelectedSubitem() && y == xmi_x.getSelectedSubitem()) {
 					centerRect(rILoc, rSelIconRect, Gravity.CENTER_VERTICAL | Gravity.LEFT);
 					rSelIconRect.offset(rILoc.width(), 0);
 				}
@@ -704,29 +794,30 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 	}
 
 	public void moveLeft() {
-		if (intSelItem == 0 || alItems.getNumSubitems() == 0) {
+		if (alItems.getSelectedSubitem() == 0 || alItems.getNumSubitems() == 0) {
 			return;
 		}
 
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_LEFT);
 		aUIAnimator.start();
 
-		--intSelItem;
+		alItems.setSelectedSubitem(alItems.getSelectedSubitem() - 1);
 	}
 
 	public void moveRight() {
-		if (intSelItem == (alItems.getNumSubitems() - 1) || alItems.getNumSubitems() == 0) {
+		if (alItems.getSelectedSubitem() == (alItems.getNumSubitems() - 1)
+				|| alItems.getNumSubitems() == 0) {
 			return;
 		}
 
 		aUIAnimatorW.setAnimationType(ANIM_MENU_MOVE_RIGHT);
 		aUIAnimator.start();
 
-		++intSelItem;
+		alItems.setSelectedSubitem(alItems.getSelectedSubitem() + 1);
 	}
 
 	public void moveUp() {
-		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(intSelItem));
+		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()));
 		if (xmc.getSelectedSubitem() == 0 || xmc.getNumSubitems() == 0) {
 			return;
 		}
@@ -738,7 +829,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 	}
 
 	public void moveDown() {
-		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(intSelItem));
+		XPMBMenuCategory xmc = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()));
 		if (xmc.getSelectedSubitem() == xmc.getNumSubitems() - 1 || xmc.getNumSubitems() == 0) {
 			return;
 		}
@@ -747,14 +838,6 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 		aUIAnimator.start();
 
 		xmc.setSelectedSubitem(xmc.getSelectedSubitem() + 1);
-	}
-
-	public void setSelectedCategory(int category) {
-		intSelItem = category;
-	}
-
-	public int getSelectedCategory() {
-		return intSelItem;
 	}
 
 	public void setOpacity(float opacity) {
@@ -772,31 +855,28 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 
 	@Override
 	public void sendKeyDown(int keyCode) {
-		if (bLockedKeyPad) {
-			return;
-		}
 		switch (keyCode) {
-		case XPMB_Activity.KEYCODE_LEFT:
+		case XPMBActivity.KEYCODE_LEFT:
 			firstBackPress = false;
 			moveLeft();
 			break;
-		case XPMB_Activity.KEYCODE_RIGHT:
+		case XPMBActivity.KEYCODE_RIGHT:
 			firstBackPress = false;
 			moveRight();
 			break;
-		case XPMB_Activity.KEYCODE_UP:
+		case XPMBActivity.KEYCODE_UP:
 			firstBackPress = false;
 			moveUp();
 			break;
-		case XPMB_Activity.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_DOWN:
 			firstBackPress = false;
 			moveDown();
 			break;
-		case XPMB_Activity.KEYCODE_CROSS:
+		case XPMBActivity.KEYCODE_CROSS:
 			firstBackPress = false;
 			execSelectedItem();
 			break;
-		case XPMB_Activity.KEYCODE_CIRCLE:
+		case XPMBActivity.KEYCODE_CIRCLE:
 			if (!firstBackPress) {
 				firstBackPress = true;
 				Toast tst = Toast.makeText(getRootActivity().getWindow().getContext(),
@@ -806,13 +886,19 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 				getRootActivity().requestActivityEnd();
 			}
 			break;
+		case XPMBActivity.KEYCODE_TRIANGLE:
+			getRootActivity().setupSideMenu(new XPMBSideMenuItem[] { new SMPasteItem() }, 7);
+			getRootActivity().showSideMenu(this);
+			break;
 		}
 	}
 
 	@Override
 	public void onFinished(Object data) {
-		bLockedKeyPad = true;
-		getRootActivity().getDrawingLayerManager().removeLayer((UILayer) curModule);
+		Modules_Base curModule = (Modules_Base) data;
+
+		getRootActivity().lockKeys(true);
+		getRootActivity().hideModule(curModule.getModuleID());
 		switch (curModule.getSubmenuType()) {
 		case XPMBMenuCategory.LIST_ANIM_FULL:
 			startAnim(XPMBMenuModule.ANIM_SHOW_MENU_FULL);
@@ -825,56 +911,25 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 			break;
 		}
 		getRootActivity().getDrawingLayerManager().setFocusOnLayer(this);
-		curModule.deInitialize();
-		curModule = null;
 		getMessageBus().postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				bLockedKeyPad = false;
+				getRootActivity().lockKeys(false);
 			}
 		}, 250);
 	}
 
-	private class ExecItemThread implements Runnable {
-		XPMBMenuModule mOwner = null;
-		XPMBMenuCategory xmc = null;
-
-		public ExecItemThread(XPMBMenuModule owner) {
-			mOwner = owner;
-		}
-
-		public void setSubcategory(XPMBMenuCategory subcategory) {
-			xmc = subcategory;
-		}
-
-		@Override
-		public void run() {
-			if (curModule != null) {
-				curModule.initialize(mOwner, xmc, mOwner);
-				curModule.setSubmenuType(xmc.getListAnimator());
-				curModule.loadIn();
-				getRootActivity().getDrawingLayerManager().addLayer((UILayer) curModule);
-				getRootActivity().getDrawingLayerManager().setFocusOnLayer(curModule);
-			}
-			bLockedKeyPad = false;
-			((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
-					.setLoadingAnimationVisible(false);
-		}
-	}
-
 	// TODO: Split this method (V/H).
 	private void execCustItem(int index) {
-		XPMBMenuItemDef xmid = ((XPMBMenuCategory) alItems.getSubitem(intSelItem))
+		XPMBMenuItemDef xmid = ((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
 				.getSubitem(index);
 		if (xmid instanceof XPMBMenuCategory) {
 			final XPMBMenuCategory xmc = (XPMBMenuCategory) xmid;
-			
-			curModule = getRootActivity().getModule(xmc.getSubmoduleID());
+			final Modules_Base curModule = getRootActivity().getModule(xmc.getSubmoduleID());
 
 			if (curModule != null) {
-				bLockedKeyPad = true;
-				((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
-						.setLoadingAnimationVisible(true);
+				getRootActivity().lockKeys(true);
+				getRootActivity().setLoading(true);
 				switch (xmc.getListAnimator()) {
 				case XPMBMenuCategory.LIST_ANIM_FULL:
 					startAnim(XPMBMenuModule.ANIM_HIDE_MENU_FULL);
@@ -890,23 +945,33 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 
 					@Override
 					public void run() {
-						rExecItem.setSubcategory(xmc);
-						new Thread(rExecItem).start();
+						new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								curModule.loadIn(xmc);
+								getRootActivity().showModule(xmc.getSubmoduleID());
+								getRootActivity().lockKeys(false);
+								getRootActivity().setLoading(false);
+							}
+						}).start();
 					}
 				}, 251);
 			} else {
 				Log.e(getClass().getSimpleName(),
 						"execCustItem():Module not found for ID '" + xmc.getSubmoduleID() + "'");
 			}
-		} else if (xmid instanceof XPMBMenuItem) {
-			XPMBMenuItem xmi = (XPMBMenuItem) xmid;
-			Intent cExInt = (Intent) xmi.getData();
+		} else if (xmid instanceof XPMBMenuItemApp) {
+			XPMBMenuItemApp xmi = (XPMBMenuItemApp) xmid;
+			Intent cExInt = xmi.getIntent();
 			if (getRootActivity().isActivityAvailable(cExInt)) {
-				getRootActivity().showLoadingAnim(true);
+				getRootActivity().lockKeys(true);
+				getRootActivity().setLoading(true);
 				getRootActivity().postIntentStartWait(new FinishedListener() {
 					@Override
 					public void onFinished(Object data) {
-						((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0)).setLoadingAnimationVisible(false);
+						getRootActivity().lockKeys(false);
+						getRootActivity().setLoading(false);
 					}
 				}, cExInt);
 			} else {
@@ -920,12 +985,14 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 	}
 
 	private void execSelectedItem() {
-		execCustItem(((XPMBMenuCategory) alItems.getSubitem(intSelItem)).getSelectedSubitem());
+		execCustItem(((XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem()))
+				.getSelectedSubitem());
 	}
 
 	@Override
 	public void sendClickEvent(Point clickedPoint) {
-		for (int h = intSelItem - 1; h <= intSelItem + (intMaxItemsOnScreenH - 2); h++) {
+		for (int h = alItems.getSelectedSubitem() - 1; h <= alItems.getSelectedSubitem()
+				+ (intMaxItemsOnScreenH - 2); h++) {
 			if ((h >= 0) && (h < alItems.getNumSubitems())) {
 				XPMBMenuItemDef xmi = alItems.getSubitem(h);
 				if (xmi.getComputedLocation().contains(clickedPoint.x, clickedPoint.y)) {
@@ -935,7 +1002,7 @@ public class XPMBMenuModule extends XPMB_Layout implements FinishedListener {
 				}
 			}
 		}
-		XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(intSelItem);
+		XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(alItems.getSelectedSubitem());
 		for (int v = (xmc.getSelectedSubitem() - (intMaxItemsOnScreenV / 2)); v <= (xmc
 				.getSelectedSubitem() + (intMaxItemsOnScreenV / 2)); v++) {
 			if ((v >= 0) && v < xmc.getNumSubitems()) {

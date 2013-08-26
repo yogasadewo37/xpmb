@@ -32,12 +32,12 @@ import android.graphics.RectF;
 import android.text.format.Time;
 import android.view.Gravity;
 
-import com.raddstudios.xpmb.utils.XPMB_Activity;
+import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 
 public class XPMBUIModule extends UILayer {
 
-	private XPMB_Activity mRoot = null;
+	private XPMBActivity mRoot = null;
 	private RectF rConstraints = null;
 	private Rect bmRect = null;
 	private String strBatteryIcon = "theme.icon|icon_batt_status_000";
@@ -48,7 +48,7 @@ public class XPMBUIModule extends UILayer {
 	private int intLoadAnimFrames = 0, intLoadAnimCurFrame = 0;
 	private Timer tUpdateAnims = null;
 
-	public XPMBUIModule(XPMB_Activity root) {
+	public XPMBUIModule(XPMBActivity root) {
 		super(root);
 		mRoot = root;
 		bmRect = new Rect();
@@ -60,20 +60,17 @@ public class XPMBUIModule extends UILayer {
 		tUpdateAnims.scheduleAtFixedRate(ttUpdateLoadAnim, 0, 30);
 		tUpdateAnims.scheduleAtFixedRate(ttUpdateDateTime, 0, 10000);
 	}
-	
+
 	public void initialize() {
-		setDrawingConstraints(new RectF(0, 0, mRoot.getRootView().getWidth(), mRoot.getRootView()
-				.getHeight()));
-		Bitmap drwAnimSrc = (Bitmap) mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
+		Bitmap drwAnimSrc = mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
 		intLoadAnimFrames = drwAnimSrc.getWidth() / drwAnimSrc.getHeight();
-		
 	}
 
 	@Override
 	public void drawTo(Canvas canvas) {
 
 		if (bBatteryIndicator) {
-			Bitmap bmBatt = (Bitmap) mRoot.getThemeManager().getAsset(strBatteryIcon);
+			Bitmap bmBatt = mRoot.getThemeManager().getAsset(strBatteryIcon);
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 
 			canvas.drawBitmap(bmBatt, null, bmRect, pPaint);

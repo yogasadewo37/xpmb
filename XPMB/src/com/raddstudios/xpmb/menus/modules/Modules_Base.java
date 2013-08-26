@@ -28,15 +28,14 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
 import com.raddstudios.xpmb.utils.UI.UILayer;
-import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
 
 public class Modules_Base extends UILayer {
 
@@ -51,38 +50,30 @@ public class Modules_Base extends UILayer {
 	private UILayer mLayer = null;
 	private XPMBMenuCategory mContainer = null;
 	private FinishedListener mListener = null;
-	private int intSubmenuType = 0, intMaxItemsOnScreen = 0;
+	private int intMaxItemsOnScreen = 0;
 	private ListAnimator mAnimator = null;
 
 	private Paint pParams = new Paint();
 	private Rect rTextBounds = new Rect(), tS = new Rect(), cP = new Rect(), rILoc = new Rect();
 
-	public Modules_Base(XPMB_Activity rootActivity) {
+	public Modules_Base(XPMBActivity rootActivity) {
 		super(rootActivity);
 	}
 
-	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
-			FinishedListener listener) {
+	public void initialize(UILayer parentLayer, FinishedListener listener) {
 		mLayer = parentLayer;
-		mContainer = container;
+		mContainer = new XPMBMenuCategory("@root");
 		mListener = listener;
-		switch (container.getListAnimator()) {
-		case XPMBMenuCategory.LIST_ANIM_HALF:
-			mContainer.setSubitemsPosX(pxfd(62));
-			break;
-		case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
-			mContainer.setSubitemsPosX(pxfd(122));
-			break;
-		}
 	}
 
-	public void saveSettings() {
+	public String getModuleID() {
+		return "com.xpmb.system.dummy";
 	}
-	
+
+	protected void saveSettings() {
+	}
+
 	protected void reloadSettings() {
-	}
-	
-	public void deInitialize() {
 	}
 
 	protected XPMBMenuCategory getContainerCategory() {
@@ -198,8 +189,17 @@ public class Modules_Base extends UILayer {
 		}
 	}
 
-	public void loadIn() {
-	};
+	public void loadIn(XPMBMenuCategory dest) {
+		mContainer = dest;
+		switch (mContainer.getListAnimator()) {
+		case XPMBMenuCategory.LIST_ANIM_HALF:
+			mContainer.setSubitemsPosX(pxfd(62));
+			break;
+		case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
+			mContainer.setSubitemsPosX(pxfd(122));
+			break;
+		}
+	}
 
 	protected void setListAnimator(ListAnimator animator) {
 		mAnimator = animator;
@@ -209,12 +209,8 @@ public class Modules_Base extends UILayer {
 		return mAnimator;
 	}
 
-	public void setSubmenuType(int type) {
-		intSubmenuType = type;
-	};
-
 	public int getSubmenuType() {
-		return intSubmenuType;
+		return mContainer.getListAnimator();
 	};
 
 	public void moveUp() {

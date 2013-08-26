@@ -3,72 +3,74 @@
 
     <category
         icon="theme.icon|icon_setting"
-        label="Settings" >
-        <subitem
+        label="$strCategorySettings" >
+        <subitem.link
             exec="com.android.settings/.Settings"
             icon="theme.icon|icon_system_setting"
-            label="System settings" />
+            label="$strSystemSettings" />
     </category>
     <category
         icon="theme.icon|icon_photo"
-        label="Photo" >
-        <subitem
+        label="$strCategoryPhoto" >
+        <subitem.link
             action="android.media.action.IMAGE_CAPTURE"
             icon="theme.icon|icon_usbcamera"
-            label="Camera"
-            type="exec" />
+            label="$strSystemCamera" />
+
+        <subitem.dummy
+            icon="theme.icon|icon_sd"
+            label="$strExternalMemory" />
     </category>
     <category
         icon="theme.icon|icon_music"
-        label="Music" >
+        label="$strCategoryMusic" >
         <subcategory
             anim="highlight"
-            module="com.xpmb.media.music"
             icon="theme.icon|icon_sd"
-            label="External memory" />
+            label="$strExternalMemory"
+            module="com.xpmb.media.music" />
     </category>
     <category
         icon="theme.icon|icon_video"
-        label="Video" >
-        <subcategory
+        label="$strCategoryVideo" >
+        <subitem.dummy
             icon="theme.icon|icon_sd"
-            label="External Memory" />
+            label="$strExternalMemory" />
     </category>
     <category
         icon="theme.icon|icon_game"
-        label="Games" >
+        label="$strCategoryGame" >
         <subcategory
             anim="half"
-            module="com.xpmb.emu.nes"
             icon="theme.icon|icon_savedata"
-            label="Nintendo Entertainment System" />
+            label="$strCategoryNES"
+            module="com.xpmb.emu.nes" />
         <subcategory
             anim="half"
-            module="com.xpmb.emu.gba"
             icon="theme.icon|icon_savedata"
-            label="Gameboy Advance" />
+            label="$strCategoryGBA"
+            module="com.xpmb.emu.gba" />
     </category>
     <category
         icon="theme.icon|icon_network"
-        label="Network" >
-        <subitem
+        label="$strCategoryWWW" >
+        <subitem.link
             exec="com.android.browser/.BrowserActivity"
             icon="theme.icon|icon_browser"
-            label="Web browser" />
-        <subitem
+            label="$strWebBrowser" />
+        <subitem.link
             exec="com.google.android.googlequicksearchbox/.SearchActivity"
             icon="theme.icon|icon_inet_search"
-            label="Internet search" />
+            label="$strWebSearch" />
     </category>
     <category
         icon="theme.icon|icon_user"
-        label="Apps" >
+        label="$strCategoryApps" >
         <subcategory
             anim="half"
             icon="theme.icon|icon_download"
-            label="Installed apps"
+            label="$strInstalledApps"
             module="com.xpmb.system.apps" />
-
     </category>
 
 </xpmbroot>

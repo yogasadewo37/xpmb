@@ -22,17 +22,18 @@ package com.raddstudios.xpmb.menus.utils;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.Bundle;
 
 
 public interface XPMBMenuItemDef {
 	final static int ICON_TYPE_COUNTER = 0, ICON_TYPE_BITMAP = 1;
 	
+	Bundle storeInBundle();
+	String getTypeDescriptor();
 	void setLabel(String label);
 	void setLabelB(String label);
 	String getLabel();
 	String getLabelB();
-	void setData(Object Data);
-	Object getData();
 	void setLabelAlpha(float alpha);
 	float getLabelAlpha();
 	void setIconBitmapID(String icon);

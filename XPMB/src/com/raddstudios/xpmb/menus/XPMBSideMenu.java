@@ -32,8 +32,8 @@ import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ValueAnimator;
 import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
+import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
 
 public class XPMBSideMenu extends Modules_Base {
 
@@ -73,14 +73,11 @@ public class XPMBSideMenu extends Modules_Base {
 				super.end();
 			}
 			pInitPosY = rSelection.top;
+			intAnimType = ANIM_CENTER_ON_ITEM;
 
-			switch (intAnimType) {
-			case ANIM_CENTER_ON_ITEM:
-				super.setDuration(250);
-				intAnimItem = intSelItem;
-				intNextItem = nextItem;
-				break;
-			}
+			super.setDuration(250);
+			intAnimItem = intSelItem;
+			intNextItem = nextItem;
 		}
 
 		@Override
@@ -89,7 +86,7 @@ public class XPMBSideMenu extends Modules_Base {
 
 			switch (intAnimType) {
 			case ANIM_CENTER_ON_ITEM:
-				dispA = (int) ((pxfd(16) * (intNextItem - intAnimItem)) * completion);
+				dispA = (int) ((intSzy * (intNextItem - intAnimItem)) * completion);
 				rSelection.offsetTo(rSelection.left, pInitPosY + dispA);
 				break;
 			case ANIM_HIDE_SIDEMENU:
@@ -101,6 +98,7 @@ public class XPMBSideMenu extends Modules_Base {
 				dispA = (int) (pxfd(188) * completion);
 				fAlpha = completion;
 				px_x = (int) (getDrawingConstraints().right - dispA);
+				break;
 			case ANIM_NONE:
 			default:
 				break;
@@ -134,20 +132,18 @@ public class XPMBSideMenu extends Modules_Base {
 	private Bitmap bmBG = null, bmIco = null;
 	private SideMenuAnimator mAnimator = null;
 
-	public XPMBSideMenu(XPMB_Activity root) {
+	public XPMBSideMenu(XPMBActivity root) {
 		super(root);
 		alItems = new XPMBSideMenuItem[15];
 		rCurItemD = new Rect();
 		rIcon = new Rect();
-		bmBG = (Bitmap) root.getThemeManager().getAsset("theme.icon|ui_sidemenu_bg");
+		rSelection = new Rect();
+		bmBG = root.getThemeManager().getAsset("theme.icon|ui_sidemenu_bg");
 		mAnimator = new SideMenuAnimator();
 	}
 
 	@Override
 	public void drawTo(Canvas canvas) {
-		if (!isInitialized()) {
-			return;
-		}
 		rCurItemD.set(px_x, (int) getDrawingConstraints().top, px_x + pxfd(188),
 				(int) (getDrawingConstraints().top + pxfd(320)));
 		rSelection.offsetTo(px_x, rSelection.top);
@@ -157,14 +153,15 @@ public class XPMBSideMenu extends Modules_Base {
 
 		canvas.saveLayerAlpha(new RectF(rCurItemD), (int) (255 * fAlpha),
 				Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-		pParams.setTextSize(pxfd(16));
+		pParams.setTextSize(intSzy - pxfd(2));
 		pParams.setColor(Color.WHITE);
 		pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
 		for (int i = 0; i < 15; i++) {
 			rCurItemD.set(px_x, px_y, (int) getDrawingConstraints().right, px_y + intSzy);
 			if (alItems[i] != null) {
 				if (alItems[i].getIconBitmapID() != null) {
-					bmIco = (Bitmap) getRootActivity().getThemeManager().getAsset(alItems[i].getIconBitmapID());
+					bmIco = (Bitmap) getRootActivity().getThemeManager().getAsset(
+							alItems[i].getIconBitmapID());
 					rIcon.offsetTo(rCurItemD.left + pxfd(2), rCurItemD.top + pxfd(2));
 
 					canvas.drawBitmap(bmIco, null, rIcon, pParams);
@@ -172,20 +169,19 @@ public class XPMBSideMenu extends Modules_Base {
 							rCurItemD.centerY() + (pParams.ascent() / 2), pParams);
 
 				} else {
-					canvas.drawText(alItems[i].getLabel(), px_x,
-							rCurItemD.centerY() + (pParams.ascent() / 2), pParams);
-				}
-				if (i == intSelItem) {
+					canvas.drawText(alItems[i].getLabel(), px_x + pxfd(2), rCurItemD.centerY()
+							- (pParams.ascent() / 2), pParams);
 				}
 			}
 			px_y += intSzy;
 		}
 		pParams.setStyle(Style.STROKE);
-		pParams.setColor(Color.CYAN);
+		pParams.setColor(Color.GRAY);
 		pParams.setStrokeWidth(pxfd(2));
 		canvas.drawRoundRect(new RectF(rSelection), pxfd(2), pxfd(2), pParams);
 		canvas.restore();
 		pParams.reset();
+		px_y = 0;
 	}
 
 	public void setItemSlot(int slot, XPMBSideMenuItem item) {
@@ -198,33 +194,43 @@ public class XPMBSideMenu extends Modules_Base {
 		}
 	}
 
+	public void setSelectedItem(int index) {
+		if (index >= 0 && index < 15) {
+			intSelItem = index;
+			rSelection.offsetTo(rSelection.left, intSzy * index);
+		}
+	}
+
 	public void moveUp() {
-		if ((intSelItem - 1) >= 0) {
-			for (int nextItem = intSelItem; nextItem >= 0; nextItem--) {
-				if (alItems[nextItem] != null) {
-					mAnimator.setNextItem(nextItem);
-					mAnimator.start();
-					intSelItem = nextItem;
-					break;
-				}
+		int tItem = intSelItem;
+
+		while (tItem > 0) {
+			tItem--;
+			if (alItems[tItem] != null) {
+				mAnimator.setNextItem(tItem);
+				mAnimator.start();
+				intSelItem = tItem;
+				return;
 			}
 		}
 	}
 
 	public void moveDown() {
-		if ((intSelItem + 1) < 15) {
-			for (int nextItem = intSelItem; nextItem < 15; nextItem++) {
-				if (alItems[nextItem] != null) {
-					mAnimator.setNextItem(nextItem);
-					mAnimator.start();
-					intSelItem = nextItem;
-					break;
-				}
+		int tItem = intSelItem;
+
+		while (tItem < 14) {
+			tItem++;
+			if (alItems[tItem] != null) {
+				mAnimator.setNextItem(tItem);
+				mAnimator.start();
+				intSelItem = tItem;
+				return;
 			}
 		}
 	}
 
 	public void show() {
+		rSelection.offsetTo(rSelection.left, intSzy * intSelItem);
 		mAnimator.setAnimation(SideMenuAnimator.ANIM_SHOW_SIDEMENU);
 		mAnimator.start();
 	}
@@ -237,18 +243,24 @@ public class XPMBSideMenu extends Modules_Base {
 	@Override
 	public void sendKeyDown(int keyCode) {
 		switch (keyCode) {
-		case XPMB_Activity.KEYCODE_UP:
+		case XPMBActivity.KEYCODE_UP:
 			moveUp();
 			break;
-		case XPMB_Activity.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_DOWN:
 			moveDown();
 			break;
-		case XPMB_Activity.KEYCODE_CROSS:
+		case XPMBActivity.KEYCODE_CROSS:
 			execSelectedItem();
-			break;
-		case XPMB_Activity.KEYCODE_TRIANGLE:
-		case XPMB_Activity.KEYCODE_CIRCLE:
+		case XPMBActivity.KEYCODE_TRIANGLE:
+		case XPMBActivity.KEYCODE_CIRCLE:
+			hide();
+			getMessageBus().postDelayed(new Runnable() {
 
+				@Override
+				public void run() {
+					getRootActivity().hideSideMenu();
+				}
+			}, 301);
 			break;
 		}
 	}
@@ -263,7 +275,7 @@ public class XPMBSideMenu extends Modules_Base {
 		intSzy = (int) (getDrawingConstraints().height() / 15);
 		px_x = (int) (constraints.right - pxfd(188));
 		px_y = (int) getDrawingConstraints().top;
-		rSelection = new Rect(0, 0, (int) getDrawingConstraints().right, pxfd(16));
+		rSelection.set(0, 0, (int) getDrawingConstraints().right, intSzy);
 		rIcon = new Rect(0, 0, intSzy - pxfd(4), intSzy - pxfd(4));
 	}
 }

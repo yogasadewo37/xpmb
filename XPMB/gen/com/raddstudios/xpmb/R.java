@@ -28,8 +28,8 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f060000;
-        public static final int strAppNotInstalled=0x7f06001b;
-        public static final int strBackKeyHint=0x7f060015;
+        public static final int strAppNotInstalled=0x7f06001d;
+        public static final int strBackKeyHint=0x7f060017;
         public static final int strCategoryApps=0x7f060012;
         public static final int strCategoryGBA=0x7f060013;
         public static final int strCategoryGame=0x7f060010;
@@ -39,14 +39,16 @@ public final class R {
         public static final int strCategorySettings=0x7f06000c;
         public static final int strCategoryVideo=0x7f06000e;
         public static final int strCategoryWWW=0x7f060011;
-        public static final int strEmuGBARom=0x7f06001c;
-        public static final int strEmuNESRom=0x7f06001d;
+        public static final int strEmuGBARom=0x7f06001e;
+        public static final int strEmuNESRom=0x7f06001f;
+        public static final int strExternalMemory=0x7f060015;
         public static final int strIncorrectDevice=0x7f060001;
-        public static final int strNoApps=0x7f06001a;
-        public static final int strNoGames=0x7f060019;
-        public static final int strNoMusic=0x7f060018;
-        public static final int strNoPictures=0x7f060017;
-        public static final int strNoVideos=0x7f060016;
+        public static final int strInstalledApps=0x7f060016;
+        public static final int strNoApps=0x7f06001c;
+        public static final int strNoGames=0x7f06001b;
+        public static final int strNoMusic=0x7f06001a;
+        public static final int strNoPictures=0x7f060019;
+        public static final int strNoVideos=0x7f060018;
         public static final int strSideMenuCopyElement=0x7f060004;
         public static final int strSideMenuCreateCategory=0x7f060006;
         public static final int strSideMenuCreateSubcategory=0x7f060007;
@@ -57,7 +59,11 @@ public final class R {
         public static final int strSideMenuMoveItemUp=0x7f060008;
         public static final int strSideMenuPasteElement=0x7f060005;
         public static final int strSideMenuRunGame=0x7f060002;
-        public static final int strVersion=0x7f06001e;
+        public static final int strSystemCamera=0x7f060022;
+        public static final int strSystemSettings=0x7f060021;
+        public static final int strVersion=0x7f060020;
+        public static final int strWebBrowser=0x7f060023;
+        public static final int strWebSearch=0x7f060024;
     }
     public static final class style {
         public static final int Theme_Transparent=0x7f070000;

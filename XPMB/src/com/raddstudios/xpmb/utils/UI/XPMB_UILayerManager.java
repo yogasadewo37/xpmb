@@ -21,8 +21,6 @@ package com.raddstudios.xpmb.utils.UI;
 
 import java.util.ArrayList;
 
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -38,11 +36,18 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 
+import com.raddstudios.xpmb.XPMBActivity;
+
 @SuppressLint("ViewConstructor")
 public class XPMB_UILayerManager extends SurfaceView implements Runnable, SurfaceHolder.Callback,
 		OnTouchListener {
 
 	public interface UILayer_I {
+
+		public void initialize();
+
+		public void dispose();
+
 		public void drawTo(Canvas canvas);
 
 		public void setOpacity(float alpha);
@@ -76,7 +81,7 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 	private int polarity = 1;
 	private boolean isMoving = false, isTouchEnabled = true;
 
-	public XPMB_UILayerManager(XPMB_Activity root) {
+	public XPMB_UILayerManager(XPMBActivity root) {
 		super(root.getBaseContext());
 
 		Log.v(getClass().getSimpleName(), "XPMB_UILayerManager():Start draw thread initialization.");
@@ -205,6 +210,7 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 				}
 
 				catch (Exception e) {
+					retry = false;
 					Log.e(getClass().getSimpleName(),
 							"setDrawingEnabled():Error stopping drawing thread.");
 					e.printStackTrace();
@@ -280,22 +286,22 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 				switch (polarity) {
 				case MOVING_DIR_HORZ:
 					if (dispX < 0) {
-						getFocusedLayer().sendKeyDown(XPMB_Activity.KEYCODE_RIGHT);
-						getFocusedLayer().sendKeyUp(XPMB_Activity.KEYCODE_RIGHT);
+						getFocusedLayer().sendKeyDown(XPMBActivity.KEYCODE_RIGHT);
+						getFocusedLayer().sendKeyUp(XPMBActivity.KEYCODE_RIGHT);
 					}
 					if (dispX > 0) {
-						getFocusedLayer().sendKeyDown(XPMB_Activity.KEYCODE_LEFT);
-						getFocusedLayer().sendKeyUp(XPMB_Activity.KEYCODE_LEFT);
+						getFocusedLayer().sendKeyDown(XPMBActivity.KEYCODE_LEFT);
+						getFocusedLayer().sendKeyUp(XPMBActivity.KEYCODE_LEFT);
 					}
 					break;
 				case MOVING_DIR_VERT:
 					if (dispY < 0) {
-						getFocusedLayer().sendKeyDown(XPMB_Activity.KEYCODE_DOWN);
-						getFocusedLayer().sendKeyUp(XPMB_Activity.KEYCODE_DOWN);
+						getFocusedLayer().sendKeyDown(XPMBActivity.KEYCODE_DOWN);
+						getFocusedLayer().sendKeyUp(XPMBActivity.KEYCODE_DOWN);
 					}
 					if (dispY > 0) {
-						getFocusedLayer().sendKeyDown(XPMB_Activity.KEYCODE_UP);
-						getFocusedLayer().sendKeyUp(XPMB_Activity.KEYCODE_UP);
+						getFocusedLayer().sendKeyDown(XPMBActivity.KEYCODE_UP);
+						getFocusedLayer().sendKeyUp(XPMBActivity.KEYCODE_UP);
 					}
 					break;
 				}

@@ -22,6 +22,8 @@
     <string name="strCategoryApps">Apps</string>
     <string name="strCategoryGBA">Game Boy Advance</string>
     <string name="strCategoryNES">Nintendo Entertainment System</string>
+    <string name="strExternalMemory">External Memory</string>
+    <string name="strInstalledApps">Installed applications</string>
     <string name="strBackKeyHint">Press again back/circle to exit.</string>
     <string name="strNoVideos">No videos.\r\nYou can import media from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
     <string name="strNoPictures">No pictures.\r\nYou can import media from a PC.\r\nFor details, refer to the wiki at (wiki uri here)</string>
@@ -32,5 +34,9 @@
     <string name="strEmuGBARom">Game Boy Advance ROM</string>
     <string name="strEmuNESRom">Nintendo Entertainment System ROM</string>
     <string name="strVersion">Version</string>
+    <string name="strSystemSettings">System settings</string>
+    <string name="strSystemCamera">Camera</string>
+    <string name="strWebBrowser">Web browser</string>
+    <string name="strWebSearch">Internet search</string>
 
 </resources>

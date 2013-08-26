@@ -20,6 +20,8 @@
 package com.raddstudios.xpmb.utils.UI;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -32,11 +34,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
-public class ThemeLoader {
+public class GraphicAssetsManager {
 
 	Hashtable<String, Bitmap> hAssets = null;
 
-	public ThemeLoader() {
+	public GraphicAssetsManager() {
 		hAssets = new Hashtable<String, Bitmap>();		
 	}
 	
@@ -45,12 +47,27 @@ public class ThemeLoader {
 	}
 
 	public Bitmap getAsset(String key, String defValue) {
-		if (hAssets.contains(key)) {
+		if (hAssets.containsKey(key)) {
 			return hAssets.get(key);
 		} else {
 			return hAssets.get(defValue);
 		}
 	}
+	
+	public boolean assetExists(String key){
+		return hAssets.containsKey(key);
+	}
+	
+	public void addCustomAsset(String key, Bitmap value){
+		hAssets.put(key, value);
+	}
+	
+	public void removeCustomAsset(String key){
+		if (!key.startsWith("theme.icon")){
+			hAssets.remove(key);
+		}
+	}
+	
 	public void reloadTheme(ZipFile container) {
 		long startT = System.currentTimeMillis();
 		Hashtable<String, String> hCachedIcons = new Hashtable<String, String>();
@@ -68,7 +85,7 @@ public class ThemeLoader {
 				Log.e(getClass().getSimpleName(),
 						"reloadTheme():Theme XML not found, must be named exactly as the container zip file. ["
 								+ zipName
-								+ ".xml]\rNow expect a NullPointerException at next drawing operation.");
+								+ ".xml]\rNow expect NullPointerException at next drawing operation.");
 				return;
 			}
 
@@ -82,7 +99,7 @@ public class ThemeLoader {
 
 				switch (eventType) {
 				case XmlResourceParser.START_DOCUMENT:
-					hAssets.clear();
+					clearThemeFromCache();
 					break;
 				case XmlResourceParser.START_TAG:
 					cName = xrpRes.getName();
@@ -126,6 +143,9 @@ public class ThemeLoader {
 				}
 				eventType = xrpRes.next();
 			}
+			
+			hCachedIcons.clear();
+			hCachedIcons = null;
 			container.close();
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
@@ -135,6 +155,26 @@ public class ThemeLoader {
 		Log.i(getClass().getSimpleName(),
 				"reloadTheme():Theme load finished. Took "
 						+ String.valueOf(System.currentTimeMillis() - startT) + "ms.");
+	}
+	
+	private void clearThemeFromCache(){
+		Enumeration<String> enK = hAssets.keys();
+		ArrayList<String> kD = new ArrayList<String>();
+		
+		while(enK.hasMoreElements()){
+			String cK = enK.nextElement();
+			
+			if (cK.startsWith("theme.icon")){
+				kD.add(cK);
+			}
+		}
+		
+		enK = null;
+		for (String k : kD){
+			hAssets.remove(k);
+		}
+		kD.clear();
+		kD = null;
 	}
 
 }

@@ -38,21 +38,20 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
-import com.raddstudios.xpmb.menus.modules.games.ROMInfo.ROMInfoNode;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemROM;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V2;
 
 public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 
-	private boolean bInit = false;
+	private boolean bInit = false, bLoaded = false;
 	private String strEmuAct = null;
 	// private ArrayList<String> alCoverKeys = null;
 	private ProcessItemThread rProcessItem = null;
@@ -61,16 +60,21 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 			SETTING_EMU_ACT = "emuact",
 			ASSET_GRAPH_GBA_CV_NOTFOUND = "theme.icon|ui_cover_not_found_gba";
 
+	@Override
+	public String getModuleID() {
+		return "com.xpmb.emu.gba";
+	}
+
 	private class ProcessItemThread implements Runnable {
 
-		private XPMBMenuItemDef f_item = null;
+		private XPMBMenuItemROM f_item = null;
 		private FinishedListener mOwner = null;
 
 		public ProcessItemThread(FinishedListener owner) {
 			mOwner = owner;
 		}
 
-		public void setItem(XPMBMenuItemDef item) {
+		public void setItem(XPMBMenuItemROM item) {
 			f_item = item;
 		}
 
@@ -80,7 +84,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 					+ "' ROM file. Using activity '" + strEmuAct + "' as emulator.");
 			Intent intent = new Intent("android.intent.action.VIEW");
 			intent.setComponent(ComponentName.unflattenFromString(strEmuAct));
-			intent.setData(Uri.fromFile((File) f_item.getData()));
+			intent.setData(Uri.fromFile(f_item.getROMPath()));
 			intent.setFlags(0x10000000);
 			if (getRootActivity().isActivityAvailable(intent)) {
 				Log.v(getClass().getSimpleName(),
@@ -100,7 +104,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 		}
 	}
 
-	public Module_Emu_GBA(XPMB_Activity root) {
+	public Module_Emu_GBA(XPMBActivity root) {
 		super(root);
 
 		// alCoverKeys = new ArrayList<String>();
@@ -108,12 +112,10 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	}
 
 	@Override
-	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
-			FinishedListener listener) {
-		super.initialize(parentLayer, container, listener);
+	public void initialize(UILayer parentLayer, FinishedListener listener) {
+		super.initialize(parentLayer, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
 		reloadSettings();
-		super.setListAnimator(new SubmenuAnimator_V2(container, this));
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
@@ -132,7 +134,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	}
 
 	@Override
-	public void deInitialize() {
+	public void dispose() {
 		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
 		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 		saveData.putString(SETTING_EMU_ACT, strEmuAct);
@@ -140,12 +142,19 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	}
 
 	@Override
-	public void loadIn() {
+	public void loadIn(XPMBMenuCategory dest) {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		if (bLoaded) {
+			Log.i(getClass().getSimpleName(), "loadIn():Module already loaded. Skipping process.");
+			return;
+		}
+
+		super.loadIn(dest);
+		super.setListAnimator(new SubmenuAnimator_V2(dest, this));
 		long t = System.currentTimeMillis();
 		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
 		ROMInfo ridROMInfoDat = null;
@@ -197,31 +206,11 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 							Log.d(getClass().getSimpleName(),
 									"loadIn():CRC for ROM '" + zef.getName() + "' is 0x" + gameCRC);
 
-							ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
-							XPMBMenuItem xmi = null;
-							if (rinCData != null) {
-								xmi = new XPMBMenuItem(rinCData.getGameName());
-								Log.v(getClass().getSimpleName(),
-										"loadIn():Data for ROM with CRC 0x" + gameCRC
-												+ " found. ROM name: '" + rinCData.getGameName()
-												+ "'");
-							} else {
-								xmi = new XPMBMenuItem(f.getName());
-								Log.e(getClass().getSimpleName(),
-										"loadIn():Data for ROM with CRC 0x" + gameCRC
-												+ " not found. Using source filename instead.");
-							}
-							xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
-							xmi.enableTwoLine(true);
-
+							XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
 							xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 							xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
-							xmi.setData(f);
 							xmi.setWidth(pxfd(85));
 							xmi.setHeight(pxfd(64));
-
-							Log.v(getClass().getSimpleName(), "loadin():Item #" + y + " is at ["
-									+ xmi.getPosition().x + "," + xmi.getPosition().y + "].");
 
 							getContainerCategory().addSubitem(xmi);
 							y++;
@@ -266,29 +255,12 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 					Log.d(getClass().getSimpleName(), "loadIn():CRC for ROM '" + f.getName()
 							+ "' is 0x" + gameCRC);
 
-					ROMInfoNode rinCData = ridROMInfoDat.getNode(gameCRC);
-					XPMBMenuItem xmi = null;
-					if (rinCData != null) {
-						xmi = new XPMBMenuItem(rinCData.getGameName());
-						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
-								+ gameCRC + " found. ROM name: '" + rinCData.getGameName() + "'");
-					} else {
-						xmi = new XPMBMenuItem(f.getName());
-						Log.d(getClass().getSimpleName(), "loadIn():Data for ROM with CRC 0x"
-								+ gameCRC + " not found. Using source filename instead.");
-					}
-					xmi.setLabelB(getRootActivity().getString(R.string.strEmuGBARom));
-					xmi.enableTwoLine(true);
+					XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
 
 					xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 					xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
-					xmi.setData(f);
 					xmi.setWidth(pxfd(85));
 					xmi.setHeight(pxfd(64));
-
-					Log.v(getClass().getSimpleName(),
-							"loadin():Item #" + y + " is at [" + xmi.getPosition().x + ","
-									+ xmi.getPosition().y + "].");
 
 					getContainerCategory().addSubitem(xmi);
 					y++;
@@ -303,6 +275,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 			e.printStackTrace();
 		}
 		getListAnimator().initializeItems();
+		bLoaded = true;
 		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
 	}
@@ -322,7 +295,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		rProcessItem.setItem(item);
+		rProcessItem.setItem((XPMBMenuItemROM)item);
 		new Thread(rProcessItem).run();
 	}
 
@@ -335,17 +308,17 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	public void sendKeyDown(int keyCode) {
 
 		switch (keyCode) {
-		case XPMB_Main.KEYCODE_UP:
+		case XPMBActivity.KEYCODE_UP:
 			moveUp();
 			break;
-		case XPMB_Main.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_DOWN:
 			moveDown();
 			break;
-		case XPMB_Main.KEYCODE_LEFT:
-		case XPMB_Main.KEYCODE_CIRCLE:
-			getFinishedListener().onFinished(null);
+		case XPMBActivity.KEYCODE_LEFT:
+		case XPMBActivity.KEYCODE_CIRCLE:
+			getFinishedListener().onFinished(this);
 			break;
-		case XPMB_Main.KEYCODE_CROSS:
+		case XPMBActivity.KEYCODE_CROSS:
 			processItem((XPMBMenuItem) getContainerCategory().getSubitem(
 					getContainerCategory().getSelectedSubitem()));
 			break;

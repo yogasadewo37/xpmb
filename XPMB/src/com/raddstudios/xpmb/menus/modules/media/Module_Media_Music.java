@@ -20,9 +20,12 @@
 package com.raddstudios.xpmb.menus.modules.media;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
@@ -32,46 +35,50 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import com.raddstudios.xpmb.R;
-import com.raddstudios.xpmb.XPMB_Main;
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
+import com.raddstudios.xpmb.XPMBMediaService;
 import com.raddstudios.xpmb.menus.XPMBSideMenuItem;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
-import com.raddstudios.xpmb.utils.XPMB_Activity;
-import com.raddstudios.xpmb.utils.XPMB_Activity.FinishedListener;
-import com.raddstudios.xpmb.utils.XPMB_Activity.MediaPlayerControl;
+import com.raddstudios.xpmb.menus.utils.XPMBMenuItemMusic;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V1;
 
 public class Module_Media_Music extends Modules_Base {
 
 	private ContentResolver cr = null;
-	private MediaPlayerControl mpc = null;
-	private boolean bInit = false, bIsPlaying = false;
+	private XPMBMediaService mpc = null;
+	private boolean bInit = false, bIsPlaying = false, bLoaded = false;
 	private int intLastPlayed = -1;
-	// private ArrayList<String> alCoverKeys = null;
+	private ArrayList<Long> alCoverKeys = null;
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTINGS_BUNDLE_KEY = "module.media.music",
 			SETTING_LAST_ITEM = "lastitem", SETTING_LAST_PLAYED = "lastplayed",
 			SETTING_IS_PLAYING = "isplaying";
 
+	@Override
+	public String getModuleID() {
+		return "com.xpmb.media.music";
+	}
+
 	private class ProcessItemThread implements Runnable {
 
-		private XPMBMenuItemDef f_item = null;
+		private XPMBMenuItemMusic f_item = null;
 
-		public void setItem(XPMBMenuItemDef item) {
+		public void setItem(XPMBMenuItemMusic item) {
 			f_item = item;
 		}
 
 		@Override
 		public void run() {
 			mpc.stop();
-			mpc.setMediaSource(((File) f_item.getData()).getAbsolutePath());
+			mpc.setMediaSource(f_item.getTrackPath());
 			Log.v(getClass().getSimpleName(),
-					"processItem():Start playing '" + ((File) f_item.getData()).getAbsolutePath()
-							+ "'");
+					"processItem():Start playing '" + f_item.getTrackName() + "'");
 			mpc.play();
 			bIsPlaying = true;
 		}
@@ -79,38 +86,40 @@ public class Module_Media_Music extends Modules_Base {
 
 	private class SMInfo extends XPMBSideMenuItem {
 		@Override
+		public int getIndex() {
+			return 7;
+		}
+
+		@Override
 		public String getLabel() {
 			return getRootActivity().getString(R.string.strSideMenuInfo);
 		}
 	}
 
-	public Module_Media_Music(XPMB_Activity root) {
+	public Module_Media_Music(XPMBActivity root) {
 		super(root);
 
-		// alCoverKeys = new ArrayList<String>();
+		alCoverKeys = new ArrayList<Long>();
 		cr = getRootActivity().getContentResolver();
-		mpc = getRootActivity().getPlayerControl();
-		if (!mpc.isInitialized()) {
-			mpc.initialize();
-		}
-		mpc.setOnCompletionListener(oclListener);
 		rProcessItem = new ProcessItemThread();
 	}
 
 	private OnCompletionListener oclListener = new OnCompletionListener() {
 		@Override
 		public void onCompletion(MediaPlayer mp) {
-			sendKeyDown(XPMB_Main.KEYCODE_SHOULDER_RIGHT);
+			sendKeyDown(XPMBActivity.KEYCODE_SHOULDER_RIGHT);
 		}
 	};
 
 	@Override
-	public void initialize(UILayer parentLayer, XPMBMenuCategory container,
-			FinishedListener listener) {
-		super.initialize(parentLayer, container, listener);
+	public void initialize(UILayer parentLayer, FinishedListener listener) {
+		super.initialize(parentLayer, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
-		super.setListAnimator(new SubmenuAnimator_V1(container, this));
-		reloadSettings();
+		mpc = getRootActivity().getPlayerControl();
+		if (!mpc.isInitialized()) {
+			mpc.initialize(getRootActivity().getApplicationContext());
+		}
+		mpc.setOnCompletionListener(oclListener);
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
 	}
@@ -131,12 +140,15 @@ public class Module_Media_Music extends Modules_Base {
 	}
 
 	@Override
-	public void deInitialize() {
+	public void dispose() {
 		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
 		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 		saveData.putInt(SETTING_LAST_PLAYED, intLastPlayed);
 		saveData.putBoolean(SETTING_IS_PLAYING, bIsPlaying);
 		getContainerCategory().clearSubitems();
+		for (long aid : alCoverKeys) {
+			getRootActivity().getThemeManager().removeCustomAsset("media.cover|albumid" + aid);
+		}
 	}
 
 	public File getImageFileFromUri(Uri uri) {
@@ -153,16 +165,23 @@ public class Module_Media_Music extends Modules_Base {
 	}
 
 	@Override
-	public void loadIn() {
+	public void loadIn(XPMBMenuCategory dest) {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+		if (bLoaded) {
+			Log.i(getClass().getSimpleName(), "loadIn():Module already loaded. Skipping process.");
+			return;
+		}
+		super.loadIn(dest);
+		reloadSettings();
+		super.setListAnimator(new SubmenuAnimator_V1(dest, this));
 		long startT = System.currentTimeMillis();
 		String[] projection = new String[] { MediaStore.MediaColumns.DATA,
 				MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
-				MediaStore.Audio.Media.ALBUM_ID };
+				MediaStore.Audio.Media.ALBUM_ID, MediaStore.Audio.Media.ALBUM };
 		Cursor mCur = cr.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, null, null,
 				null);
 		mCur.moveToFirst();
@@ -174,57 +193,33 @@ public class Module_Media_Music extends Modules_Base {
 							.getAbsolutePath())) {
 
 				long t = System.currentTimeMillis();
-				// long albumId = mCur.getLong(3);
-				// String strAlbumId = String.valueOf(albumId);
+				String strTrackPath = mCur.getString(0);
 				String strTrackName = mCur.getString(1);
 				String strTrackArtist = mCur.getString(2);
-				String strTrackPath = mCur.getString(0);
+				long albumId = mCur.getLong(3);
+				String strTrackAlbum = mCur.getString(4);
 
 				Log.d(getClass().getSimpleName(), "loadIn():Found track Name='" + strTrackName
 						+ "' Artist='" + strTrackArtist + "' at '" + strTrackPath + "' ID #" + y);
 
-				XPMBMenuItem xmi = new XPMBMenuItem(strTrackName);
+				XPMBMenuItemMusic xmi = new XPMBMenuItemMusic(strTrackPath);
+				xmi.setAlbumArtID(albumId);
+				xmi.setTrackName(strTrackName);
+				xmi.setAuthorName(strTrackArtist);
+				xmi.setAlbumName(strTrackAlbum);
+
+				xmi.setLabel(strTrackName);
 				xmi.setLabelB(strTrackArtist);
+				xmi.setIconBitmapID("media.cover|albumid" + albumId);
 				xmi.enableTwoLine(true);
 				xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_COUNTER);
-				// TODO: post-load cover images to decrease loading times
+				if (!alCoverKeys.contains(albumId)) {
+					alCoverKeys.add(albumId);
+				}
 
-				xmi.setIconBitmapID("theme.icon|icon_music_album_default");
-				xmi.setData(new File(strTrackPath));
-
+				//xmi.setIconBitmapID("theme.icon|icon_music_album_default");
 				xmi.setWidth(pxfd(64));
 				xmi.setHeight(pxfd(64));
-
-				/*
-				 * if (mStor.getObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-				 * "media.cover|" + strAlbumId) == null) { Uri sArtworkUri =
-				 * Uri.parse("content://media/external/audio/albumart"); Uri
-				 * albumArtUri = ContentUris.withAppendedId(sArtworkUri,
-				 * albumId); File artFile = getImageFileFromUri(albumArtUri);
-				 * 
-				 * if (artFile != null) { if (!artFile.exists()) {
-				 * Log.e(getClass().getSimpleName(),
-				 * "loadIn():Couldn't load album art for mediaID '" + strAlbumId
-				 * + "' (File not found), using stock album art."); } else {
-				 * Long ct = System.currentTimeMillis();
-				 * mStor.putObject(XPMB_Main.GRAPH_ASSETS_COL_KEY,
-				 * "media.cover|" + strAlbumId,
-				 * BitmapFactory.decodeFile(artFile.getAbsolutePath()));
-				 * xmi.setIcon("media.cover|" + strAlbumId);
-				 * Log.i(getClass().getSimpleName(),
-				 * "loadIn():Album art caching for ID '" + strAlbumId +
-				 * "' took " + (System.currentTimeMillis() - ct) + "ms."); } }
-				 * else { Log.e(getClass().getSimpleName(),
-				 * "loadIn():Couldn't load album art for mediaID '" + strAlbumId
-				 * +
-				 * "' (MediaStore returned no rows for path), using stock album art."
-				 * ); } } else { xmi.setIcon("media.cover|" + strAlbumId);
-				 * Log.w(getClass().getSimpleName(),
-				 * "loadIn():Album art for mediaID '" + strAlbumId +
-				 * "' already cached, skipping cache process.");
-				 * 
-				 * }
-				 */
 
 				getContainerCategory().addSubitem(xmi);
 				y++;
@@ -235,9 +230,61 @@ public class Module_Media_Music extends Modules_Base {
 		}
 		mCur.close();
 		getListAnimator().initializeItems();
+
+		bLoaded = true;
 		Log.i(getClass().getSimpleName(), "loadIn():Track list load finished. Process took "
 				+ (System.currentTimeMillis() - startT) + "ms.");
+		new Thread(rLoadAlbumArts).start();
 	}
+
+	private Runnable rLoadAlbumArts = new Runnable() {
+		@Override
+		public void run() {
+			Long t = System.currentTimeMillis();
+
+			Log.i(getClass().getSimpleName(), "loadAlbumArts():Started album art caching.");
+			ArrayList<Long> loadedKeys = new ArrayList<Long>();
+
+			for (long aid : alCoverKeys) {
+				if (!getRootActivity().getThemeManager().assetExists("media.cover|albumid" + aid)) {
+					Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+					Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, aid);
+					File artFile = getImageFileFromUri(albumArtUri);
+
+					if (artFile != null) {
+						if (!artFile.exists()) {
+							Log.e(getClass().getSimpleName(),
+									"loadAlbumArts():Couldn't load album art for mediaID '" + aid
+											+ "' (File not found), using list counter only.");
+						} else {
+							Long ct = System.currentTimeMillis();
+							getRootActivity().getThemeManager().addCustomAsset(
+									"media.cover|albumid" + aid,
+									BitmapFactory.decodeFile(artFile.getAbsolutePath()));
+							loadedKeys.add(aid);
+							Log.i(getClass().getSimpleName(),
+									"loadAlbumArts():Album art caching for ID '" + aid + "' took "
+											+ (System.currentTimeMillis() - ct) + "ms.");
+						}
+					} else {
+						Log.e(getClass().getSimpleName(),
+								"loadAlbumArts():Couldn't load album art for mediaID '"
+										+ aid
+										+ "' (MediaStore returned no rows for path), using list counter only.");
+					}
+				}
+			}
+			for (int i = 0; i < getContainerCategory().getNumSubitems(); i++) {
+				XPMBMenuItemMusic xmim = (XPMBMenuItemMusic) getContainerCategory().getSubitem(i);
+				if (loadedKeys.contains(xmim.getAlbumArtID())) {
+					xmim.setIconType(XPMBMenuItem.ICON_TYPE_BITMAP);
+				}
+			}
+			Log.i(getClass().getSimpleName(),
+					"loadAlbumArts():Album art caching took " + (System.currentTimeMillis() - t)
+							+ "ms.");
+		}
+	};
 
 	@Override
 	public void processItem(XPMBMenuItemDef item) {
@@ -246,7 +293,7 @@ public class Module_Media_Music extends Modules_Base {
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		rProcessItem.setItem(item);
+		rProcessItem.setItem((XPMBMenuItemMusic) item);
 		new Thread(rProcessItem).start();
 		intLastPlayed = getContainerCategory().getSelectedSubitem();
 	}
@@ -260,7 +307,7 @@ public class Module_Media_Music extends Modules_Base {
 	public void sendKeyDown(int keyCode) {
 
 		switch (keyCode) {
-		case XPMB_Main.KEYCODE_SHOULDER_LEFT:
+		case XPMBActivity.KEYCODE_SHOULDER_LEFT:
 			if (intLastPlayed == 0) {
 				break;
 			}
@@ -268,10 +315,10 @@ public class Module_Media_Music extends Modules_Base {
 			processItem((XPMBMenuItem) getContainerCategory().getSubitem(intLastPlayed - 1));
 			intLastPlayed--;
 			break;
-		case XPMB_Main.KEYCODE_UP:
+		case XPMBActivity.KEYCODE_UP:
 			moveUp();
 			break;
-		case XPMB_Main.KEYCODE_SHOULDER_RIGHT:
+		case XPMBActivity.KEYCODE_SHOULDER_RIGHT:
 			if (intLastPlayed == getContainerCategory().getNumSubitems() - 1) {
 				break;
 			}
@@ -279,14 +326,14 @@ public class Module_Media_Music extends Modules_Base {
 			processItem((XPMBMenuItem) getContainerCategory().getSubitem(intLastPlayed + 1));
 			intLastPlayed++;
 			break;
-		case XPMB_Main.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_DOWN:
 			moveDown();
 			break;
-		case XPMB_Main.KEYCODE_LEFT:
-		case XPMB_Main.KEYCODE_CIRCLE:
-			getFinishedListener().onFinished(null);
+		case XPMBActivity.KEYCODE_LEFT:
+		case XPMBActivity.KEYCODE_CIRCLE:
+			getFinishedListener().onFinished(this);
 			break;
-		case XPMB_Main.KEYCODE_CROSS:
+		case XPMBActivity.KEYCODE_CROSS:
 			if (getContainerCategory().getSelectedSubitem() == intLastPlayed) {
 				if (bIsPlaying) {
 					mpc.pause();
@@ -299,6 +346,10 @@ public class Module_Media_Music extends Modules_Base {
 				processItem(getContainerCategory().getSubitem(
 						getContainerCategory().getSelectedSubitem()));
 			}
+			break;
+		case XPMBActivity.KEYCODE_TRIANGLE:
+			getRootActivity().setupSideMenu(new XPMBSideMenuItem[] { new SMInfo() }, 7);
+			getRootActivity().showSideMenu(this);
 			break;
 		}
 	}
