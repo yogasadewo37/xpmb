@@ -27,7 +27,7 @@ import android.os.Bundle;
 
 public class XPMBMenuItem implements XPMBMenuItemDef {
 
-	private String strLabelA = null, strLabelB = null, strIcon = null, strTypeDescriptor = null;
+	private String strLabelA = null, strLabelB = null, strIcon = null;
 	private PointF pfScale = null;
 	private Rect rLoc = null, rMargins = null;
 	private float fAlpha_i = 1.0f, fAlpha_l = 1.0f, fAlpha_s = 1.0f;
@@ -39,15 +39,13 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	private final String BD_STRLABELA = "strLabelA", BD_STRLABELB = "strLabelB",
 			BD_STRICON = "strIcon", BD_PFSCALE = "pfScale", BD_RLOC = "rLoc",
 			BD_RMARGINS = "rMargins", BD_FALPHAI = "fAlpha_i", BD_FALPHAL = "fAlpha_l",
-			BD_FALPHAS = "fALpha_s", BD_BTWOLINES = "bTwoLines", BD_INTICONTYPE = "intIconType",
-			BD_STRTYPEDESC = "strTypeDescriptor";
+			BD_FALPHAS = "fAlpha_s", BD_BTWOLINES = "bTwoLines", BD_INTICONTYPE = "intIconType";
 
 	public XPMBMenuItem(String label) {
 		strLabelA = label;
 		pfScale = new PointF(1.0f, 1.0f);
 		rLoc = new Rect();
 		rMargins = new Rect();
-		strTypeDescriptor = TYPE_DESC;
 	}
 
 	public XPMBMenuItem(Bundle src) {
@@ -62,16 +60,11 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 		fAlpha_s = src.getFloat(BD_FALPHAS);
 		bTwoLines = src.getBoolean(BD_BTWOLINES);
 		intIconType = src.getInt(BD_INTICONTYPE);
-		strTypeDescriptor = src.getString(BD_STRTYPEDESC);
 	}
 
 	@Override
 	public String getTypeDescriptor() {
-		return strTypeDescriptor;
-	}
-
-	protected void setTypeDescriptor(String type) {
-		strTypeDescriptor = type;
+		return XPMBMenuItem.TYPE_DESC;
 	}
 
 	public Bundle storeInBundle() {
@@ -88,7 +81,6 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 		o.putFloat(BD_FALPHAS, fAlpha_s);
 		o.putBoolean(BD_BTWOLINES, bTwoLines);
 		o.putInt(BD_INTICONTYPE, intIconType);
-		o.putString(BD_STRTYPEDESC, strTypeDescriptor);
 
 		return o;
 	}

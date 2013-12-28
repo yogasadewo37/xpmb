@@ -24,7 +24,6 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
 
-
 public interface XPMBMenuItemDef {
 	final static int ICON_TYPE_COUNTER = 0, ICON_TYPE_BITMAP = 1;
 	
@@ -51,9 +50,9 @@ public interface XPMBMenuItemDef {
 	void setSeparatorAlpha(float alpha);
 	float getSeparatorAlpha();
 	void setSize(Point size);
+	Point getSize();
 	void setWidth(int width);
 	void setHeight(int height);
-	Point getSize();
 	void setPosition(Point position);
 	Point getPosition();
 	void setPositionX(int x);

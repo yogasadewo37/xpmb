@@ -19,15 +19,11 @@
 
 package com.raddstudios.xpmb.menus.modules.games;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-//import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.zip.CRC32;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -42,12 +38,15 @@ import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
-import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
+import com.raddstudios.xpmb.menus.modules.games.romdata.XPMB_ROMData;
+import com.raddstudios.xpmb.menus.modules.games.romdata.rcdat.XPMB_RCDatParser;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemROM;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V2;
+
+//import java.util.ArrayList;
 
 public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 
@@ -143,7 +142,7 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 	}
 
 	@Override
-	public void loadIn(XPMBMenuCategory dest) {
+	public void loadIn() {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
@@ -154,11 +153,11 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 			return;
 		}
 
-		super.loadIn(dest);
-		super.setListAnimator(new SubmenuAnimator_V2(dest, this));
+		super.loadIn();
+		super.setListAnimator(new SubmenuAnimator_V2(getContainerCategory(), this));
 		long t = System.currentTimeMillis();
 		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/NES");
-		ROMInfo ridROMInfoDat = null;
+		XPMB_RCDatParser ridROMInfoDat = null;
 		int y = 0;
 
 		mROMRoot.mkdirs();
@@ -176,39 +175,23 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 				return;
 			}
 		}
-		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_nes),
-				ROMInfo.TYPE_CRC);
+		ridROMInfoDat = new XPMB_RCDatParser(getRootActivity().getResources().getXml(
+				R.xml.rominfo_nes));
 
 		try {
 			File[] storPtCont = mROMRoot.listFiles();
 			for (File f : storPtCont) {
 				if (f.getName().endsWith(".zip")) {
-					ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
-					Enumeration<? extends ZipEntry> ze = zf.entries();
-					while (ze.hasMoreElements()) {
-						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".nes") || zef.getName().endsWith(".NES")) {
-							long ct = System.currentTimeMillis();
+					ZipInputStream zis = new ZipInputStream(new FileInputStream(f));
+					ZipEntry ze = zis.getNextEntry();
+					while (ze != null) {
+						if (zis.getNextEntry().getName().toLowerCase(Locale.ROOT).endsWith(".nes")) {
 							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
-									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
+									+ ze.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
 									+ y);
-							// InputStream fi = null;
-							// InputStream fi = zf.getInputStream(zef);
-							// fi.skip(0xAC);
-							// String gameCode = "";
 
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// fi.close();
-							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
-									getRootActivity().getResources().getConfiguration().locale);
-							Log.d(getClass().getSimpleName(),
-									"loadIn():CRC for ROM '" + zef.getName() + "' is 0x" + gameCRC);
-
-							XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
-
+							XPMBMenuItemROM xmi = new XPMBMenuItemROM(new XPMB_ROMData(f, ze,
+									ridROMInfoDat));
 							xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 							xmi.setIconBitmapID(ASSET_GRAPH_NES_CV_NOTFOUND);
 							xmi.setWidth(pxfd(85));
@@ -216,49 +199,18 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 
 							getContainerCategory().addSubitem(xmi);
 							y++;
-							Log.i(getClass().getSimpleName(),
-									"loadIn():Item loading completed for item #" + y
-											+ ". Process took " + (System.currentTimeMillis() - ct)
-											+ "ms.");
+							break;
 						}
+						ze = zis.getNextEntry();
 					}
-					zf.close();
-				} else if (f.getName().endsWith(".nes") || f.getName().endsWith(".NES")) {
+					zis.close();
+				} else if (f.getName().toLowerCase(Locale.ROOT).endsWith(".nes")) {
 					long ct = System.currentTimeMillis();
 					Log.v(getClass().getSimpleName(),
 							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "' ID #"
 									+ y);
-					InputStream fi = null;
-					// InputStream fi = new FileInputStream(f);
-					// fi.skip(0xAC); // TODO: Find a better way to associate
-					// ROMS with DB titles
-					// String gameCode = "";
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// fi.close();
 
-					fi = new BufferedInputStream(new FileInputStream(f));
-					CRC32 cCRC = new CRC32();
-					int cByte = 0;
-					long i = System.currentTimeMillis();
-					byte[] buf = new byte[1024 * 64];
-					while ((cByte = fi.read(buf)) > 0) {
-						cCRC.update(buf, 0, cByte);
-					}
-					Log.i(getClass().getSimpleName(),
-							"loadIn():CRC Calculation for '" + f.getName() + "' took "
-									+ (System.currentTimeMillis() - i) + "ms.");
-					fi.close();
-
-					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
-							getRootActivity().getResources().getConfiguration().locale);
-					Log.d(getClass().getSimpleName(), "loadIn():CRC for ROM '" + f.getName()
-							+ "' is 0x" + gameCRC);
-
-					XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
-
+					XPMBMenuItemROM xmi = new XPMBMenuItemROM(new XPMB_ROMData(f, ridROMInfoDat));
 					xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 					xmi.setIconBitmapID(ASSET_GRAPH_NES_CV_NOTFOUND);
 					xmi.setWidth(pxfd(85));
@@ -269,7 +221,6 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 					Log.i(getClass().getSimpleName(), "loadIn():Item loading completed for item #"
 							+ y + ". Process took " + (System.currentTimeMillis() - ct) + "ms.");
 				}
-
 			}
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
@@ -278,7 +229,7 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 			e.printStackTrace();
 		}
 		getListAnimator().initializeItems();
-		
+
 		bLoaded = true;
 		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
@@ -299,7 +250,7 @@ public class Module_Emu_NES extends Modules_Base implements FinishedListener {
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		rProcessItem.setItem((XPMBMenuItemROM)item);
+		rProcessItem.setItem((XPMBMenuItemROM) item);
 		new Thread(rProcessItem).run();
 	}
 

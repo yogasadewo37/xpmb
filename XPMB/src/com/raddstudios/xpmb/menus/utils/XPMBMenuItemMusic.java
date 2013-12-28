@@ -24,17 +24,17 @@ import android.os.Bundle;
 public class XPMBMenuItemMusic extends XPMBMenuItem {
 
 	public static final String TYPE_DESC = "menuitem.media.music";
-	
+
 	private long albumArtID = 0l;
 	private String strTrackName = null, strAlbumName = null, strAuthorName = null,
 			strTrackPath = null;
 
 	private final String BD_STRTRACKNAME = "strTrackName", BD_STRALBUMNAME = "strAlbumName",
-			BD_STRAUTHORNAME = "strAuthorName", BD_STRTRACKPATH = "strTrackPath", BD_ALBUMARTID = "albumArtID";
+			BD_STRAUTHORNAME = "strAuthorName", BD_STRTRACKPATH = "strTrackPath",
+			BD_ALBUMARTID = "albumArtID";
 
 	public XPMBMenuItemMusic(String trackPath) {
 		super(trackPath);
-		super.setTypeDescriptor(TYPE_DESC);
 		strTrackPath = trackPath;
 	}
 
@@ -60,44 +60,49 @@ public class XPMBMenuItemMusic extends XPMBMenuItem {
 
 		return s;
 	}
-	
-	public void setAlbumArtID(long mediaID){
+
+	@Override
+	public String getTypeDescriptor() {
+		return XPMBMenuItemMusic.TYPE_DESC;
+	}
+
+	public void setAlbumArtID(long mediaID) {
 		albumArtID = mediaID;
 	}
-	
-	public long getAlbumArtID(){
+
+	public long getAlbumArtID() {
 		return albumArtID;
 	}
-	
-	public void setTrackName(String name){
+
+	public void setTrackName(String name) {
 		strTrackName = name;
 	}
-	
-	public String getTrackName(){
+
+	public String getTrackName() {
 		return strTrackName;
 	}
-	
-	public void setAuthorName(String name){
+
+	public void setAuthorName(String name) {
 		strAuthorName = name;
 	}
-	
-	public String getAuthorName(){
+
+	public String getAuthorName() {
 		return strAuthorName;
 	}
-	
-	public void setAlbumName(String name){
+
+	public void setAlbumName(String name) {
 		strAlbumName = name;
 	}
-	
-	public String getAlbumName(){
+
+	public String getAlbumName() {
 		return strAlbumName;
 	}
-	
-	public void setTrackPath(String path){
+
+	public void setTrackPath(String path) {
 		strTrackPath = path;
 	}
-	
-	public String getTrackPath(){
+
+	public String getTrackPath() {
 		return strTrackPath;
 	}
 }

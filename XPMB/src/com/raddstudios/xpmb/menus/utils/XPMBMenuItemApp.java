@@ -19,21 +19,22 @@
 
 package com.raddstudios.xpmb.menus.utils;
 
+import java.net.URISyntaxException;
+
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 public class XPMBMenuItemApp extends XPMBMenuItem {
 
 	public static final String TYPE_DESC = "menuitem.system.app";
-	
+
 	private Intent mIntent = null;
 
 	private final String BD_MINTENT = "mIntent";
 
 	public XPMBMenuItemApp(String label) {
 		super(label);
-		super.setTypeDescriptor(TYPE_DESC);
 	}
 
 	public XPMBMenuItemApp(Bundle source) {
@@ -43,10 +44,9 @@ public class XPMBMenuItemApp extends XPMBMenuItem {
 	}
 
 	public Intent getIntent() {
-		Intent o = null;
-		return o;
+		return mIntent;
 	}
-	
+
 	@Override
 	public Bundle storeInBundle() {
 		Bundle s = super.storeInBundle();
@@ -54,17 +54,24 @@ public class XPMBMenuItemApp extends XPMBMenuItem {
 		return s;
 	}
 
+	@Override
+	public String getTypeDescriptor() {
+		return XPMBMenuItemApp.TYPE_DESC;
+	}
+
 	private void storeIntentInBundle(Bundle dest, Intent src, String baseKey) {
 		dest.putString(baseKey + "_datauri", src.toUri(Intent.URI_INTENT_SCHEME));
 	}
 
 	private Intent getIntentFromBundle(Bundle src, String baseKey) {
-		Intent o = new Intent();
 
-		Uri data = Uri.parse(src.getString(baseKey + "_datauri"));
-		o.setData(data);
-
-		return o;
+		try {
+			return Intent.parseUri(src.getString(baseKey + "_datauri"), Intent.URI_INTENT_SCHEME);
+		} catch (URISyntaxException e) {
+			Log.e(getClass().getSimpleName(),
+					"getIntentFromBundle():Error parsing Uri from Bundle. Returning empty Intent.");
+		}
+		return new Intent();
 	}
 
 	public void setIntent(Intent dest) {

@@ -22,12 +22,17 @@ package com.raddstudios.xpmb.utils.UI;
 import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.PorterDuff.Mode;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -39,7 +44,7 @@ import android.view.ViewGroup.LayoutParams;
 import com.raddstudios.xpmb.XPMBActivity;
 
 @SuppressLint("ViewConstructor")
-public class XPMB_UILayerManager extends SurfaceView implements Runnable, SurfaceHolder.Callback,
+public class UILayerManager extends SurfaceView implements Runnable, SurfaceHolder.Callback,
 		OnTouchListener {
 
 	public interface UILayer_I {
@@ -53,6 +58,10 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 		public void setOpacity(float alpha);
 
 		public float getOpacity();
+
+		public void setVisibility(boolean visibility);
+
+		public boolean isVisible();
 
 		public void setDrawingConstraints(RectF constraints);
 
@@ -72,7 +81,7 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 	private boolean bIsEnabled = true, bSurfaceExists = false, bModifyingList = false;
 	private ArrayList<UILayer> alLayers = null;
 	private Canvas mCanvas = null;
-	private int intFocusedLayer = 0;
+	private int intFocusedLayer = 0, intAlwaysOnTopLayer = -1;
 	private RectF rConstraints = null;
 
 	// Touch Events Vars
@@ -81,10 +90,16 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 	private int polarity = 1;
 	private boolean isMoving = false, isTouchEnabled = true;
 
-	public XPMB_UILayerManager(XPMBActivity root) {
+	// Custom BG Vars
+	private Rect bgRect = null;
+	private Bitmap bmBG = null;
+	private float fBG = 0.0f;
+	private Paint pPaint = null;
+
+	public UILayerManager(XPMBActivity root) {
 		super(root.getBaseContext());
 
-		Log.v(getClass().getSimpleName(), "XPMB_UILayerManager():Start draw thread initialization.");
+		Log.v(getClass().getSimpleName(), "UILayerManager():Start draw thread initialization.");
 		getHolder().addCallback(this);
 		getHolder().setFormat(PixelFormat.TRANSPARENT);
 		super.setZOrderOnTop(true);
@@ -92,10 +107,12 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 
 		alLayers = new ArrayList<UILayer>();
 		rConstraints = new RectF();
+		pPaint = new Paint();
+		pPaint.setAntiAlias(true);
 		setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		root.getRootView().addView(this);
 		Log.v(getClass().getSimpleName(),
-				"XPMB_UILayerManager():Finished draw thread initialization.");
+				"UILayerManager():Finished draw thread initialization.");
 	}
 
 	@Override
@@ -108,20 +125,40 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 
 			if (mCanvas != null && !bModifyingList) {
 				mCanvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
+				mCanvas.clipRect(rConstraints, Region.Op.REPLACE);
+
+				if (bmBG != null && fBG > 0.0f) {
+					mCanvas.saveLayerAlpha(rConstraints, (int) (255 * fBG),
+							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+					mCanvas.drawBitmap(bmBG, null, bgRect, pPaint);
+					mCanvas.restore();
+				}
 
 				for (ly = 0; ly < alLayers.size(); ly++) {
 					UILayer l = alLayers.get(ly);
+					if (ly == intAlwaysOnTopLayer || !l.isVisible()) {
+						continue;
+					}
+					// TODO: Optimize graphics performance before aplying
+					// layered alpha
 					// mCanvas.saveLayerAlpha(l.getDrawingConstraints(),
 					// (int) (255 * l.getOpacity()),
 					// Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
 					l.drawTo(mCanvas);
 					// mCanvas.restore();
 				}
+				if (intAlwaysOnTopLayer != -1) {
+					alLayers.get(intAlwaysOnTopLayer).drawTo(mCanvas);
+				}
 
 				getHolder().unlockCanvasAndPost(mCanvas);
 				mCanvas = null;
 			}
 		}
+	}
+
+	public void setAlwaysOnTopLayer(int layerIndex) {
+		intAlwaysOnTopLayer = layerIndex;
 	}
 
 	public int addLayer(UILayer layer) {
@@ -188,6 +225,22 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 		}
 	}
 
+	public void setBackgroundBitmap(Bitmap bg) {
+		bmBG = bg;
+	}
+
+	public void setBackgroundOpacity(float opacity) {
+		fBG = opacity;
+	}
+
+	public float getBackgroundOpacity() {
+		return fBG;
+	}
+
+	public boolean isBackgroundBitmapSet() {
+		return (bmBG != null);
+	}
+
 	@Override
 	public boolean isEnabled() {
 		return bIsEnabled;
@@ -225,6 +278,8 @@ public class XPMB_UILayerManager extends SurfaceView implements Runnable, Surfac
 				+ height + "h");
 
 		rConstraints = new RectF(0, 0, width, height);
+		bgRect = new Rect((int) rConstraints.left, (int) rConstraints.top,
+				(int) rConstraints.right, (int) rConstraints.bottom);
 		updateAllLayersDrawingConstraints();
 	}
 

@@ -23,9 +23,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
@@ -42,6 +42,8 @@ public class Modules_Base extends UILayer {
 	public interface ListAnimator {
 		public void initializeItems();
 
+		public void resetContainer(XPMBMenuCategory container);
+
 		public void setNextItem(int nextItem);
 
 		public void start();
@@ -54,7 +56,7 @@ public class Modules_Base extends UILayer {
 	private ListAnimator mAnimator = null;
 
 	private Paint pParams = new Paint();
-	private Rect rTextBounds = new Rect(), tS = new Rect(), cP = new Rect(), rILoc = new Rect();
+	private Rect rTextBounds = new Rect(), rILoc = new Rect();
 
 	public Modules_Base(XPMBActivity rootActivity) {
 		super(rootActivity);
@@ -74,6 +76,13 @@ public class Modules_Base extends UILayer {
 	}
 
 	protected void reloadSettings() {
+	}
+
+	protected void setContainerCategory(XPMBMenuCategory container) {
+		mContainer = container;
+		if (mAnimator != null) {
+			mAnimator.resetContainer(container);
+		}
 	}
 
 	protected XPMBMenuCategory getContainerCategory() {
@@ -105,8 +114,6 @@ public class Modules_Base extends UILayer {
 				case XPMBMenuItemDef.ICON_TYPE_COUNTER:
 					iAlpha = (int) ((255 * xmi_y.getIconAlpha()) * mContainer.getSubitemsAlpha());
 
-					canvas.saveLayerAlpha(rILoc.left, rILoc.top, rILoc.right, rILoc.bottom, iAlpha,
-							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
 					pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 					pParams.setColor(Color.WHITE);
 					pParams.setStyle(Style.STROKE);
@@ -116,9 +123,12 @@ public class Modules_Base extends UILayer {
 							pParams);
 					pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
 					pParams.setTextSize(pxfd(18));
-					pParams.getTextBounds(num, 0, num.length(), tS);
-					Gravity.apply(Gravity.CENTER, tS.width(), tS.height(), rILoc, cP);
-					canvas.drawText(num, cP.left, cP.top + pxfd(18) - pParams.descent(), pParams);
+					pParams.getTextBounds(num, 0, num.length(), rTextBounds);
+					getRectFromTextBounds(rTextBounds, pParams);
+					gravitateRect(rILoc, rTextBounds, Gravity.CENTER);
+					canvas.saveLayerAlpha(rILoc.left, rILoc.top, rILoc.right, rILoc.bottom, iAlpha,
+							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+					drawText(num, rTextBounds, pParams, canvas);
 					pParams.reset();
 					canvas.restore();
 					break;
@@ -141,45 +151,48 @@ public class Modules_Base extends UILayer {
 				String strLabel_B = xmi_y.getLabelB();
 				iAlpha = (int) (((255 * xmi_y.getLabelAlpha()) * mContainer.getSubitemsAlpha()) * mLayer
 						.getOpacity());
-				canvas.saveLayerAlpha(rILoc.right, rILoc.top, getDrawingConstraints().right,
-						rILoc.bottom, iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
 				pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 				pParams.setTextSize(pxfd(18));
 				pParams.setColor(Color.WHITE);
 				pParams.setTextAlign(Align.LEFT);
 				pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
-				pParams.getTextBounds(strLabel_A, 0, strLabel_A.length(), rTextBounds);
-				rTextBounds = getBoundsFromTextRect(rTextBounds);
 
 				if (xmi_y.isTwoLines()) {
 					// Text A
+					pParams.getTextBounds(strLabel_A, 0, strLabel_A.length(), rTextBounds);
+					getRectFromTextBounds(rTextBounds, pParams);
 					rTextBounds.offsetTo(rILoc.right + pxfd(10),
-							(int) (rILoc.centerY() - pxfd(2) - pParams.descent()));
-					canvas.drawText(strLabel_A, rTextBounds.left, rTextBounds.top, pParams);
+							rILoc.centerY() - (rTextBounds.height() + pxfd(4)));
+					canvas.saveLayerAlpha(rTextBounds.left, rTextBounds.top, rTextBounds.right,
+							rTextBounds.bottom, iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+					drawText(strLabel_A, rTextBounds, pParams, canvas);
 					canvas.restore();
 					// Line Separator
 					int s_alpha = (int) ((255 * xmi_y.getSeparatorAlpha()) * mLayer.getOpacity());
-					canvas.saveLayerAlpha(rILoc.right + pxfd(10), rILoc.top,
-							getDrawingConstraints().right, rILoc.bottom, s_alpha,
-							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
 					pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.GRAY);
-					canvas.drawLine(rILoc.right + pxfd(10), rILoc.centerY() - pxfd(2),
-							getDrawingConstraints().right - pxfd(2), rILoc.centerY() - pxfd(2),
-							pParams);
+					canvas.saveLayerAlpha(rILoc.right + pxfd(10), rILoc.centerY() - pxfd(2),
+							getDrawingConstraints().right - pxfd(2), rILoc.centerY() + pxfd(2),
+							s_alpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+					canvas.drawLine(rILoc.right + pxfd(10), rILoc.centerY(),
+							getDrawingConstraints().right - pxfd(2), rILoc.centerY(), pParams);
 					canvas.restore();
 					// Text B
-					canvas.saveLayerAlpha(rILoc.right + pxfd(10), rILoc.top,
-							getDrawingConstraints().right, rILoc.bottom, iAlpha,
-							Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-					rTextBounds.offsetTo(rILoc.right + pxfd(10),
-							(int) (rILoc.centerY() + pxfd(2) - pParams.ascent()));
+					pParams.getTextBounds(strLabel_B, 0, strLabel_B.length(), rTextBounds);
+					getRectFromTextBounds(rTextBounds, pParams);
+					rTextBounds.offsetTo(rILoc.right + pxfd(10), rILoc.centerY() + pxfd(4));
+					canvas.saveLayerAlpha(rTextBounds.left, rTextBounds.top, rTextBounds.right,
+							rTextBounds.bottom, iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
 					pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
-					canvas.drawText(strLabel_B, rTextBounds.left, rTextBounds.top, pParams);
+					drawText(strLabel_B, rTextBounds, pParams, canvas);
 					canvas.restore();
 				} else {
+					pParams.getTextBounds(strLabel_A, 0, strLabel_A.length(), rTextBounds);
+					getRectFromTextBounds(rTextBounds, pParams);
 					rTextBounds.offsetTo(rILoc.right + pxfd(10),
-							(int) (rILoc.centerY() + pParams.descent()));
-					canvas.drawText(strLabel_A, rTextBounds.left, rTextBounds.top, pParams);
+							(int) (rILoc.centerY() - rTextBounds.height() / 2));
+					canvas.saveLayerAlpha(rTextBounds.left, rTextBounds.top, rTextBounds.right,
+							rTextBounds.bottom, iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+					drawText(strLabel_A, rTextBounds, pParams, canvas);
 					canvas.restore();
 				}
 				pParams.reset();
@@ -189,16 +202,11 @@ public class Modules_Base extends UILayer {
 		}
 	}
 
-	public void loadIn(XPMBMenuCategory dest) {
-		mContainer = dest;
-		switch (mContainer.getListAnimator()) {
-		case XPMBMenuCategory.LIST_ANIM_HALF:
-			mContainer.setSubitemsPosX(pxfd(62));
-			break;
-		case XPMBMenuCategory.LIST_ANIM_HIGHLIGHT:
-			mContainer.setSubitemsPosX(pxfd(122));
-			break;
-		}
+	public void setSubitemOffsetX(int offset) {
+		mContainer.setSubitemsPosX(offset);
+	}
+
+	public void loadIn() {
 	}
 
 	protected void setListAnimator(ListAnimator animator) {
@@ -207,6 +215,10 @@ public class Modules_Base extends UILayer {
 
 	protected ListAnimator getListAnimator() {
 		return mAnimator;
+	}
+
+	public void setSubmenuType(int animator) {
+		mContainer.setListAnimator(animator);
 	}
 
 	public int getSubmenuType() {

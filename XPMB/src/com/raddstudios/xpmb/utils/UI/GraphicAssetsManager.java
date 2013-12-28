@@ -92,9 +92,8 @@ public class GraphicAssetsManager {
 			xrpRes.setInput(container.getInputStream(thmSrc), null);
 
 			int eventType = xrpRes.getEventType();
-			boolean done = false;
 
-			while (eventType != XmlPullParser.END_DOCUMENT && !done) {
+			while (eventType != XmlPullParser.END_DOCUMENT) {
 				String cName = null;
 
 				switch (eventType) {

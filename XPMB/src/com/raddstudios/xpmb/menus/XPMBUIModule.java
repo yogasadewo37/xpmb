@@ -19,6 +19,7 @@
 
 package com.raddstudios.xpmb.menus;
 
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,7 +40,7 @@ public class XPMBUIModule extends UILayer {
 
 	private XPMBActivity mRoot = null;
 	private RectF rConstraints = null;
-	private Rect bmRect = null;
+	private Rect bmRect = null, notifBMRect = null, rDate = null;;
 	private String strBatteryIcon = "theme.icon|icon_batt_status_000";
 	private boolean bLoadingAnim = false, bBatteryIndicator = true, bDateTimeLabel = true;
 	private Paint pPaint = null;
@@ -47,11 +48,20 @@ public class XPMBUIModule extends UILayer {
 	private String strDateFormat = "%d/%m %H:%M", strFormattedDate = "00/00 00:00";
 	private int intLoadAnimFrames = 0, intLoadAnimCurFrame = 0;
 	private Timer tUpdateAnims = null;
+	private ArrayList<XPMBUINotification> alNotifications = null;
+
+	public interface XPMBUINotification {
+		String getIconKey();
+
+		String getText();
+	}
 
 	public XPMBUIModule(XPMBActivity root) {
 		super(root);
 		mRoot = root;
 		bmRect = new Rect();
+		rDate = new Rect();
+		alNotifications = new ArrayList<XPMBUINotification>();
 		setDrawingConstraints(new RectF(0, 0, root.getRootView().getWidth(), root.getRootView()
 				.getHeight()));
 		pPaint = new Paint();
@@ -72,7 +82,6 @@ public class XPMBUIModule extends UILayer {
 		if (bBatteryIndicator) {
 			Bitmap bmBatt = mRoot.getThemeManager().getAsset(strBatteryIcon);
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-
 			canvas.drawBitmap(bmBatt, null, bmRect, pPaint);
 			pPaint.reset();
 		}
@@ -82,19 +91,38 @@ public class XPMBUIModule extends UILayer {
 			pPaint.setTextAlign(Align.RIGHT);
 			pPaint.setTextSize(pxfd(19));
 			pPaint.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
-			int intTime_x = (int) rConstraints.right - pxfd(42), intTime_y = (int) (rConstraints.top
-					- pPaint.ascent() + pxfd(6));
-			canvas.drawText(strFormattedDate, intTime_x, intTime_y, pPaint);
+			pPaint.getTextBounds(strFormattedDate, 0, strFormattedDate.length(), rDate);
+			getRectFromTextBounds(rDate, pPaint);
+			rDate.offsetTo((int) (rConstraints.right - pxfd(42)),
+					(int) (rConstraints.top + pxfd(6)));
+			drawText(strFormattedDate, rDate, pPaint, canvas);
 			pPaint.reset();
 		}
 		if (bLoadingAnim) {
-			Bitmap bmAnim = (Bitmap) mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
+			Bitmap bmAnim = mRoot.getThemeManager().getAsset("theme.icon|ui_load_anim");
 			int intAnim_x = (int) rConstraints.right - pxfd(37), intAnim_y = (int) rConstraints.bottom
 					- pxfd(37), intAnim_bx = bmAnim.getHeight() * intLoadAnimCurFrame;
 			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 			canvas.drawBitmap(bmAnim, new Rect(intAnim_bx, 0, intAnim_bx + bmAnim.getHeight(),
 					bmAnim.getHeight()), new Rect(intAnim_x, intAnim_y, intAnim_x + pxfd(32),
 					intAnim_y + pxfd(32)), pPaint);
+			pPaint.reset();
+		}
+
+		if (alNotifications.size() > 0) {
+			XPMBUINotification cN = alNotifications.get(0);
+			canvas.drawBitmap(mRoot.getThemeManager().getAsset(cN.getIconKey()), null, notifBMRect,
+					pPaint);
+			pPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+			pPaint.setColor(Color.WHITE);
+			pPaint.setTextAlign(Align.LEFT);
+			pPaint.setTextSize(pxfd(12));
+			pPaint.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
+			pPaint.getTextBounds(cN.getText(), 0, cN.getText().length(), rDate);
+			getRectFromTextBounds(rDate, pPaint);
+			rDate.offsetTo(notifBMRect.right + pxfd(4), notifBMRect.centerY()
+					- (rDate.height() / 2));
+			drawText(cN.getText(), rDate, pPaint, canvas);
 			pPaint.reset();
 		}
 	}
@@ -108,6 +136,8 @@ public class XPMBUIModule extends UILayer {
 				(int) rConstraints.right - pxfd(37) + pxfd(32), (int) rConstraints.top + pxfd(32));
 		bmRect = getScaledRect(br, bm_rect.width() / br.width(), bm_rect.height() / br.height(),
 				Gravity.CENTER);
+		notifBMRect = new Rect((int) rConstraints.left, (int) rConstraints.top,
+				(int) rConstraints.top + pxfd(32), (int) rConstraints.left + pxfd(32));
 	}
 
 	public void setLoadingAnimationVisible(boolean visible) {
@@ -164,6 +194,17 @@ public class XPMBUIModule extends UILayer {
 			strDateFormat = "%d/%m %H:%M";
 		} else if (timeVisible) {
 			strDateFormat = "%d/%m %H:%M";
+		}
+	}
+
+	public int putNotification(XPMBUINotification notif) {
+		alNotifications.add(notif);
+		return alNotifications.indexOf(notif);
+	}
+
+	public void removeNotification(int key) {
+		if (!alNotifications.isEmpty() && key < alNotifications.size()) {
+			alNotifications.remove(key);
 		}
 	}
 

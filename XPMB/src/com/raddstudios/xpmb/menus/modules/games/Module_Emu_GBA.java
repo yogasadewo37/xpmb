@@ -19,33 +19,45 @@
 
 package com.raddstudios.xpmb.menus.modules.games;
 
-import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-//import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.zip.CRC32;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Toast;
 
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.ValueAnimator;
+import com.nineoldandroids.animation.ValueAnimator.AnimatorUpdateListener;
+import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
+import com.raddstudios.xpmb.menus.modules.games.romdata.XPMB_ROMData;
+import com.raddstudios.xpmb.menus.modules.games.romdata.rcdat.XPMB_RCDatParser;
+import com.raddstudios.xpmb.menus.modules.games.romdata.tgdbapi.TGDB_GameData;
+import com.raddstudios.xpmb.menus.modules.games.romdata.tgdbapi.TGDB_GameData.TGDB_GameData_ImageEntry;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
-import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemROM;
+import com.raddstudios.xpmb.utils.XPMBSettingsManager;
 import com.raddstudios.xpmb.utils.UI.UILayer;
 import com.raddstudios.xpmb.utils.UI.animators.SubmenuAnimator_V2;
 
@@ -53,7 +65,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 
 	private boolean bInit = false, bLoaded = false;
 	private String strEmuAct = null;
-	// private ArrayList<String> alCoverKeys = null;
+	private ArrayList<String> alCoverKeys = null;
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTINGS_BUNDLE_KEY = "module.emu.gba", SETTING_LAST_ITEM = "lastitem",
@@ -64,6 +76,150 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	public String getModuleID() {
 		return "com.xpmb.emu.gba";
 	}
+
+	private class BackgroundFadeAnimator extends ValueAnimator implements AnimatorUpdateListener,
+			AnimatorListener {
+
+		boolean fi = false;
+
+		public BackgroundFadeAnimator(boolean fadein) {
+			super();
+			super.setFloatValues(0.0f, 1.0f);
+			super.setInterpolator(new AccelerateDecelerateInterpolator());
+			super.addUpdateListener(this);
+			fi = fadein;
+			super.setDuration(1000);
+		}
+
+		@Override
+		public void onAnimationUpdate(ValueAnimator arg0) {
+			float completion = (Float) arg0.getAnimatedValue();
+
+			if (fi) {
+				if (getRootActivity().getDrawingLayerManager().isBackgroundBitmapSet()) {
+					getRootActivity().getDrawingLayerManager().setBackgroundOpacity(completion);
+				}
+			} else {
+				getRootActivity().getDrawingLayerManager().setBackgroundOpacity(1.0f - completion);
+			}
+		}
+
+		@Override
+		public void onAnimationCancel(Animator arg0) {
+		}
+
+		@Override
+		public void onAnimationEnd(Animator arg0) {
+		}
+
+		@Override
+		public void onAnimationRepeat(Animator arg0) {
+		}
+
+		@Override
+		public void onAnimationStart(Animator arg0) {
+			if (fi) {
+				getRootActivity().getDrawingLayerManager().setBackgroundBitmap(
+						getRootActivity().getThemeManager()
+								.getAsset(
+										((XPMBMenuItemROM) getContainerCategory().getSubitem(
+												getContainerCategory().getSelectedSubitem()))
+												.getROMBGKey()));
+			}
+		}
+	}
+
+	private Runnable LoadImagesThread = new Runnable() {
+
+		@Override
+		public void run() {
+			Iterator<XPMBMenuItemDef> it = getContainerCategory().getSubitems();
+
+			while (it.hasNext()) {
+				getRootActivity().setLoading(true);
+				XPMBMenuItemROM xmir = (XPMBMenuItemROM) it.next();
+
+				if (xmir.getROMInfo() != null) {
+					TGDB_GameData gd = xmir.getROMInfo().getExtendedData();
+					String boxFront = null, artwork = null;
+					boolean boxSet = false, artSet = false;
+					if (gd != null) {
+						Iterator<TGDB_GameData_ImageEntry> gd_ie = gd.getImages();
+						while (gd_ie.hasNext()) {
+							TGDB_GameData_ImageEntry ie = gd_ie.next();
+							if (ie.getType() == TGDB_GameData_ImageEntry.IMG_ENTRY_TYPE_BOXART
+									&& ie.getBoxSide() == TGDB_GameData_ImageEntry.IMG_ENTRY_BOX_SIDE_FRONT
+									&& !boxSet) {
+								boxFront = ie.getOriginalImageURL().getFile();
+								boxSet = true;
+							}
+							if (ie.getType() == TGDB_GameData_ImageEntry.IMG_ENTRY_TYPE_FANART
+									&& !artSet) {
+								artwork = ie.getOriginalImageURL().getFile();
+								artSet = true;
+							}
+						}
+					}
+
+					if (boxFront == null && artwork == null) {
+						continue;
+					}
+
+					try {
+						File resFile = new File(new File(xmir.getROMPath(), "Resources"), Long
+								.toHexString(xmir.getROMCRC()).toUpperCase(Locale.ROOT) + ".zip");
+						ZipFile zf = new ZipFile(resFile);
+						ZipEntry bf = null, aw = null;
+						if (boxFront != null) {
+							bf = zf.getEntry(boxFront.substring(1));
+						}
+						if (artwork != null) {
+							aw = zf.getEntry(artwork.substring(1));
+						}
+						if (bf != null) {
+							getRootActivity().getThemeManager().addCustomAsset(
+									Long.toHexString(xmir.getROMCRC()).toUpperCase(Locale.ROOT)
+											+ boxFront,
+									BitmapFactory.decodeStream(zf.getInputStream(bf)));
+							alCoverKeys.add(Long.toHexString(xmir.getROMCRC()).toUpperCase(
+									Locale.ROOT)
+									+ boxFront);
+							xmir.setIconBitmapID(Long.toHexString(xmir.getROMCRC()).toUpperCase(
+									Locale.ROOT)
+									+ boxFront);
+							xmir.setWidth(pxfd(64));
+						}
+						if (aw != null) {
+							getRootActivity().getThemeManager().addCustomAsset(
+									Long.toHexString(xmir.getROMCRC()).toUpperCase(Locale.ROOT)
+											+ artwork,
+									BitmapFactory.decodeStream(zf.getInputStream(aw)));
+							alCoverKeys.add(Long.toHexString(xmir.getROMCRC()).toUpperCase(
+									Locale.ROOT)
+									+ artwork);
+							xmir.setROMBGKey(Long.toHexString(xmir.getROMCRC()).toUpperCase(
+									Locale.ROOT)
+									+ artwork);
+						}
+						zf.close();
+					} catch (Exception e) {
+						Log.e(getClass().getSimpleName(),
+								"run()[in-loop]:Error while loading assets for ROM '"
+										+ xmir.getLabel() + "'");
+						e.printStackTrace();
+					}
+				}
+			}
+			getMessageBus().post(new Runnable() {
+				@Override
+				public void run() {
+					startBGFadeAnim();
+				}
+			});
+			getRootActivity().setLoading(false);
+		}
+
+	};
 
 	private class ProcessItemThread implements Runnable {
 
@@ -107,14 +263,30 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 	public Module_Emu_GBA(XPMBActivity root) {
 		super(root);
 
-		// alCoverKeys = new ArrayList<String>();
+		alCoverKeys = new ArrayList<String>();
 		rProcessItem = new ProcessItemThread(this);
+	}
+
+	private void startBGFadeAnim() {
+		if (getContainerCategory().getNumSubitems() == 0) {
+			return;
+		}
+		if (getRootActivity().getDrawingLayerManager().isBackgroundBitmapSet()) {
+			BackgroundFadeAnimator va_o = new BackgroundFadeAnimator(false), va_i = new BackgroundFadeAnimator(
+					true);
+			va_i.setStartDelay(1001);
+			va_o.start();
+			va_i.start();
+		} else {
+			new BackgroundFadeAnimator(true).start();
+		}
 	}
 
 	@Override
 	public void initialize(UILayer parentLayer, FinishedListener listener) {
 		super.initialize(parentLayer, listener);
 		Log.v(getClass().getSimpleName(), "initialize():Start module initialization.");
+		super.setListAnimator(new SubmenuAnimator_V2(super.getContainerCategory(), this));
 		reloadSettings();
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
@@ -138,26 +310,85 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 		Bundle saveData = getRootActivity().getSettingBundle(SETTINGS_BUNDLE_KEY);
 		saveData.putInt(SETTING_LAST_ITEM, getContainerCategory().getSelectedSubitem());
 		saveData.putString(SETTING_EMU_ACT, strEmuAct);
+		for (String k : alCoverKeys) {
+			getRootActivity().getThemeManager().removeCustomAsset(k);
+		}
+
+		if (bLoaded) {
+			Log.v(getClass().getSimpleName(), "dispose():Started saving module state.");
+			File fMenuState = new File(getRootActivity().getCacheDir(), getModuleID() + ".state");
+			try {
+				FileOutputStream fos = new FileOutputStream(fMenuState);
+				DataOutputStream dos = new DataOutputStream(fos);
+
+				XPMBSettingsManager.writeBundleTo(getContainerCategory().storeInBundle(), dos);
+
+				dos.close();
+
+				Log.v(getClass().getSimpleName(), "dispose():Finished saving module state.");
+			} catch (Exception e) {
+				Log.e(getClass().getSimpleName(), "dispose():Couldn't save module state");
+			}
+		}
 		getContainerCategory().clearSubitems();
 	}
 
 	@Override
-	public void loadIn(XPMBMenuCategory dest) {
+	public void loadIn() {
+		super.loadIn();
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
 			return;
 		}
+
+		if (bInit && !bLoaded) {
+			File fMenuState = new File(getRootActivity().getCacheDir(), getModuleID() + ".state");
+			if (fMenuState.exists()) {
+				try {
+					FileInputStream fis = new FileInputStream(fMenuState);
+					DataInputStream dis = new DataInputStream(fis);
+
+					long t = System.currentTimeMillis();
+					Log.i(getClass().getSimpleName(),
+							"doInit():Started reading module state cache.");
+					super.setContainerCategory(new XPMBMenuCategory(XPMBSettingsManager
+							.readBundleFrom(dis)));
+					Log.i(getClass().getSimpleName(),
+							"doInit():Finished reading module state cache. Took "
+									+ (System.currentTimeMillis() - t) + "ms.");
+					dis.close();
+
+					for (int id = 0; id < getContainerCategory().getNumSubitems(); id++) {
+						XPMBMenuItemROM xmir = (XPMBMenuItemROM) getContainerCategory().getSubitem(
+								id);
+						xmir.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
+					}
+					new Thread(LoadImagesThread).start();
+
+					bLoaded = true;
+					Log.v(getClass().getSimpleName(), "doInit():Finished module initialization.");
+					return;
+				} catch (Exception e) {
+					Log.e(getClass().getSimpleName(), "doInit():Couldn't read module state");
+				}
+			}
+		}
+
 		if (bLoaded) {
 			Log.i(getClass().getSimpleName(), "loadIn():Module already loaded. Skipping process.");
+			getMessageBus().post(new Runnable() {
+				@Override
+				public void run() {
+					startBGFadeAnim();
+				}
+			});
 			return;
 		}
 
-		super.loadIn(dest);
-		super.setListAnimator(new SubmenuAnimator_V2(dest, this));
 		long t = System.currentTimeMillis();
 		File mROMRoot = new File(Environment.getExternalStorageDirectory().getPath() + "/GBA");
-		ROMInfo ridROMInfoDat = null;
+		XPMB_RCDatParser ridROMInfoDat = null;
 		int y = 0;
 
 		mROMRoot.mkdirs();
@@ -175,38 +406,23 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 				return;
 			}
 		}
-		ridROMInfoDat = new ROMInfo(getRootActivity().getResources().getXml(R.xml.rominfo_gba),
-				ROMInfo.TYPE_CRC);
+		ridROMInfoDat = new XPMB_RCDatParser(getRootActivity().getResources().getXml(
+				R.xml.rominfo_gba));
 
 		try {
 			File[] storPtCont = mROMRoot.listFiles();
 			for (File f : storPtCont) {
 				if (f.getName().endsWith(".zip")) {
-					ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
-					Enumeration<? extends ZipEntry> ze = zf.entries();
-					while (ze.hasMoreElements()) {
-						ZipEntry zef = ze.nextElement();
-						if (zef.getName().endsWith(".gba") || zef.getName().endsWith(".GBA")) {
-							long ct = System.currentTimeMillis();
+					ZipInputStream zis = new ZipInputStream(new FileInputStream(f));
+					ZipEntry ze = zis.getNextEntry();
+					while (ze != null) {
+						if (ze.getName().toLowerCase(Locale.ROOT).endsWith(".gba")) {
 							Log.v(getClass().getSimpleName(), "loadIn():Found compressed ROM '"
-									+ zef.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
+									+ ze.getName() + "' inside '" + f.getAbsolutePath() + "' ID #"
 									+ y);
-							// InputStream fi = null;
-							// InputStream fi = zf.getInputStream(zef);
-							// fi.skip(0xAC);
-							// String gameCode = "";
 
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// gameCode += (char) fi.read();
-							// fi.close();
-							String gameCRC = Long.toHexString(zef.getCrc()).toUpperCase(
-									getRootActivity().getResources().getConfiguration().locale);
-							Log.d(getClass().getSimpleName(),
-									"loadIn():CRC for ROM '" + zef.getName() + "' is 0x" + gameCRC);
-
-							XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
+							XPMBMenuItemROM xmi = new XPMBMenuItemROM(new XPMB_ROMData(f, ze,
+									ridROMInfoDat));
 							xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 							xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
 							xmi.setWidth(pxfd(85));
@@ -214,49 +430,18 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 
 							getContainerCategory().addSubitem(xmi);
 							y++;
-							Log.i(getClass().getSimpleName(),
-									"loadIn():Item loading completed for item #" + y
-											+ ". Process took " + (System.currentTimeMillis() - ct)
-											+ "ms.");
+							break;
 						}
+						ze = zis.getNextEntry();
 					}
-					zf.close();
-				} else if (f.getName().endsWith(".gba") || f.getName().endsWith(".GBA")) {
+					zis.close();
+				} else if (f.getName().toLowerCase(Locale.ROOT).endsWith(".gba")) {
 					long ct = System.currentTimeMillis();
 					Log.v(getClass().getSimpleName(),
 							"loadIn():Found uncompressed ROM '" + f.getAbsolutePath() + "' ID #"
 									+ y);
-					InputStream fi = null;
-					// InputStream fi = new FileInputStream(f);
-					// fi.skip(0xAC); // TODO: Find a better way to associate
-					// ROMS with DB titles
-					// String gameCode = "";
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// gameCode += (char) fi.read();
-					// fi.close();
 
-					fi = new BufferedInputStream(new FileInputStream(f));
-					CRC32 cCRC = new CRC32();
-					int cByte = 0;
-					long i = System.currentTimeMillis();
-					byte[] buf = new byte[1024 * 64];
-					while ((cByte = fi.read(buf)) > 0) {
-						cCRC.update(buf, 0, cByte);
-					}
-					Log.i(getClass().getSimpleName(),
-							"loadIn():CRC Calculation for '" + f.getName() + "' took "
-									+ (System.currentTimeMillis() - i) + "ms.");
-					fi.close();
-
-					String gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
-							getRootActivity().getResources().getConfiguration().locale);
-					Log.d(getClass().getSimpleName(), "loadIn():CRC for ROM '" + f.getName()
-							+ "' is 0x" + gameCRC);
-
-					XPMBMenuItemROM xmi = new XPMBMenuItemROM(ridROMInfoDat,gameCRC, f);
-
+					XPMBMenuItemROM xmi = new XPMBMenuItemROM(new XPMB_ROMData(f, ridROMInfoDat));
 					xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
 					xmi.setIconBitmapID(ASSET_GRAPH_GBA_CV_NOTFOUND);
 					xmi.setWidth(pxfd(85));
@@ -275,6 +460,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 			e.printStackTrace();
 		}
 		getListAnimator().initializeItems();
+		new Thread(LoadImagesThread).start();
 		bLoaded = true;
 		Log.i(getClass().getSimpleName(), "loadIn():ROM list load finished. Process took: "
 				+ (System.currentTimeMillis() - t) + "ms.");
@@ -295,7 +481,7 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		rProcessItem.setItem((XPMBMenuItemROM)item);
+		rProcessItem.setItem((XPMBMenuItemROM) item);
 		new Thread(rProcessItem).run();
 	}
 
@@ -317,10 +503,22 @@ public class Module_Emu_GBA extends Modules_Base implements FinishedListener {
 		case XPMBActivity.KEYCODE_LEFT:
 		case XPMBActivity.KEYCODE_CIRCLE:
 			getFinishedListener().onFinished(this);
+			getRootActivity().getDrawingLayerManager().setBackgroundOpacity(0.0f);
+			getRootActivity().getDrawingLayerManager().setBackgroundBitmap(null);
 			break;
 		case XPMBActivity.KEYCODE_CROSS:
-			processItem((XPMBMenuItem) getContainerCategory().getSubitem(
+			processItem(getContainerCategory().getSubitem(
 					getContainerCategory().getSelectedSubitem()));
+			break;
+		}
+	}
+
+	@Override
+	public void sendKeyUp(int keyCode) {
+		switch (keyCode) {
+		case XPMBActivity.KEYCODE_DOWN:
+		case XPMBActivity.KEYCODE_UP:
+			startBGFadeAnim();
 			break;
 		}
 	}

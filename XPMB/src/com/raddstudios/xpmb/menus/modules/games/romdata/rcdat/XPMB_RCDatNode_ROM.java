@@ -17,11 +17,11 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules.games;
+package com.raddstudios.xpmb.menus.modules.games.romdata.rcdat;
 
 import android.os.Bundle;
 
-public class ROMInfoNode_ROM {
+public class XPMB_RCDatNode_ROM {
 
 	private final String BD_STRROMNAME = "strROMName", BD_STRROMCRC = "strRomCRC",
 			BD_STRROMMD5 = "strROMMD5", BD_STRROMSHA1 = "strROMSHA1",
@@ -31,7 +31,7 @@ public class ROMInfoNode_ROM {
 			strROMStatus = null;
 	private int intROMSize = 0;
 
-	public ROMInfoNode_ROM(String name, int size, String crc, String md5, String sha1,
+	public XPMB_RCDatNode_ROM(String name, int size, String crc, String md5, String sha1,
 			String status) {
 		strROMName = name;
 		intROMSize = size;
@@ -41,7 +41,7 @@ public class ROMInfoNode_ROM {
 		strROMStatus = status;
 	}
 
-	public ROMInfoNode_ROM(Bundle source) {
+	public XPMB_RCDatNode_ROM(Bundle source) {
 		strROMName = source.getString(BD_STRROMNAME);
 		intROMSize = source.getInt(BD_INTROMSIZE);
 		strROMCRC = source.getString(BD_STRROMCRC);
@@ -81,7 +81,7 @@ public class ROMInfoNode_ROM {
 		o.putInt(BD_INTROMSIZE, intROMSize);
 		o.putString(BD_STRROMCRC, strROMCRC);
 		o.putString(BD_STRROMMD5, strROMMD5);
-		o.putString(BD_STRROMSHA1, BD_STRROMSHA1);
+		o.putString(BD_STRROMSHA1, strROMSHA1);
 		o.putString(BD_STRROMSTATUS, strROMStatus);
 
 		return o;

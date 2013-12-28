@@ -17,25 +17,24 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules.games;
+package com.raddstudios.xpmb.menus.modules.games.romdata.rcdat;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.res.XmlResourceParser;
 
-public class ROMInfo {
+public class XPMB_RCDatParser {
 
-	public static final int TYPE_CRC = 0, TYPE_MD5 = 1, TYPE_SHA1 = 2;
+	public static final int TYPE_CRC = 0, TYPE_FULL_NAME = 1;
 
-	private Hashtable<String, ROMInfoNode> htItems = null;
-	private int intCheckType = 0;
-	private ROMInfoHeader mHeader = null;
+	private ArrayList<String> alItemsByName = null, alItemsByCRC = null;
+	private ArrayList<XPMB_RCDatNode> alItems = null;
 
-	public ROMInfo(XmlResourceParser src, int checkType) {
-		intCheckType = checkType;
+	private XPMB_RCDatHeader mHeader = null;
+
+	public XPMB_RCDatParser(XmlResourceParser src) {
 
 		try {
 			int eventType = src.getEventType();
@@ -44,17 +43,19 @@ public class ROMInfo {
 
 			// Used in header
 			String hn = null, hd = null, hv = null, hdt = null, ha = null, hu = null;
-			// Used in game
+			// Used in game data
 			String gn = null, gc = null, gd = null;
-			ArrayList<ROMInfoNode_Release> gr = null;
-			ROMInfoNode_ROM grr = null;
+			ArrayList<XPMB_RCDatNode_Release> gr = null;
+			XPMB_RCDatNode_ROM grr = null;
 
 			while (eventType != XmlPullParser.END_DOCUMENT) {
 				String cName = null;
 
 				switch (eventType) {
 				case XmlResourceParser.START_DOCUMENT:
-					htItems = new Hashtable<String, ROMInfoNode>();
+					alItemsByName = new ArrayList<String>();
+					alItemsByCRC = new ArrayList<String>();
+					alItems = new ArrayList<XPMB_RCDatNode>();
 					break;
 				case XmlResourceParser.START_TAG:
 					cName = src.getName();
@@ -64,7 +65,7 @@ public class ROMInfo {
 					}
 					if (cName.equals("game")) {
 						cHeader = cName;
-						gr = new ArrayList<ROMInfoNode_Release>();
+						gr = new ArrayList<XPMB_RCDatNode_Release>();
 						gn = src.getAttributeValue(null, "name");
 						gc = src.getAttributeValue(null, "cloneof");
 						break;
@@ -93,11 +94,11 @@ public class ROMInfo {
 							gd = src.getText();
 						}
 						if (cName.equals("release")) {
-							gr.add(new ROMInfoNode_Release(src.getAttributeValue(null, "name"), src
-									.getAttributeValue(null, "region")));
+							gr.add(new XPMB_RCDatNode_Release(src.getAttributeValue(null, "name"),
+									src.getAttributeValue(null, "region")));
 						}
 						if (cName.equals("rom")) {
-							grr = new ROMInfoNode_ROM(src.getAttributeValue(null, "name"),
+							grr = new XPMB_RCDatNode_ROM(src.getAttributeValue(null, "name"),
 									src.getAttributeIntValue(null, "size", 0),
 									src.getAttributeValue(null, "crc"), src.getAttributeValue(null,
 											"md5"), src.getAttributeValue(null, "sha1"),
@@ -108,18 +109,10 @@ public class ROMInfo {
 				case XmlResourceParser.END_TAG:
 					cName = src.getName();
 					if (cName.equals("game")) {
-						switch (intCheckType) {
-						case TYPE_MD5:
-							htItems.put(grr.getROMMD5(), new ROMInfoNode(gn, gc, gd, gr, grr));
-							break;
-						case TYPE_SHA1:
-							htItems.put(grr.getROMSHA1(), new ROMInfoNode(gn, gc, gd, gr, grr));
-							break;
-						case TYPE_CRC:
-						default:
-							htItems.put(grr.getROMCRC(), new ROMInfoNode(gn, gc, gd, gr, grr));
-							break;
-						}
+						alItemsByName.add(gn);
+						alItemsByCRC.add(grr.getROMCRC());
+						alItems.add(new XPMB_RCDatNode(gn, gc, gd, gr, grr));
+
 						gn = null;
 						gc = null;
 						gd = null;
@@ -128,7 +121,7 @@ public class ROMInfo {
 						cHeader = "";
 					}
 					if (cName.equals("header")) {
-						mHeader = new ROMInfoHeader(hn, hd, hv, hdt, ha, hu);
+						mHeader = new XPMB_RCDatHeader(hn, hd, hv, hdt, ha, hu);
 						hn = null;
 						hd = null;
 						hv = null;
@@ -148,20 +141,22 @@ public class ROMInfo {
 		}
 	}
 
-	public int getCheckType() {
-		return intCheckType;
-	}
-
-	public ROMInfoHeader getHeader() {
+	public XPMB_RCDatHeader getHeader() {
 		return mHeader;
 	}
 
 	public int getNumNodes() {
-		return htItems.size();
+		return alItems.size();
 	}
 
-	public ROMInfoNode getNode(String key) {
-		return htItems.get(key);
+	public XPMB_RCDatNode getNode(String key, int type) {
+		switch (type) {
+		case TYPE_CRC:
+			return alItems.get(alItemsByCRC.indexOf(key));
+		case TYPE_FULL_NAME:
+			return alItems.get(alItemsByName.indexOf(key));
+		}
+		return null;
 	}
 
 }

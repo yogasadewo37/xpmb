@@ -26,6 +26,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.view.Gravity;
 import android.view.animation.DecelerateInterpolator;
 
 import com.nineoldandroids.animation.Animator;
@@ -153,7 +154,7 @@ public class XPMBSideMenu extends Modules_Base {
 
 		canvas.saveLayerAlpha(new RectF(rCurItemD), (int) (255 * fAlpha),
 				Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-		pParams.setTextSize(intSzy - pxfd(2));
+		pParams.setTextSize(intSzy - pxfd(8));
 		pParams.setColor(Color.WHITE);
 		pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
 		for (int i = 0; i < 15; i++) {
@@ -169,8 +170,12 @@ public class XPMBSideMenu extends Modules_Base {
 							rCurItemD.centerY() + (pParams.ascent() / 2), pParams);
 
 				} else {
-					canvas.drawText(alItems[i].getLabel(), px_x + pxfd(2), rCurItemD.centerY()
-							- (pParams.ascent() / 2), pParams);
+					pParams.getTextBounds(alItems[i].getLabel(), 0, alItems[i].getLabel().length(),
+							rIcon);
+					getRectFromTextBounds(rIcon, pParams);
+					gravitateRect(rCurItemD, rIcon, Gravity.LEFT | Gravity.CENTER_VERTICAL);
+					rIcon.offset(pxfd(4), 0);
+					drawText(alItems[i].getLabel(), rIcon, pParams, canvas);
 				}
 			}
 			px_y += intSzy;
@@ -275,7 +280,7 @@ public class XPMBSideMenu extends Modules_Base {
 		intSzy = (int) (getDrawingConstraints().height() / 15);
 		px_x = (int) (constraints.right - pxfd(188));
 		px_y = (int) getDrawingConstraints().top;
-		rSelection.set(0, 0, (int) getDrawingConstraints().right, intSzy);
+		rSelection.set(px_x, px_y, (int) getDrawingConstraints().right - pxfd(2), px_y + intSzy);
 		rIcon = new Rect(0, 0, intSzy - pxfd(4), intSzy - pxfd(4));
 	}
 }

@@ -36,12 +36,12 @@ public class SubmenuAnimator_V2 extends ValueAnimator implements AnimatorUpdateL
 	private final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
 			ANIM_MENU_CENTER_ON_ITEM = 2;
 
-	//Common Vars
+	// Common Vars
 	private int pInitPosY = 0, intAnimType = -1, intAnimItem = -1, intNextItem = -1;
 	private UILayer mOwner = null;
 	private XPMBMenuCategory mList = null;
 
-	//Animator Vars
+	// Animator Vars
 	private int dispA = 0, marginA = 0, marginB = 0;
 	private float alphaA = 0.0f, alphaB = 0.0f, alphaC = 0.0f, alphaD = 0.0f, scaleA = 1.0f,
 			scaleB = 1.0f;
@@ -112,25 +112,21 @@ public class SubmenuAnimator_V2 extends ValueAnimator implements AnimatorUpdateL
 			marginB = (mOwner.pxfd(16) - marginA);
 			mList.setSubitemsPosY(pInitPosY + dispA);
 
-			for (int y = 0; y < mList.getNumSubitems(); y++) {
-				XPMBMenuItemDef xmid = mList.getSubitem(y);
-
-				if (y == intAnimItem) {
-					xmid.setSeparatorAlpha(alphaA);
-					xmid.setLabelAlpha(alphaC);
-					xmid.setMarginTop(marginB);
-					xmid.setMarginBottom(marginB);
-					xmid.setIconScaleX(scaleB);
-					xmid.setIconScaleY(scaleB);
-				} else if (y == intNextItem) {
-					xmid.setSeparatorAlpha(alphaB);
-					xmid.setLabelAlpha(alphaD);
-					xmid.setMarginTop(marginA);
-					xmid.setMarginBottom(marginA);
-					xmid.setIconScaleX(scaleA);
-					xmid.setIconScaleY(scaleA);
-				}
-			}
+			XPMBMenuItemDef xmid = mList.getSubitem(intAnimItem),
+			xmidn = mList.getSubitem(intNextItem);
+			
+			xmid.setSeparatorAlpha(alphaA);
+			xmid.setLabelAlpha(alphaC);
+			xmid.setMarginTop(marginB);
+			xmid.setMarginBottom(marginB);
+			xmid.setIconScaleX(scaleB);
+			xmid.setIconScaleY(scaleB);
+			xmidn.setSeparatorAlpha(alphaB);
+			xmidn.setLabelAlpha(alphaD);
+			xmidn.setMarginTop(marginA);
+			xmidn.setMarginBottom(marginA);
+			xmidn.setIconScaleX(scaleA);
+			xmidn.setIconScaleY(scaleA);
 			break;
 		case ANIM_NONE:
 		default:
@@ -161,7 +157,7 @@ public class SubmenuAnimator_V2 extends ValueAnimator implements AnimatorUpdateL
 	}
 
 	public void initializeItems() {
-		if (mList.getSelectedSubitem() == -1){
+		if (mList.getSelectedSubitem() == -1) {
 			mList.setSelectedSubitem(0);
 		}
 		mList.setSubitemsPosY(mOwner.pxfd(114) - (mOwner.pxfd(64) * mList.getSelectedSubitem()));
@@ -177,5 +173,15 @@ public class SubmenuAnimator_V2 extends ValueAnimator implements AnimatorUpdateL
 				xmi.setLabelAlpha(0.5f);
 			}
 		}
+	}
+	
+	@Override
+	public void resetContainer(XPMBMenuCategory container){
+		mList = container;
+	}
+
+	@Override
+	public void start() {
+		super.start();
 	}
 };

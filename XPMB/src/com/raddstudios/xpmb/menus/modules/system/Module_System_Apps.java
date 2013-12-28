@@ -24,17 +24,20 @@ import java.util.List;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMBActivity;
 import com.raddstudios.xpmb.XPMBActivity.FinishedListener;
 import com.raddstudios.xpmb.menus.XPMBSideMenuItem;
-import com.raddstudios.xpmb.menus.XPMBUIModule;
 import com.raddstudios.xpmb.menus.modules.Modules_Base;
-import com.raddstudios.xpmb.menus.utils.XPMBMenuCategory;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItem;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemApp;
 import com.raddstudios.xpmb.menus.utils.XPMBMenuItemDef;
@@ -83,10 +86,13 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 		@Override
 		public void executeAction() {
-			Bundle item = getContainerCategory().getSubitem(
-					getContainerCategory().getSelectedSubitem()).storeInBundle();
+			XPMBMenuItemDef xmi = getContainerCategory().getSubitem(
+					getContainerCategory().getSelectedSubitem());
+			Bundle item = xmi.storeInBundle();
 			getRootActivity().getSettingBundle(XPMBActivity.SETTINGS_BUNDLE_GLOBAL).putBundle(
 					XPMBActivity.SETTINGS_GLOBAL_COPIED_MENUITEM, item);
+			getRootActivity().getSettingBundle(XPMBActivity.SETTINGS_BUNDLE_GLOBAL).putString(
+					XPMBActivity.SETTINGS_GLOBAL_COPIED_MENUITEM_TYPE, xmi.getTypeDescriptor());
 		}
 	}
 
@@ -105,9 +111,10 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 		@Override
 		public void run() {
-			Log.v(getClass().getSimpleName(), "processItem():Starting app's main activity...");
-			((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
-					.setLoadingAnimationVisible(true);
+			Log.v(getClass().getSimpleName(), "processItem():Starting app's main activity... /"
+					+ f_item.getIntent().getPackage());
+			getRootActivity().setLoading(true);
+			getFinishedListener().onFinished(Module_System_Apps.this);
 			getRootActivity().postIntentStartWait(mOwner, f_item.getIntent());
 		}
 	}
@@ -144,7 +151,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	}
 
 	@Override
-	public void loadIn(XPMBMenuCategory dest) {
+	public void loadIn() {
 		if (!bInit) {
 			Log.e(getClass().getSimpleName(),
 					"loadIn():Module not initialized. Refusing to load any item.");
@@ -155,8 +162,8 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			return;
 		}
 
-		super.loadIn(dest);
-		super.setListAnimator(new SubmenuAnimator_V1(dest, this));
+		super.loadIn();
+		super.setListAnimator(new SubmenuAnimator_V1(getContainerCategory(), this));
 		long t = System.currentTimeMillis();
 		PackageManager pm = getRootActivity().getPackageManager();
 		Intent filter = new Intent(Intent.ACTION_MAIN);
@@ -179,8 +186,14 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 			XPMBMenuItemApp xmi = new XPMBMenuItemApp(strAppLabel);
 			String strIcon = "module.system.apps.icon|" + strAppLabel;
 			long dt = System.currentTimeMillis();
-			getRootActivity().getThemeManager().addCustomAsset(strIcon,
-					((BitmapDrawable) rinf.loadIcon(pm)).getBitmap());
+			Bitmap bmAsset = ((BitmapDrawable) rinf.loadIcon(pm)).getBitmap();
+			Bitmap bmModAsset = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888);
+			Canvas bmModAssetCanvas = new Canvas(bmModAsset);
+			Rect bA = new Rect(0, 0, 96, 96), bB = new Rect(0, 0, bmAsset.getWidth(),
+					bmAsset.getHeight());
+			gravitateRect(bA, bB, Gravity.CENTER);
+			bmModAssetCanvas.drawBitmap(bmAsset, null, bB, new Paint());
+			getRootActivity().getThemeManager().addCustomAsset(strIcon, bmModAsset);
 			Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '" + strAppLabel
 					+ "' done. Took " + dt + "ms.");
 
@@ -205,8 +218,7 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 	public void onFinished(Object data) {
 		Log.v(getClass().getSimpleName(),
 				"onFinished():App activity finished. Returning to XPMB...");
-		((XPMBUIModule) getRootActivity().getDrawingLayerManager().getLayer(0))
-				.setLoadingAnimationVisible(false);
+		getRootActivity().setLoading(false);
 	}
 
 	@Override

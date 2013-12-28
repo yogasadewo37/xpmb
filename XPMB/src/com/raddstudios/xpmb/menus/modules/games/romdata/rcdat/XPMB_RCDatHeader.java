@@ -17,13 +17,13 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules.games;
+package com.raddstudios.xpmb.menus.modules.games.romdata.rcdat;
 
-public class ROMInfoHeader {
+public class XPMB_RCDatHeader {
 	private String strHeaderName = null, strHeaderDescription = null, strHeaderVersion = null,
 			strHeaderDate = null, strHeaderAuthor = null, strHeaderUrl = null;
 
-	public ROMInfoHeader(String name, String description, String version, String date,
+	public XPMB_RCDatHeader(String name, String description, String version, String date,
 			String author, String url) {
 		strHeaderName = name;
 		strHeaderDescription = description;

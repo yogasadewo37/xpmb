@@ -24,6 +24,7 @@ import java.util.Vector;
 
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.raddstudios.xpmb.XPMBActivity;
 
@@ -38,39 +39,74 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 	private float fSubAlpha = 1.0f;
 	private Point pContainerPos = null;
 	private boolean bSubitemsVisible = false;
-	
-	private final String BD_INTCURSUBITEM = "intCurSubitem", BD_INTLISTANIMATOR = "intListAnimator",
-			BD_STRSUBMODULE = "strSubmodule", BD_FSUBALPHA = "fSubAlpha", BD_PCONTAINERPOS = "pContainerPos",
-			BD_BSUBITEMSVISIBLE = "bSubitemsVisible";
+
+	public static final String TYPE_DESC = "menuitem.category";
+
+	private final String BD_INTCURSUBITEM = "intCurSubitem",
+			BD_INTLISTANIMATOR = "intListAnimator", BD_STRSUBMODULE = "strSubmodule",
+			BD_FSUBALPHA = "fSubAlpha", BD_PCONTAINERPOS = "pContainerPos",
+			BD_BSUBITEMSVISIBLE = "bSubitemsVisible", BD_NUMSUBITEMS = "intNumSubitems";
 
 	public XPMBMenuCategory(String label) {
 		super(label);
 		alSubitems = new Vector<XPMBMenuItemDef>();
 		pContainerPos = new Point();
 	}
-	
-	public XPMBMenuCategory(Bundle source){
+
+	public XPMBMenuCategory(Bundle source) {
 		super(source);
 		intCurSubitem = source.getInt(BD_INTCURSUBITEM);
 		intListAnimator = source.getInt(BD_INTLISTANIMATOR);
 		strSubmodule = source.getString(BD_STRSUBMODULE);
 		fSubAlpha = source.getFloat(BD_FSUBALPHA);
-		pContainerPos = getPointFromBundle(source,BD_PCONTAINERPOS);
+		pContainerPos = getPointFromBundle(source, BD_PCONTAINERPOS);
 		bSubitemsVisible = source.getBoolean(BD_BSUBITEMSVISIBLE);
+
+		alSubitems = new Vector<XPMBMenuItemDef>();
+		int nItems = source.getInt(BD_NUMSUBITEMS);
+		for (int i = 0; i < nItems; i++) {
+			String strType = source.getString("Item" + i + ".type");
+			if (strType.equals(XPMBMenuCategory.TYPE_DESC)) {
+				alSubitems.add(new XPMBMenuCategory(source.getBundle("Item" + i)));
+			} else if (strType.equals(XPMBMenuItem.TYPE_DESC)) {
+				alSubitems.add(new XPMBMenuItem(source.getBundle("Item" + i)));
+			} else if (strType.equals(XPMBMenuItemMusic.TYPE_DESC)) {
+				alSubitems.add(new XPMBMenuItemMusic(source.getBundle("Item" + i)));
+			} else if (strType.equals(XPMBMenuItemApp.TYPE_DESC)) {
+				alSubitems.add(new XPMBMenuItemApp(source.getBundle("Item" + i)));
+			} else if (strType.equals(XPMBMenuItemROM.TYPE_DESC)) {
+				alSubitems.add(new XPMBMenuItemROM(source.getBundle("Item" + i)));
+			} else {
+				Log.e(getClass().getSimpleName(),
+						"+XPMBMenuCategory():Found unknown menuitem type '" + strType
+								+ "'. Ignoring");
+			}
+		}
 	}
-	
+
 	@Override
-	public Bundle storeInBundle(){
+	public Bundle storeInBundle() {
 		Bundle s = super.storeInBundle();
-		
+
 		s.putInt(BD_INTCURSUBITEM, intCurSubitem);
 		s.putInt(BD_INTLISTANIMATOR, intListAnimator);
 		s.putString(BD_STRSUBMODULE, strSubmodule);
-		s.putFloat(BD_FSUBALPHA,fSubAlpha);
-		storePointInBundle(s,pContainerPos,BD_PCONTAINERPOS);
+		s.putFloat(BD_FSUBALPHA, fSubAlpha);
+		storePointInBundle(s, pContainerPos, BD_PCONTAINERPOS);
 		s.putBoolean(BD_BSUBITEMSVISIBLE, bSubitemsVisible);
-		
+		s.putInt(BD_NUMSUBITEMS, alSubitems.size());
+
+		for (XPMBMenuItemDef xmi : alSubitems) {
+			s.putString("Item" + alSubitems.indexOf(xmi) + ".type", xmi.getTypeDescriptor());
+			s.putBundle("Item" + alSubitems.indexOf(xmi), xmi.storeInBundle());
+		}
+
 		return s;
+	}
+
+	@Override
+	public String getTypeDescriptor() {
+		return XPMBMenuCategory.TYPE_DESC;
 	}
 
 	public void setSubitemsAlpha(float alpha) {
@@ -92,9 +128,13 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 	public void addSubitem(XPMBMenuItemDef subitem) {
 		alSubitems.add(subitem);
 	}
-	
-	public void addSubitem(int index, XPMBMenuItemDef subitem){
+
+	public void addSubitem(int index, XPMBMenuItemDef subitem) {
 		alSubitems.add(index, subitem);
+	}
+
+	public void setSubitem(int index, XPMBMenuItemDef newSubitem) {
+		alSubitems.set(index, newSubitem);
 	}
 
 	public void removeSubitem(XPMBMenuItemDef subitem) {
@@ -139,6 +179,10 @@ public class XPMBMenuCategory extends XPMBMenuItem {
 
 	public String getSubmoduleID() {
 		return strSubmodule;
+	}
+
+	public void setListAnimator(int animator) {
+		intListAnimator = animator;
 	}
 
 	public void setListAnimator(String animator) {

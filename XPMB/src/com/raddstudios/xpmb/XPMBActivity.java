@@ -29,6 +29,7 @@ import java.util.zip.ZipFile;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -65,12 +66,13 @@ import com.raddstudios.xpmb.menus.modules.system.Module_System_Apps;
 import com.raddstudios.xpmb.utils.XPMBSettingsManager;
 import com.raddstudios.xpmb.utils.UI.GraphicAssetsManager;
 import com.raddstudios.xpmb.utils.UI.UILayer;
-import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager;
+import com.raddstudios.xpmb.utils.UI.UILayerManager;
 
 @SuppressLint("Registered")
 public class XPMBActivity extends Activity {
 
-	// XPERIA Play's physical button Key Codes
+	// XPERIA Play's physical button Key Codes (stored again here just for
+	// convenience)
 	public static final int KEYCODE_UP = KeyEvent.KEYCODE_DPAD_UP,
 			KEYCODE_DOWN = KeyEvent.KEYCODE_DPAD_DOWN, KEYCODE_LEFT = KeyEvent.KEYCODE_DPAD_LEFT,
 			KEYCODE_RIGHT = KeyEvent.KEYCODE_DPAD_RIGHT,
@@ -85,7 +87,8 @@ public class XPMBActivity extends Activity {
 			KEYCODE_VOLUME_UP = KeyEvent.KEYCODE_VOLUME_UP;
 
 	public static final String SETTINGS_BUNDLE_GLOBAL = "com.raddstudios.settings.storage",
-			SETTINGS_GLOBAL_COPIED_MENUITEM = "com.raddstudios.settings.copiedmenuitem";
+			SETTINGS_GLOBAL_COPIED_MENUITEM = "com.raddstudios.settings.copiedmenuitem",
+			SETTINGS_GLOBAL_COPIED_MENUITEM_TYPE = "com.raddstudios.settings.copiedmenuitem.type";
 	private final String SETTINGS_BUNDLE_KEY = "main.settings", SETTING_NO_TITLE = "notitle",
 			SETTING_SHOW_SYSWALLPAPER = "usesyswallpaper", SETTING_KEEP_SCREEN = "keppscreen",
 			SETTING_SYSTEM_INITIALIZED = "initialized";
@@ -120,7 +123,7 @@ public class XPMBActivity extends Activity {
 
 	private XPMBMediaService mpMedia = null;
 	private RelativeLayout rlRootView = null;
-	private XPMB_UILayerManager xuLayerManager = null;
+	private UILayerManager xuLayerManager = null;
 	private Handler hMessageBus = null;
 	private GraphicAssetsManager mTheme = null;
 	private Hashtable<String, Modules_Base> alModules = null;
@@ -174,10 +177,10 @@ public class XPMBActivity extends Activity {
 			finish();
 		}
 
-		xsm = new XPMBSettingsManager(this);
 		itMediaService = new Intent(this, XPMBMediaService.class);
+		xsm = new XPMBSettingsManager();
 		if (savedInstanceState == null) {
-			xsm.readFromFile(SETTINGS_BUNDLE_GLOBAL);
+			xsm.readFromFile(new File(getBaseContext().getFilesDir(), SETTINGS_BUNDLE_GLOBAL));
 		} else {
 			xsm.setRootBundle(savedInstanceState.getBundle(SETTINGS_BUNDLE_GLOBAL));
 		}
@@ -187,11 +190,12 @@ public class XPMBActivity extends Activity {
 		rlRootView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.MATCH_PARENT));
 		hMessageBus = new Handler(Looper.getMainLooper());
-		xuLayerManager = new XPMB_UILayerManager(this);
+		xuLayerManager = new UILayerManager(this);
 		mTheme = new GraphicAssetsManager();
 		alModules = new Hashtable<String, Modules_Base>();
 
 		setContentView(getRootView());
+		this.setTheme(android.R.style.Theme_NoTitleBar_Fullscreen);
 
 		// Setup services
 		amVolControl = (AudioManager) getBaseContext().getSystemService(AUDIO_SERVICE);
@@ -201,9 +205,11 @@ public class XPMBActivity extends Activity {
 
 		mBaseLayer = new XPMBUIModule(this);
 		mBaseLayer.initialize();
+		mBaseLayer.setVisibility(true);
 		mSideMenu = new XPMBSideMenu(this);
-		getDrawingLayerManager().addLayer(mBaseLayer);
+		getDrawingLayerManager().setAlwaysOnTopLayer(getDrawingLayerManager().addLayer(mBaseLayer));
 		mMenu = new XPMBMenuModule(this);
+		mMenu.setVisibility(true);
 		bInit = getSettingBundle(SETTINGS_BUNDLE_KEY).getBoolean(SETTING_SYSTEM_INITIALIZED, false);
 	}
 
@@ -258,7 +264,8 @@ public class XPMBActivity extends Activity {
 		// Setup window params
 		if (settings.getBoolean(SETTING_NO_TITLE, true)) {
 			requestWindowFeature(Window.FEATURE_NO_TITLE);
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 		if (settings.getBoolean(SETTING_SHOW_SYSWALLPAPER, true)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
@@ -337,6 +344,7 @@ public class XPMBActivity extends Activity {
 			ulSideMenuOwner = root;
 			xuLayerManager.addLayer(mSideMenu);
 			xuLayerManager.setFocusOnLayer(mSideMenu);
+			mSideMenu.setVisibility(true);
 			mSideMenu.show();
 			sideMenuOpen = true;
 		}
@@ -345,6 +353,7 @@ public class XPMBActivity extends Activity {
 	public void hideSideMenu() {
 		if (sideMenuOpen) {
 			xuLayerManager.setFocusOnLayer(ulSideMenuOwner);
+			mSideMenu.setVisibility(false);
 			xuLayerManager.removeLayer(mSideMenu);
 			sideMenuOpen = false;
 		}
@@ -354,7 +363,7 @@ public class XPMBActivity extends Activity {
 	public void onStop() {
 		dispose();
 		xsm.getSettingBundle(SETTINGS_BUNDLE_KEY).putBoolean(SETTING_SYSTEM_INITIALIZED, false);
-		xsm.writeToFile(SETTINGS_BUNDLE_GLOBAL);
+		xsm.writeToFile(new File(getBaseContext().getFilesDir(), SETTINGS_BUNDLE_GLOBAL));
 		super.onStop();
 	}
 
@@ -374,7 +383,7 @@ public class XPMBActivity extends Activity {
 		savedInstanceState.putBundle(SETTINGS_BUNDLE_GLOBAL, xsm.getRootBundle());
 	}
 
-	public XPMB_UILayerManager getDrawingLayerManager() {
+	public UILayerManager getDrawingLayerManager() {
 		return xuLayerManager;
 	}
 
@@ -393,7 +402,8 @@ public class XPMBActivity extends Activity {
 	private void initializeModules() {
 		setLoading(true);
 		while (this.getPlayerControl() == null) {
-			// TODO: This could cause an infinite loop!
+			// TODO: Wait for service connection before attempting to load any
+			// module. This could cause an infinite loop!
 			continue;
 		}
 		alModules.put(MODULE_MEDIA_MUSIC, new Module_Media_Music(this));
@@ -415,12 +425,14 @@ public class XPMBActivity extends Activity {
 		if (alModules.containsKey(id)) {
 			xuLayerManager.addLayer(alModules.get(id));
 			xuLayerManager.setFocusOnLayer(alModules.get(id));
+			alModules.get(id).setVisibility(true);
 		}
 	}
 
 	public void hideModule(String id) {
 		if (alModules.containsKey(id)) {
 			xuLayerManager.removeLayer(alModules.get(id));
+			alModules.get(id).setVisibility(false);
 		}
 	}
 
@@ -439,6 +451,10 @@ public class XPMBActivity extends Activity {
 		} else {
 			mBaseLayer.setLoadingAnimationVisible(false);
 		}
+	}
+
+	public XPMBUIModule getMainUILayer() {
+		return mBaseLayer;
 	}
 
 	@Override
@@ -477,14 +493,13 @@ public class XPMBActivity extends Activity {
 		return true;
 	}
 
-	// TODO: fix the need to use this function
+	// TODO: Fix the need to use this function
 	// Normally, as this is a launcher, we should not call this procedure.
 	// As we aren't finished yet, we can't use this launcher as a day-to-day
-	// replacement one,
-	// that's the reason to be for this procedure.
+	// replacement one, that's the reason to be for this procedure.
 	public void requestActivityEnd() {
-		onStop();
-		onDestroy();
+		//onStop();
+		//onDestroy();
 		finish();
 	}
 
@@ -520,7 +535,13 @@ public class XPMBActivity extends Activity {
 
 	public void postIntentStartWait(FinishedListener listener, Intent intent) {
 		cIntentWaitListener = listener;
-		startActivityForResult(intent, 0);
+		try {
+			startActivityForResult(intent, 0);
+		} catch (ActivityNotFoundException ane) {
+			Log.e(getClass().getSimpleName(),
+					"postIntentStartWait(): Couldn't find the requested activity '"
+							+ intent.getPackage() + "'");
+		}
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -538,5 +559,6 @@ public class XPMBActivity extends Activity {
 		alModules.get(MODULE_EMU_GBA).dispose();
 		alModules.get(MODULE_EMU_NES).dispose();
 		alModules.get(MODULE_SYSTEM_APPS).dispose();
+		mMenu.dispose();
 	}
 }

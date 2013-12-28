@@ -21,29 +21,32 @@ package com.raddstudios.xpmb.utils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 
-import android.content.Context;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
+
+import android.content.res.XmlResourceParser;
 import android.os.Bundle;
 import android.util.Log;
-
-import com.raddstudios.xpmb.XPMBActivity;
+import android.util.Xml;
 
 public class XPMBSettingsManager {
 
 	Bundle mSettingsStorage = null;
-	XPMBActivity mRoot = null;
 
-	private final byte DATA_TYPE_NONE = -1, DATA_TYPE_INT = 0, DATA_TYPE_LONG = 1,
-			DATA_TYPE_FLOAT = 2, DATA_TYPE_BOOLEAN = 3, DATA_TYPE_BYTE = 4, DATA_TYPE_STRING = 5,
-			DATA_TYPE_DOUBLE = 6, DATA_TYPE_BUNDLE = 7;
+	private static final String DATA_TYPE_NULL = "NULL", DATA_TYPE_NONE = "UnknownType",
+			DATA_TYPE_INT = "Integer", DATA_TYPE_LONG = "Long", DATA_TYPE_FLOAT = "Float",
+			DATA_TYPE_BOOLEAN = "Boolean", DATA_TYPE_BYTE = "Byte", DATA_TYPE_STRING = "String",
+			DATA_TYPE_DOUBLE = "Double", DATA_TYPE_BUNDLE = "Bundle", DATA_KEY_IDENT = "Key";
 
-	public XPMBSettingsManager(XPMBActivity owner) {
-		mRoot = owner;
+	public XPMBSettingsManager() {
 		mSettingsStorage = new Bundle();
 	}
 
@@ -65,22 +68,23 @@ public class XPMBSettingsManager {
 		return mSettingsStorage;
 	}
 
-	public void writeToFile(String name) {
+	public void writeToFile(File dest) {
 		try {
-			FileOutputStream fos = mRoot.openFileOutput(name, Context.MODE_PRIVATE);
+			FileOutputStream fos = new FileOutputStream(dest);
 			DataOutputStream dos = new DataOutputStream(fos);
 			writeBundleTo(mSettingsStorage, dos);
 			dos.close();
 			fos.close();
 		} catch (Exception e) {
-			Log.e(getClass().getSimpleName(), "writeToFile():Error trying to access '" + name
-					+ "' while saving settings to file.");
+			Log.e(getClass().getSimpleName(),
+					"writeToFile():Error trying to access '" + dest.getAbsolutePath()
+							+ "' while saving settings to file.");
 		}
 	}
 
-	public void readFromFile(String name) {
+	public void readFromFile(File src) {
 		try {
-			FileInputStream fis = mRoot.openFileInput(name);
+			FileInputStream fis = new FileInputStream(src);
 			DataInputStream dis = new DataInputStream(fis);
 			mSettingsStorage = readBundleFrom(dis);
 			dis.close();
@@ -89,102 +93,140 @@ public class XPMBSettingsManager {
 			Log.w(getClass().getSimpleName(),
 					"readFromFile():No settings file found. Starting with a blank one.");
 		} catch (Exception e) {
-			Log.e(getClass().getSimpleName(), "readFromFile():Error trying to access '" + name
-					+ "' while reading settings from file.");
+			Log.e(getClass().getSimpleName(),
+					"readFromFile():Error trying to access '" + src.getAbsolutePath()
+							+ "' while reading settings from file.");
 		}
 	}
 
-	private void writeBundleTo(Bundle src, DataOutputStream dest) throws IOException {
+	public static void writeBundleTo(Bundle src, XmlSerializer xs) throws IOException {
 		Set<String> ks = src.keySet();
 
-		dest.writeInt(ks.size());
 		for (String s : ks) {
-			writeString(s, dest);
 			Object o = src.get(s);
-
-			if (o instanceof Byte) {
-				dest.writeByte(DATA_TYPE_BYTE);
-				dest.writeByte((Byte) o);
+			if (o == null) {
+				xs.startTag(null, DATA_TYPE_NULL);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.endTag(null, DATA_TYPE_NULL);
+			} else if (o instanceof Byte) {
+				xs.startTag(null, DATA_TYPE_BYTE);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Byte.toString((Byte) o));
+				xs.endTag(null, DATA_TYPE_BYTE);
 			} else if (o instanceof Integer) {
-				dest.writeByte(DATA_TYPE_INT);
-				dest.writeInt((Integer) o);
+				xs.startTag(null, DATA_TYPE_INT);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Integer.toString((Integer) o));
+				xs.endTag(null, DATA_TYPE_INT);
 			} else if (o instanceof Long) {
-				dest.writeByte(DATA_TYPE_LONG);
-				dest.writeLong((Long) o);
+				xs.startTag(null, DATA_TYPE_LONG);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Long.toString((Long) o));
+				xs.endTag(null, DATA_TYPE_LONG);
 			} else if (o instanceof Double) {
-				dest.writeByte(DATA_TYPE_DOUBLE);
-				dest.writeDouble((Double) o);
+				xs.startTag(null, DATA_TYPE_DOUBLE);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Double.toString((Double) o));
+				xs.endTag(null, DATA_TYPE_DOUBLE);
 			} else if (o instanceof Float) {
-				dest.writeByte(DATA_TYPE_FLOAT);
-				dest.writeFloat((Float) o);
+				xs.startTag(null, DATA_TYPE_FLOAT);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Float.toString((Float) o));
+				xs.endTag(null, DATA_TYPE_FLOAT);
 			} else if (o instanceof String) {
-				dest.writeByte(DATA_TYPE_STRING);
-				writeString((String) o, dest);
+				xs.startTag(null, DATA_TYPE_STRING);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text((String) o);
+				xs.endTag(null, DATA_TYPE_STRING);
 			} else if (o instanceof Boolean) {
-				dest.writeByte(DATA_TYPE_BOOLEAN);
-				dest.writeBoolean((Boolean) o);
+				xs.startTag(null, DATA_TYPE_BOOLEAN);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(Boolean.toString((Boolean) o));
+				xs.endTag(null, DATA_TYPE_BOOLEAN);
 			} else if (o instanceof Bundle) {
-				dest.writeByte(DATA_TYPE_BUNDLE);
-				writeBundleTo((Bundle) o, dest);
+				xs.startTag(null, DATA_TYPE_BUNDLE);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				writeBundleTo((Bundle) o, xs);
+				xs.endTag(null, DATA_TYPE_BUNDLE);
 			} else {
-				dest.writeByte(DATA_TYPE_NONE);
+				xs.startTag(null, DATA_TYPE_NONE);
+				xs.attribute(null, DATA_KEY_IDENT, s);
+				xs.text(o.toString());
+				xs.endTag(null, DATA_TYPE_NONE);
 			}
 		}
 	}
 
-	private Bundle readBundleFrom(DataInputStream src) throws IOException {
+	public static void writeBundleTo(Bundle src, DataOutputStream dest) throws IOException {
+		XmlSerializer xs = Xml.newSerializer();
+		xs.setOutput(dest, "utf-8");
+		xs.startDocument(null, null);
+		
+		xs.startTag(null, DATA_TYPE_BUNDLE);
+		xs.attribute(null, DATA_KEY_IDENT, "@root");
+		writeBundleTo(src, xs);
+		xs.endTag(null, DATA_TYPE_BUNDLE);
+
+		xs.endDocument();
+		dest.close();
+	}
+
+	public static Bundle readBundleFrom(XmlPullParser src) throws IOException,
+			XmlPullParserException {
 		Bundle o = new Bundle();
-		int sz = src.readInt();
-		int i = 0;
-		while (i < sz) {
-			String key = readString(src);
-			byte type = src.readByte();
-			switch (type) {
-			case DATA_TYPE_BYTE:
-				o.putByte(key, src.readByte());
+		int eventType = src.next();
+
+		while (eventType != XmlPullParser.END_DOCUMENT) {
+			String cName = null, cType = null;
+
+			switch (eventType) {
+			case XmlResourceParser.START_TAG:
+				cType = src.getName();
+				cName = src.getAttributeValue(null, DATA_KEY_IDENT);
+
+				if (cType.equals(DATA_TYPE_BYTE)) {
+					o.putByte(cName, Byte.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_INT)) {
+					o.putInt(cName, Integer.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_LONG)) {
+					o.putLong(cName, Long.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_FLOAT)) {
+					o.putFloat(cName, Float.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_DOUBLE)) {
+					o.putDouble(cName, Double.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_BOOLEAN)) {
+					o.putBoolean(cName, Boolean.valueOf(src.nextText()));
+				} else if (cType.equals(DATA_TYPE_STRING)) {
+					o.putString(cName, src.nextText());
+				} else if (cType.equals(DATA_TYPE_BUNDLE)) {
+					o.putBundle(cName, readBundleFrom(src));
+				} else if (cType.equals(DATA_TYPE_NULL)) {
+					o.putString(cName, null);
+				} else if (cType.equals(DATA_TYPE_NONE)) {
+					Log.w("XPMBSettingsManager", "readBundleFrom(): Found value '" + cName
+							+ "' with unknown type '" + src.nextText() + "'.");
+				}
 				break;
-			case DATA_TYPE_INT:
-				o.putInt(key, src.readInt());
-				break;
-			case DATA_TYPE_LONG:
-				o.putLong(key, src.readLong());
-				break;
-			case DATA_TYPE_FLOAT:
-				o.putFloat(key, src.readFloat());
-				break;
-			case DATA_TYPE_DOUBLE:
-				o.putDouble(key, src.readDouble());
-				break;
-			case DATA_TYPE_BOOLEAN:
-				o.putBoolean(key, src.readBoolean());
-				break;
-			case DATA_TYPE_STRING:
-				o.putString(key, readString(src));
-				break;
-			case DATA_TYPE_BUNDLE:
-				o.putBundle(key, readBundleFrom(src));
-				break;
-			case DATA_TYPE_NONE:
+			case XmlResourceParser.END_TAG:
+				cType = src.getName();
+				if (cType.equals(DATA_TYPE_BUNDLE)) {
+					return o;
+				}
 				break;
 			}
-			i++;
+			eventType = src.next();
 		}
 		return o;
 	}
 
-	private void writeString(String v, DataOutputStream dest) throws IOException {
-		dest.write(v.length());
-		dest.writeChars(v);
-	}
+	public static Bundle readBundleFrom(DataInputStream src) throws IOException,
+			XmlPullParserException {
+		XmlPullParser xpp = Xml.newPullParser();
+		xpp.setInput(src, "utf-8");
 
-	private String readString(DataInputStream src) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		int sz = src.read();
-		int c = 0;
-		while (c < sz) {
-			sb.append(src.readChar());
-			c++;
-		}
-		return sb.toString();
+		Bundle o = readBundleFrom(xpp).getBundle("@root");
+
+		src.close();
+		return o;
 	}
 }

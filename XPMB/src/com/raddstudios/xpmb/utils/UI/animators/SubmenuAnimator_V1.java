@@ -169,4 +169,14 @@ public class SubmenuAnimator_V1 extends ValueAnimator implements AnimatorUpdateL
 			}
 		}
 	}
+	
+	@Override
+	public void resetContainer(XPMBMenuCategory container){
+		mList = container;
+	}
+	
+	@Override
+	public void start(){
+		super.start();
+	}
 };

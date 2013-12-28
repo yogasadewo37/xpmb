@@ -17,23 +17,23 @@
 //
 //-----------------------------------------------------------------------------
 
-package com.raddstudios.xpmb.menus.modules.games;
+package com.raddstudios.xpmb.menus.modules.games.romdata.rcdat;
 
 import android.os.Bundle;
 
-public class ROMInfoNode_Release {
+public class XPMB_RCDatNode_Release {
 
 	private final String BD_STRRELEASENAME = "strReleaseName",
 			BD_STRRELEASEREGION = "strReleaseRegion";
 
 	private String strReleaseName = null, strReleaseRegion = null;
 
-	public ROMInfoNode_Release(String name, String region) {
+	public XPMB_RCDatNode_Release(String name, String region) {
 		strReleaseName = name;
 		strReleaseRegion = region;
 	}
 
-	public ROMInfoNode_Release(Bundle source) {
+	public XPMB_RCDatNode_Release(Bundle source) {
 		strReleaseName = source.getString(BD_STRRELEASENAME);
 		strReleaseRegion = source.getString(BD_STRRELEASEREGION);
 	}

@@ -22,6 +22,7 @@ package com.raddstudios.xpmb.utils.UI;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -31,7 +32,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 
 import com.raddstudios.xpmb.XPMBActivity;
-import com.raddstudios.xpmb.utils.UI.XPMB_UILayerManager.UILayer_I;
+import com.raddstudios.xpmb.utils.UI.UILayerManager.UILayer_I;
 
 public class UILayer implements UILayer_I {
 
@@ -40,24 +41,37 @@ public class UILayer implements UILayer_I {
 	private XPMBActivity mRoot = null;
 	private RectF rConstraints = null;
 	private float fOpacity = 1.0f;
+	private boolean bVisible = false;
+	private Handler hBus = null;
 
 	public UILayer(XPMBActivity root) {
 		mRoot = root;
+		hBus = new Handler(root.getMainLooper());
 		rConstraints = new RectF();
 	}
-	
+
 	@Override
-	public void initialize(){
+	public void initialize() {
 	}
-		
+
 	@Override
-	public void dispose(){
+	public void dispose() {
 	}
-	
-	protected Handler getMessageBus(){
-		return mRoot.getMessageBus();
+
+	@Override
+	public void setVisibility(boolean visibility) {
+		bVisible = visibility;
 	}
-	
+
+	@Override
+	public boolean isVisible() {
+		return bVisible;
+	}
+
+	protected Handler getMessageBus() {
+		return hBus;
+	}
+
 	@Override
 	public void drawTo(Canvas canvas) {
 	}
@@ -79,22 +93,30 @@ public class UILayer implements UILayer_I {
 		return mRoot;
 	}
 
-	public Rect getBoundsFromTextRect(Rect source) {
-		Rect out = new Rect();
-		out.right = source.right - source.left;
-		out.bottom = Math.abs(source.top) + Math.abs(source.bottom);
-		return out;
+	public void getRectFromTextBounds(Rect bounds, Paint p) {
+		bounds.right = bounds.right - bounds.left;
+		bounds.bottom = (int) (-p.ascent() + p.descent());
+		bounds.left = 0;
+		bounds.top = 0;
 	}
 
 	protected Rect getScaledRect(Rect source, float scaleX, float scaleY, int gravity) {
 		Rect scaledRect = new Rect(0, 0, (int) (source.width() * scaleX),
 				(int) (source.height() * scaleY));
 
-		centerRect(source, scaledRect, gravity);
+		gravitateRect(source, scaledRect, gravity);
 		return scaledRect;
 	}
 
-	protected void centerRect(Rect base, Rect source, int gravity) {
+	protected void drawText(String text, Rect destRect, Paint p, Canvas destCanvas) {
+		Rect tRect = new Rect();
+		p.getTextBounds(text, 0, text.length(), tRect);
+		tRect.top = (int) p.ascent();
+		tRect.bottom = (int) p.descent();
+		destCanvas.drawText(text, destRect.left - tRect.left, destRect.top - tRect.top, p);
+	}
+
+	protected void gravitateRect(Rect base, Rect source, int gravity) {
 		switch (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
 		case Gravity.CENTER_HORIZONTAL:
 			source.offsetTo(base.centerX() - (source.width() / 2), source.top);

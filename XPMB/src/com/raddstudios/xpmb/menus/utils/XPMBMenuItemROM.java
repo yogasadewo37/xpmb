@@ -23,68 +23,85 @@ import java.io.File;
 
 import android.os.Bundle;
 
-import com.raddstudios.xpmb.menus.modules.games.ROMInfo;
-import com.raddstudios.xpmb.menus.modules.games.ROMInfoNode;
+import com.raddstudios.xpmb.menus.modules.games.romdata.XPMB_ROMData;
+import com.raddstudios.xpmb.menus.modules.games.romdata.rcdat.XPMB_RCDatNode;
+import com.raddstudios.xpmb.menus.modules.games.romdata.tgdbapi.TGDB_GameData;
 
 public class XPMBMenuItemROM extends XPMBMenuItem {
 
 	public static final String TYPE_DESC = "menuitem.media.rom";
-	
-	private ROMInfoNode mData = null;
-	private File fROMPath = null;
-	private String strROMCRC = null;
 
-	private final String BD_STRROMPATH = "fROMPath", BD_STRROMCRC = "strROMCRC", BD_MDATA = "mData";
+	private XPMB_ROMData mData = null;
 
-	public XPMBMenuItemROM(ROMInfo datasource, String fCRC, File rompath) {
-		super(rompath.getName());
-		super.setTypeDescriptor(TYPE_DESC);
-		
-		fROMPath = rompath;
-		
-		mData = datasource.getNode(fCRC);
-		if (mData != null){
-			super.setLabel(mData.getReleaseData(0).getReleaseName());
-			super.enableTwoLine(true);
-			super.setLabelB(mData.getReleaseData(0).getReleaseRegion());
-		}		
+	private String strROMBGKey = null;
+
+	private final String BD_STRROMBGKEY = "strROMBGKey", BD_MDATA = "mData";
+
+	public XPMBMenuItemROM(XPMB_ROMData source) {
+		super(source.getInfo().getGameName());
+		mData = source;
+
+		initialize();
 	}
 
 	public XPMBMenuItemROM(Bundle source) {
 		super(source);
 
-		fROMPath = new File(source.getString(BD_STRROMPATH));
-		strROMCRC = source.getString(BD_STRROMCRC);
-		mData = new ROMInfoNode(source.getBundle(BD_MDATA));
-		
-		if (mData != null){
-			super.setLabel(mData.getReleaseData(0).getReleaseName());
-			super.enableTwoLine(true);
-			super.setLabelB(mData.getReleaseData(0).getReleaseRegion());
-		}	
+		strROMBGKey = source.getString(BD_STRROMBGKEY);
+		mData = new XPMB_ROMData(source.getBundle(BD_MDATA));
+
+		initialize();
 	}
 
+	private void initialize() {
+		if (mData != null) {
+			TGDB_GameData extData = mData.getInfo().getExtendedData();
+			if (extData != null) {
+				super.setLabel(mData.getInfo().getExtendedData().getTitle());
+				if (extData.getPublisher() != null) {
+					super.enableTwoLine(true);
+					super.setLabelB(extData.getPublisher());
+				}
+				if (extData.getDeveloper() != null) {
+					super.setLabelB(super.getLabelB() + "/" + extData.getDeveloper());
+				}
+			} else {
+				super.setLabel(mData.getInfo().getReleaseData(0).getReleaseName());
+			}
+		}
+	}
 
 	@Override
 	public Bundle storeInBundle() {
 		Bundle s = super.storeInBundle();
-		s.putString(BD_STRROMPATH, fROMPath.getAbsolutePath());
-		s.putString(BD_STRROMCRC, strROMCRC);
+		s.putString(BD_STRROMBGKEY, strROMBGKey);
 		s.putBundle(BD_MDATA, mData.storeInBundle());
 		return s;
 	}
 
-	public ROMInfoNode getROMInfo(){
-		return mData;
+	@Override
+	public String getTypeDescriptor() {
+		return XPMBMenuItemROM.TYPE_DESC;
 	}
-	
-	public File getROMPath(){
-		return fROMPath;
+
+	public XPMB_RCDatNode getROMInfo() {
+		return mData.getInfo();
 	}
-	
-	public String getROMCRC(){
-		return strROMCRC;
+
+	public File getROMPath() {
+		return mData.getSourceFile().getParentFile();
 	}
-	
-	
+
+	public long getROMCRC() {
+		return mData.getCRC();
+	}
+
+	public String getROMBGKey() {
+		return strROMBGKey;
+	}
+
+	public void setROMBGKey(String key) {
+		strROMBGKey = key;
+	}
+
 }
