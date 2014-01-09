@@ -19,6 +19,8 @@
 
 package com.raddstudios.xpmb.menus.utils;
 
+import com.raddstudios.xpmb.XPMBActivity;
+
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -37,6 +39,7 @@ public interface XPMBMenuItemDef {
 	float getLabelAlpha();
 	void setIconBitmapID(String icon);
 	String getIconBitmapID();
+	void preloadIconBitmap(XPMBActivity root);
 	void setIconType(int type);
 	int getIconType();
 	void enableTwoLine(boolean enabled);

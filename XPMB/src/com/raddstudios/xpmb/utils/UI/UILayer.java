@@ -116,7 +116,7 @@ public class UILayer implements UILayer_I {
 		destCanvas.drawText(text, destRect.left - tRect.left, destRect.top - tRect.top, p);
 	}
 
-	protected void gravitateRect(Rect base, Rect source, int gravity) {
+	public static void gravitateRect(Rect base, Rect source, int gravity) {
 		switch (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
 		case Gravity.CENTER_HORIZONTAL:
 			source.offsetTo(base.centerX() - (source.width() / 2), source.top);

@@ -21,9 +21,19 @@ package com.raddstudios.xpmb.menus.utils;
 
 import java.net.URISyntaxException;
 
+import com.raddstudios.xpmb.XPMBActivity;
+import com.raddstudios.xpmb.utils.UI.UILayer;
+
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 
 public class XPMBMenuItemApp extends XPMBMenuItem {
 
@@ -57,6 +67,35 @@ public class XPMBMenuItemApp extends XPMBMenuItem {
 	@Override
 	public String getTypeDescriptor() {
 		return XPMBMenuItemApp.TYPE_DESC;
+	}
+
+	@Override
+	public void preloadIconBitmap(XPMBActivity root) {
+		if (getIconBitmapID() != null && mIntent != null) {
+			if (!root.getThemeManager().assetExists(getIconBitmapID())) {
+				long dt = System.currentTimeMillis();
+				Bitmap bmAsset = null;
+				try {
+					bmAsset = ((BitmapDrawable) root.getBaseContext().getPackageManager()
+							.getActivityIcon(mIntent)).getBitmap();
+				} catch (NameNotFoundException e) {
+					Log.w(getClass().getSimpleName(),
+							"preloadIconBitmap():Couldn't load Icon for app '"
+									+ mIntent.getPackage() + "'");
+					return;
+				}
+				Bitmap bmModAsset = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888);
+				Canvas bmModAssetCanvas = new Canvas(bmModAsset);
+				Rect bA = new Rect(0, 0, 96, 96), bB = new Rect(0, 0, bmAsset.getWidth(),
+						bmAsset.getHeight());
+				UILayer.gravitateRect(bA, bB, Gravity.CENTER);
+				bmModAssetCanvas.drawBitmap(bmAsset, null, bB, new Paint());
+				root.getThemeManager().addCustomAsset(getIconBitmapID(), bmModAsset);
+				Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '"
+						+ getLabel() + "' done. Took " + (System.currentTimeMillis() - dt) + "ms.");
+			}
+			super.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
+		}
 	}
 
 	private void storeIntentInBundle(Bundle dest, Intent src, String baseKey) {

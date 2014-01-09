@@ -24,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Iterator;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -74,7 +75,7 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 	private UIAnimatorWorker aUIAnimatorW = null;
 
 	private Paint pParams = new Paint();
-	private Rect rTextBounds = null, tS = null, cP = null, rSelIconRect = null;
+	private Rect rTextBounds = null, rSelIconRect = null;
 	private Bitmap bmSelIcon = null;
 
 	public static final int ANIM_NONE = -1, ANIM_MENU_MOVE_UP = 0, ANIM_MENU_MOVE_DOWN = 1,
@@ -100,12 +101,17 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 					.getSelectedSubitem());
 			if (xmc.getNumSubitems() > 0) {
 				if (xmc.getSelectedSubitem() > 0) {
-					XPMBMenuItemDef t = xmc.getSubitem(xmc.getSelectedSubitem() - 1);
-					xmc.setSubitem(xmc.getSelectedSubitem() - 1,
-							xmc.getSubitem(xmc.getSelectedSubitem()));
-					xmc.setSubitem(xmc.getSelectedSubitem(), t);
-					xmc.getSubitem(xmc.getSelectedSubitem()).setLabelAlpha(1.0f);
-					xmc.getSubitem(xmc.getSelectedSubitem() - 1).setLabelAlpha(0.0f);
+					XPMBMenuItemDef a = xmc.getSubitem(xmc.getSelectedSubitem() - 1), b = xmc
+							.getSubitem(xmc.getSelectedSubitem());
+					Point pa = a.getPosition(), pb = b.getPosition();
+					a.setPosition(pb);
+					a.setLabelAlpha(1.0f);
+					a.setMarginTop(pxfd(85));
+					b.setPosition(pa);
+					b.setLabelAlpha(0.0f);
+					b.setMarginTop(0);
+					xmc.setSubitem(xmc.getSelectedSubitem() - 1, b);
+					xmc.setSubitem(xmc.getSelectedSubitem(), a);
 				}
 			}
 		}
@@ -127,13 +133,18 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 			XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(alItems
 					.getSelectedSubitem());
 			if (xmc.getNumSubitems() > 0) {
-				if (xmc.getSelectedSubitem() < xmc.getNumSubitems()) {
-					XPMBMenuItemDef t = xmc.getSubitem(xmc.getSelectedSubitem() + 1);
-					xmc.setSubitem(xmc.getSelectedSubitem() + 1,
-							xmc.getSubitem(xmc.getSelectedSubitem()));
-					xmc.setSubitem(xmc.getSelectedSubitem(), t);
-					xmc.getSubitem(xmc.getSelectedSubitem()).setLabelAlpha(1.0f);
-					xmc.getSubitem(xmc.getSelectedSubitem() + 1).setLabelAlpha(0.0f);
+				if (xmc.getSelectedSubitem() < (xmc.getNumSubitems() - 1)) {
+					XPMBMenuItemDef a = xmc.getSubitem(xmc.getSelectedSubitem() + 1), b = xmc
+							.getSubitem(xmc.getSelectedSubitem());
+					Point pa = a.getPosition(), pb = b.getPosition();
+					a.setPosition(pb);
+					a.setLabelAlpha(1.0f);
+					a.setMarginTop(pxfd(85));
+					b.setPosition(pa);
+					b.setLabelAlpha(0.0f);
+					b.setMarginTop(0);
+					xmc.setSubitem(xmc.getSelectedSubitem() + 1, b);
+					xmc.setSubitem(xmc.getSelectedSubitem(), a);
 				}
 			}
 		}
@@ -158,7 +169,7 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 			if (item != null) {
 				XPMBMenuCategory xmc = (XPMBMenuCategory) alItems.getSubitem(alItems
 						.getSelectedSubitem());
-				XPMBMenuItemDef xmi = null;
+				XPMBMenuItemDef xmi = null, xms = xmc.getSubitem(xmc.getSelectedSubitem());
 				String desc = bGlobal.getString(XPMBActivity.SETTINGS_GLOBAL_COPIED_MENUITEM_TYPE);
 				if (desc.equals(XPMBMenuItem.TYPE_DESC)) {
 					xmi = new XPMBMenuItem(item);
@@ -175,11 +186,14 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 				if (xmi != null) {
 					xmi.setHeight(pxfd(85));
 					xmi.setWidth(pxfd(85));
+					xmi.setPositionX(xmc.getPosition().x);
 					if (xmc.getNumSubitems() != 0) {
+						xmi.setPositionY(xms.getPosition().y + pxfd(85));
 						xmi.setMarginTop(0);
 						xmc.addSubitem(xmc.getSelectedSubitem() + 1, xmi);
 					} else {
 						xmi.setMarginTop(pxfd(85));
+						xmi.setPositionY(pxfd(42));
 						xmc.addSubitem(xmi);
 					}
 				} else {
@@ -486,8 +500,6 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 		aUIAnimator.addUpdateListener(aUIAnimatorW);
 		aUIAnimator.addListener(aUIAnimatorW);
 		rTextBounds = new Rect();
-		tS = new Rect();
-		cP = new Rect();
 	}
 
 	@Override
@@ -520,6 +532,23 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 		}
 	}
 
+	private Runnable rReloadAppIcons = new Runnable() {
+		@Override
+		public void run() {
+			Iterator<XPMBMenuItemDef> xmx = alItems.getSubitems();
+			while (xmx.hasNext()) {
+				XPMBMenuCategory x = (XPMBMenuCategory) xmx.next();
+				Iterator<XPMBMenuItemDef> xmy = x.getSubitems();
+				while (xmy.hasNext()) {
+					XPMBMenuItemDef y = xmy.next();
+					if (y instanceof XPMBMenuItemApp) {
+						y.preloadIconBitmap(getRootActivity());
+					}
+				}
+			}
+		}
+	};
+
 	public void doInit(XmlResourceParser xrpRes) {
 		Log.v(getClass().getSimpleName(), "doInit():Start module initialization.");
 
@@ -539,6 +568,7 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 				dis.close();
 
 				mInit = true;
+				new Thread(rReloadAppIcons).start();
 				Log.v(getClass().getSimpleName(), "doInit():Finished module initialization.");
 				return;
 			} catch (Exception e) {
@@ -738,6 +768,7 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 		// TODO: Take in account the actual orientation of the device
 		Rect rILoc = new Rect();
 		int iAlpha = 255, px_x = 0, px_y = 0;
+		float sAlpha = 1.0f;
 
 		px_x = alItems.getSubitemsPos().x;
 		for (int x = 0; x < alItems.getNumSubitems(); x++) {
@@ -770,11 +801,12 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 				// Label
 				String strLabel_c = xmi_x.getLabel();
 				iAlpha = (int) ((255 * xmi_x.getLabelAlpha()) * fOpacity);
+				sAlpha = xmi_x.getLabelAlpha() * fOpacity;
 
 				pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 				pParams.setColor(Color.WHITE);
 				pParams.setTextSize(pxfd(13));
-				pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
+				pParams.setShadowLayer((int) (pxfd(2) * sAlpha), pxfd(1), pxfd(1), Color.BLACK);
 				pParams.getTextBounds(strLabel_c, 0, strLabel_c.length(), rTextBounds);
 				getRectFromTextBounds(rTextBounds, pParams);
 				rTextBounds.offsetTo(rILoc.centerX() - (rTextBounds.width() / 2),
@@ -850,11 +882,12 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 					String strLabel_A = xmi_y.getLabel();
 					String strLabel_B = xmi_y.getLabelB();
 					iAlpha = (int) (((255 * xmi_y.getLabelAlpha()) * xmi_x.getSubitemsAlpha()) * fOpacity);
+					sAlpha = xmi_y.getLabelAlpha() * xmi_x.getSubitemsAlpha();
 					pParams.setFlags(Paint.ANTI_ALIAS_FLAG);
 					pParams.setTextSize(pxfd(18));
 					pParams.setColor(Color.WHITE);
 					pParams.setTextAlign(Align.LEFT);
-					pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
+					pParams.setShadowLayer((int) (pxfd(2) * sAlpha), pxfd(1), pxfd(1), Color.BLACK);
 
 					if (xmi_y.isTwoLines()) {
 						// Text A
@@ -868,7 +901,8 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 						canvas.restore();
 						// Line Separator
 						int s_alpha = (int) ((255 * xmi_y.getSeparatorAlpha()) * fOpacity);
-						pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.GRAY);
+						pParams.setShadowLayer((int) (pxfd(2) * sAlpha), pxfd(1), pxfd(1),
+								Color.GRAY);
 						canvas.saveLayerAlpha(rILoc.right + pxfd(10), rILoc.centerY() - pxfd(2),
 								getDrawingConstraints().right - pxfd(2), rILoc.centerY() + pxfd(2),
 								s_alpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
@@ -881,7 +915,8 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 						rTextBounds.offsetTo(rILoc.right + pxfd(10), rILoc.centerY() + pxfd(4));
 						canvas.saveLayerAlpha(rTextBounds.left, rTextBounds.top, rTextBounds.right,
 								rTextBounds.bottom, iAlpha, Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-						pParams.setShadowLayer(pxfd(2), pxfd(1), pxfd(1), Color.BLACK);
+						pParams.setShadowLayer((int) (pxfd(2) * sAlpha), pxfd(1), pxfd(1),
+								Color.BLACK);
 						drawText(strLabel_B, rTextBounds, pParams, canvas);
 						canvas.restore();
 					} else {

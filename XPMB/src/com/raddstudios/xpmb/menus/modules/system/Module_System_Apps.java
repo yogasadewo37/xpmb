@@ -24,14 +24,8 @@ import java.util.List;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 
 import com.raddstudios.xpmb.R;
 import com.raddstudios.xpmb.XPMBActivity;
@@ -185,21 +179,10 @@ public class Module_System_Apps extends Modules_Base implements FinishedListener
 
 			XPMBMenuItemApp xmi = new XPMBMenuItemApp(strAppLabel);
 			String strIcon = "module.system.apps.icon|" + strAppLabel;
-			long dt = System.currentTimeMillis();
-			Bitmap bmAsset = ((BitmapDrawable) rinf.loadIcon(pm)).getBitmap();
-			Bitmap bmModAsset = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888);
-			Canvas bmModAssetCanvas = new Canvas(bmModAsset);
-			Rect bA = new Rect(0, 0, 96, 96), bB = new Rect(0, 0, bmAsset.getWidth(),
-					bmAsset.getHeight());
-			gravitateRect(bA, bB, Gravity.CENTER);
-			bmModAssetCanvas.drawBitmap(bmAsset, null, bB, new Paint());
-			getRootActivity().getThemeManager().addCustomAsset(strIcon, bmModAsset);
-			Log.i(getClass().getSimpleName(), "loadIn():Icon asset loading for app '" + strAppLabel
-					+ "' done. Took " + dt + "ms.");
-
-			xmi.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
+			
 			xmi.setIconBitmapID(strIcon);
 			xmi.setIntent(strAppIntent);
+			xmi.preloadIconBitmap(getRootActivity());
 			xmi.setWidth(pxfd(64));
 			xmi.setHeight(pxfd(64));
 

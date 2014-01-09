@@ -19,6 +19,8 @@
 
 package com.raddstudios.xpmb.menus.utils;
 
+import com.raddstudios.xpmb.XPMBActivity;
+
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -310,5 +312,9 @@ public class XPMBMenuItem implements XPMBMenuItemDef {
 	@Override
 	public int getIconType() {
 		return intIconType;
+	}
+
+	@Override
+	public void preloadIconBitmap(XPMBActivity root) {
 	}
 }

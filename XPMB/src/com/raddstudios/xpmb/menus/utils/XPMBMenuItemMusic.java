@@ -19,7 +19,18 @@
 
 package com.raddstudios.xpmb.menus.utils;
 
+import java.io.File;
+
+import android.app.Activity;
+import android.content.ContentUris;
+import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
+
+import com.raddstudios.xpmb.XPMBActivity;
 
 public class XPMBMenuItemMusic extends XPMBMenuItem {
 
@@ -64,6 +75,52 @@ public class XPMBMenuItemMusic extends XPMBMenuItem {
 	@Override
 	public String getTypeDescriptor() {
 		return XPMBMenuItemMusic.TYPE_DESC;
+	}
+
+	public File getImageFileFromUri(Activity root, Uri uri) {
+		File out = null;
+		String[] projection = { MediaStore.Images.Media.DATA };
+		Cursor cursor = root.getContentResolver().query(uri, projection, null, null, null);
+		cursor.moveToFirst();
+		if (cursor.getCount() != 0) {
+			out = new File(cursor.getString(0));
+		}
+		cursor.close();
+		return out;
+	}
+
+	@Override
+	public void preloadIconBitmap(XPMBActivity root) {
+		if (getIconBitmapID() != null && albumArtID != 0) {
+			if (!root.getThemeManager().assetExists(getIconBitmapID())) {
+				Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+				Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumArtID);
+				File artFile = getImageFileFromUri(root, albumArtUri);
+
+				if (artFile != null) {
+					if (!artFile.exists()) {
+						Log.e(getClass().getSimpleName(),
+								"loadAlbumArts():Couldn't load album art for mediaID '"
+										+ albumArtID
+										+ "' (File not found), using list counter only.");
+					} else {
+						Long ct = System.currentTimeMillis();
+						root.getThemeManager().addCustomAsset(getIconBitmapID(),
+								BitmapFactory.decodeFile(artFile.getAbsolutePath()));
+						Log.i(getClass().getSimpleName(),
+								"loadAlbumArts():Album art caching for ID '" + albumArtID
+										+ "' took " + (System.currentTimeMillis() - ct) + "ms.");
+					}
+				} else {
+					Log.e(getClass().getSimpleName(),
+							"loadAlbumArts():Couldn't load album art for mediaID '"
+									+ albumArtID
+									+ "' (MediaStore returned no rows for path), using list counter only.");
+				}
+			}
+
+			super.setIconType(XPMBMenuItemDef.ICON_TYPE_BITMAP);
+		}
 	}
 
 	public void setAlbumArtID(long mediaID) {
