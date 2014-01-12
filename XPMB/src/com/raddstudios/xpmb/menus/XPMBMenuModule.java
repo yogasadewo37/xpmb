@@ -19,10 +19,8 @@
 
 package com.raddstudios.xpmb.menus;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Iterator;
 
@@ -516,15 +514,9 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 	@Override
 	public void dispose() {
 		Log.v(getClass().getSimpleName(), "dispose():Started saving menu state.");
-		File fMenuState = new File(getRootActivity().getCacheDir(), "menustate");
+		File fMenuState = new File(getRootActivity().getFilesDir(), "menustate");
 		try {
-			FileOutputStream fos = new FileOutputStream(fMenuState);
-			DataOutputStream dos = new DataOutputStream(fos);
-
-			XPMBSettingsManager.writeBundleTo(alItems.storeInBundle(), dos);
-
-			dos.close();
-
+			XPMBSettingsManager.writeBundleTo(alItems.storeInBundle(), fMenuState);
 			Log.v(getClass().getSimpleName(), "dispose():Finished saving menu state.");
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(), "dispose():Couldn't save menu state");
@@ -552,20 +544,16 @@ public class XPMBMenuModule extends UILayer implements FinishedListener {
 	public void doInit(XmlResourceParser xrpRes) {
 		Log.v(getClass().getSimpleName(), "doInit():Start module initialization.");
 
-		File fMenuState = new File(getRootActivity().getCacheDir(), "menustate");
+		File fMenuState = new File(getRootActivity().getFilesDir(), "menustate");
 		if (fMenuState.exists()) {
 			try {
-				FileInputStream fis = new FileInputStream(fMenuState);
-				DataInputStream dis = new DataInputStream(fis);
 
 				long t = System.currentTimeMillis();
 				Log.i(getClass().getSimpleName(), "doInit():Started reading menu state cache.");
-				alItems = new XPMBMenuCategory(XPMBSettingsManager.readBundleFrom(dis));
+				alItems = new XPMBMenuCategory(XPMBSettingsManager.readBundleFrom(fMenuState));
 				Log.i(getClass().getSimpleName(),
 						"doInit():Finished reading menu state cache. Took "
 								+ (System.currentTimeMillis() - t) + "ms.");
-
-				dis.close();
 
 				mInit = true;
 				new Thread(rReloadAppIcons).start();

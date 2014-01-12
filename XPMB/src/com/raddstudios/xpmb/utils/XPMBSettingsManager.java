@@ -27,6 +27,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -71,10 +73,9 @@ public class XPMBSettingsManager {
 	public void writeToFile(File dest) {
 		try {
 			FileOutputStream fos = new FileOutputStream(dest);
-			DataOutputStream dos = new DataOutputStream(fos);
+			DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(fos));
 			writeBundleTo(mSettingsStorage, dos);
 			dos.close();
-			fos.close();
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(),
 					"writeToFile():Error trying to access '" + dest.getAbsolutePath()
@@ -85,10 +86,9 @@ public class XPMBSettingsManager {
 	public void readFromFile(File src) {
 		try {
 			FileInputStream fis = new FileInputStream(src);
-			DataInputStream dis = new DataInputStream(fis);
+			DataInputStream dis = new DataInputStream(new GZIPInputStream(fis));
 			mSettingsStorage = readBundleFrom(dis);
 			dis.close();
-			fis.close();
 		} catch (FileNotFoundException fnf) {
 			Log.w(getClass().getSimpleName(),
 					"readFromFile():No settings file found. Starting with a blank one.");
@@ -161,7 +161,7 @@ public class XPMBSettingsManager {
 		XmlSerializer xs = Xml.newSerializer();
 		xs.setOutput(dest, "utf-8");
 		xs.startDocument(null, null);
-		
+
 		xs.startTag(null, DATA_TYPE_BUNDLE);
 		xs.attribute(null, DATA_KEY_IDENT, "@root");
 		writeBundleTo(src, xs);
@@ -169,6 +169,13 @@ public class XPMBSettingsManager {
 
 		xs.endDocument();
 		dest.close();
+	}
+
+	public static void writeBundleTo(Bundle src, File dest) throws IOException {
+		FileOutputStream fos = new FileOutputStream(dest);
+		DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(fos));
+		writeBundleTo(src, dos);
+		dos.close();
 	}
 
 	public static Bundle readBundleFrom(XmlPullParser src) throws IOException,
@@ -227,6 +234,16 @@ public class XPMBSettingsManager {
 		Bundle o = readBundleFrom(xpp).getBundle("@root");
 
 		src.close();
+		return o;
+	}
+
+	public static Bundle readBundleFrom(File src) throws IOException, XmlPullParserException {
+		Bundle o = null;
+		FileInputStream fis = new FileInputStream(src);
+		DataInputStream dis = new DataInputStream(new GZIPInputStream(fis));
+		o = readBundleFrom(dis);
+		dis.close();
+		fis.close();
 		return o;
 	}
 }

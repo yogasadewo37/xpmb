@@ -19,18 +19,12 @@
 
 package com.raddstudios.xpmb.menus.modules.media;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -62,7 +56,7 @@ public class Module_Media_Music extends Modules_Base {
 	private ProcessItemThread rProcessItem = null;
 
 	private final String SETTINGS_BUNDLE_KEY = "module.media.music",
-			SETTING_LAST_ITEM = "lastitem", SETTING_LAST_PLAYED = "lastplayed",
+	/* SETTING_LAST_ITEM = "lastitem", */SETTING_LAST_PLAYED = "lastplayed",
 			SETTING_IS_PLAYING = "isplaying";
 
 	@Override
@@ -72,18 +66,20 @@ public class Module_Media_Music extends Modules_Base {
 
 	private class ProcessItemThread implements Runnable {
 
-		private XPMBMenuItemMusic f_item = null;
+		private int f_item = -1;
 
-		public void setItem(XPMBMenuItemMusic item) {
+		public void setItem(int item) {
 			f_item = item;
 		}
 
 		@Override
 		public void run() {
 			mpc.stop();
-			mpc.setMediaSource(f_item.getTrackPath());
+			mpc.setMediaSource(f_item);
 			Log.v(getClass().getSimpleName(),
-					"processItem():Start playing '" + f_item.getTrackName() + "'");
+					"processItem():Start playing '"
+							+ ((XPMBMenuItemMusic) getContainerCategory().getSubitem(f_item))
+									.getTrackName() + "'");
 			mpc.play();
 			bIsPlaying = true;
 		}
@@ -161,10 +157,14 @@ public class Module_Media_Music extends Modules_Base {
 		rProcessItem = new ProcessItemThread();
 	}
 
-	private OnCompletionListener oclListener = new OnCompletionListener() {
+	private FinishedListener oclListener = new FinishedListener() {
 		@Override
-		public void onCompletion(MediaPlayer mp) {
-			sendKeyDown(XPMBActivity.KEYCODE_SHOULDER_RIGHT);
+		public void onFinished(Object o) {
+			int v = (Integer)o;
+			if (intLastPlayed != v  && v > -1){
+				centerOnItem(v);
+				intLastPlayed = v;
+			}
 		}
 	};
 
@@ -178,6 +178,7 @@ public class Module_Media_Music extends Modules_Base {
 		if (!mpc.isInitialized()) {
 			mpc.initialize(getRootActivity().getApplicationContext());
 		}
+		mpc.setOnFinishedBehavior(XPMBMediaService.ONFINISH_NEXT);
 		mpc.setOnCompletionListener(oclListener);
 		bInit = true;
 		Log.v(getClass().getSimpleName(), "initialize():Finished module initialization.");
@@ -210,15 +211,10 @@ public class Module_Media_Music extends Modules_Base {
 
 		if (bLoaded) {
 			Log.v(getClass().getSimpleName(), "dispose():Started saving module state.");
-			File fMenuState = new File(getRootActivity().getCacheDir(), getModuleID() + ".state");
+			File fMenuState = new File(getRootActivity().getFilesDir(), getModuleID() + ".state");
 			try {
-				FileOutputStream fos = new FileOutputStream(fMenuState);
-				DataOutputStream dos = new DataOutputStream(fos);
-
-				XPMBSettingsManager.writeBundleTo(getContainerCategory().storeInBundle(), dos);
-
-				dos.close();
-
+				XPMBSettingsManager.writeBundleTo(getContainerCategory().storeInBundle(),
+						fMenuState);
 				Log.v(getClass().getSimpleName(), "dispose():Finished saving module state.");
 			} catch (Exception e) {
 				Log.e(getClass().getSimpleName(), "dispose():Couldn't save module state");
@@ -250,22 +246,21 @@ public class Module_Media_Music extends Modules_Base {
 		}
 
 		if (bInit && !bLoaded) {
-			File fMenuState = new File(getRootActivity().getCacheDir(), getModuleID() + ".state");
+			File fMenuState = new File(getRootActivity().getFilesDir(), getModuleID() + ".state");
 			if (fMenuState.exists()) {
 				try {
-					FileInputStream fis = new FileInputStream(fMenuState);
-					DataInputStream dis = new DataInputStream(fis);
-
 					long t = System.currentTimeMillis();
 					Log.i(getClass().getSimpleName(),
 							"doInit():Started reading module state cache.");
 					super.setContainerCategory(new XPMBMenuCategory(XPMBSettingsManager
-							.readBundleFrom(dis)));
+							.readBundleFrom(fMenuState)));
+					mpc.setMediaPlaylist(getContainerCategory());
+					if (mpc.isPlaying()){
+						showNotification();
+					}
 					Log.i(getClass().getSimpleName(),
 							"doInit():Finished reading module state cache. Took "
 									+ (System.currentTimeMillis() - t) + "ms.");
-
-					dis.close();
 
 					for (int id = 0; id < getContainerCategory().getNumSubitems(); id++) {
 						XPMBMenuItemMusic xmim = (XPMBMenuItemMusic) getContainerCategory()
@@ -342,6 +337,10 @@ public class Module_Media_Music extends Modules_Base {
 		}
 		mCur.close();
 		getListAnimator().initializeItems();
+		mpc.setMediaPlaylist(getContainerCategory());
+		if (mpc.isPlaying()){
+			showNotification();
+		}
 
 		bLoaded = true;
 		new Thread(rLoadAlbumArts).start();
@@ -356,7 +355,7 @@ public class Module_Media_Music extends Modules_Base {
 					"loadIn():Module not initialized. You shouldn't even be calling this method.");
 			return;
 		}
-		rProcessItem.setItem((XPMBMenuItemMusic) item);
+		rProcessItem.setItem(getContainerCategory().getIndexOf(item));
 		new Thread(rProcessItem).start();
 		intLastPlayed = getContainerCategory().getSelectedSubitem();
 		showNotification();
@@ -375,9 +374,11 @@ public class Module_Media_Music extends Modules_Base {
 			if (intLastPlayed == 0 || !bIsPlaying) {
 				break;
 			}
-			intLastPlayed--;
-			centerOnItem(intLastPlayed);
-			processItem((XPMBMenuItem) getContainerCategory().getSubitem(intLastPlayed));
+			int pItem = mpc.previous();
+			if (pItem != intLastPlayed) {
+				intLastPlayed = pItem;
+				centerOnItem(pItem);
+			}
 			break;
 		case XPMBActivity.KEYCODE_UP:
 			moveUp();
@@ -386,9 +387,11 @@ public class Module_Media_Music extends Modules_Base {
 			if (intLastPlayed == getContainerCategory().getNumSubitems() - 1 || !bIsPlaying) {
 				break;
 			}
-			intLastPlayed++;
-			centerOnItem(intLastPlayed);
-			processItem((XPMBMenuItem) getContainerCategory().getSubitem(intLastPlayed));
+			int nItem = mpc.next();
+			if (nItem != intLastPlayed) {
+				intLastPlayed = nItem;
+				centerOnItem(nItem);
+			}
 			break;
 		case XPMBActivity.KEYCODE_DOWN:
 			moveDown();
